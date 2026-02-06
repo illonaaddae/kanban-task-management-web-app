@@ -1,7 +1,14 @@
 import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { Dashboard } from './pages/Dashboard';
 import { BoardView } from './pages/BoardView';
+import { Login } from './pages/Login';
+import { Admin } from './pages/Admin';
+import { NotFound } from './pages/NotFound';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { useTheme } from './context/ThemeContext';
 
 function App() {
@@ -10,12 +17,48 @@ function App() {
 
   return (
     <div className={`app ${theme}`}>
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: theme === 'dark' ? '#20212C' : '#FFFFFF',
+            color: theme === 'dark' ? '#FFFFFF' : '#000112',
+            border: `1px solid ${theme === 'dark' ? '#3E3F4E' : '#E4EBFA'}`,
+          },
+          success: {
+            iconTheme: {
+              primary: '#635FC7',
+              secondary: '#FFFFFF',
+            },
+          },
+        }}
+      />
       
-      <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-        <Header />
-        <BoardView />
-      </main>
+      <Routes>
+        {/* Public route - Login */}
+        <Route path="/login" element={<Login />} />
+
+        {/* Protected routes with layout */}
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+              
+              <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+                <Header />
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/board/:boardId" element={<BoardView />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </div>
   );
 }

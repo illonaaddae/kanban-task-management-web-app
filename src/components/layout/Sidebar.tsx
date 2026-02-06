@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useBoard } from '../../context/BoardContext';
 import { Logo } from '../ui/Logo';
 import { ThemeToggle } from '../ui/ThemeToggle';
@@ -11,8 +12,17 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
-  const { boards, activeBoard, setActiveBoard } = useBoard();
+  const { boards } = useBoard();
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
+  const location = useLocation();
+  
+  // Extract board index from current URL path
+  const getCurrentBoardIndex = () => {
+    const match = location.pathname.match(/\/board\/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  };
+  
+  const activeBoardIndex = getCurrentBoardIndex();
   
   if (!isOpen) {
     return (
@@ -26,54 +36,58 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   
   return (
     <>
-    <aside className={styles.sidebar}>
-      <Logo />
+      {/* Backdrop for mobile overlay */}
+      <div className={`${styles.backdrop} ${isOpen ? styles.backdropVisible : ''}`} onClick={onToggle} />
       
-      <div className={styles.boardSection}>
-        <h2 className={styles.boardsHeading}>ALL BOARDS ({boards.length})</h2>
+      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+        <Logo />
         
-        <nav className={styles.boardList}>
-          {boards.map((board, index) => (
-            <button
-              key={index}
-              className={`${styles.boardItem} ${activeBoard === index ? styles.active : ''}`}
-              onClick={() => setActiveBoard(index)}
+        <div className={styles.boardSection}>
+          <h2 className={styles.boardsHeading}>
+            ALL BOARDS ({boards.length})
+          </h2>
+          
+          <div className={styles.boardList}>
+            {boards.map((board, index) => (
+              <Link
+                key={index}
+                to={`/board/${index}`}
+                className={`${styles.boardItem} ${activeBoardIndex === index ? styles.active : ''}`}
+                onClick={onToggle}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M0.846133 0.846133C0.304363 1.3879 0 2.12271 0 2.88889V13.1111C0 13.8773 0.304363 14.6121 0.846133 15.1538C1.3879 15.6955 2.12271 16 2.88889 16H13.1111C13.8773 16 14.6121 15.6955 15.1538 15.1538C15.6956 14.6121 16 13.8773 16 13.1111V2.88889C16 2.12271 15.6956 1.3879 15.1538 0.846133C14.6121 0.304363 13.8773 0 13.1111 0H2.88889C2.12271 0 1.3879 0.304363 0.846133 0.846133Z"/>
+                </svg>
+                {board.name}
+              </Link>
+            ))}
+            
+            <button 
+              className={styles.createBoard}
+              onClick={() => setShowAddBoardModal(true)}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M0.945312 2.10938C0.945312 1.15859 1.71641 0.3875 2.66719 0.3875H6.11094C7.06172 0.3875 7.83281 1.15859 7.83281 2.10938V13.8906C7.83281 14.8414 7.06172 15.6125 6.11094 15.6125H2.66719C1.71641 15.6125 0.945312 14.8414 0.945312 13.8906V2.10938ZM9.88906 2.10938C9.88906 1.15859 10.6602 0.3875 11.6109 0.3875H13.3328C14.2836 0.3875 15.0547 1.15859 15.0547 2.10938V7.16406C15.0547 8.11484 14.2836 8.88594 13.3328 8.88594H11.6109C10.6602 8.88594 9.88906 8.11484 9.88906 7.16406V2.10938Z"/>
+                <path d="M0.846133 0.846133C0.304363 1.3879 0 2.12271 0 2.88889V13.1111C0 13.8773 0.304363 14.6121 0.846133 15.1538C1.3879 15.6955 2.12271 16 2.88889 16H13.1111C13.8773 16 14.6121 15.6955 15.1538 15.1538C15.6956 14.6121 16 13.8773 16 13.1111V2.88889C16 2.12271 15.6956 1.3879 15.1538 0.846133C14.6121 0.304363 13.8773 0 13.1111 0H2.88889C2.12271 0 1.3879 0.304363 0.846133 0.846133Z"/>
               </svg>
-              <span>{board.name}</span>
+              + Create New Board
             </button>
-          ))}
-          
-          <button 
-            className={styles.createBoard}
-            onClick={() => setShowAddBoardModal(true)}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M0.945312 2.10938C0.945312 1.15859 1.71641 0.3875 2.66719 0.3875H6.11094C7.06172 0.3875 7.83281 1.15859 7.83281 2.10938V13.8906C7.83281 14.8414 7.06172 15.6125 6.11094 15.6125H2.66719C1.71641 15.6125 0.945312 14.8414 0.945312 13.8906V2.10938ZM9.88906 2.10938C9.88906 1.15859 10.6602 0.3875 11.6109 0.3875H13.3328C14.2836 0.3875 15.0547 1.15859 15.0547 2.10938V7.16406C15.0547 8.11484 14.2836 8.88594 13.3328 8.88594H11.6109C10.6602 8.88594 9.88906 8.11484 9.88906 7.16406V2.10938Z"/>
-            </svg>
-            <span>+ Create New Board</span>
-          </button>
-        </nav>
-      </div>
-      
-      <div className={styles.bottomSection}>
-        <ThemeToggle />
+          </div>
+        </div>
         
-        <button className={styles.hideButton} onClick={onToggle}>
-          <svg width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
-            <path d="M8.58447 2.77778C13.7062 2.77778 17.0254 8.14815 17.2142 8.48148C17.4254 8.85185 17.4254 9.32593 17.2142 9.66667C17.0254 9.99259 13.7062 15.3333 8.58447 15.3333C3.4627 15.3333 0.143478 10 -0.0453216 9.66667C-0.280545 9.26667 -0.280545 8.77778 -0.0453216 8.44444C0.143478 8.07407 3.4627 2.77778 8.58447 2.77778ZM8.58447 13.1111C11.3885 13.1111 14.0797 10.6667 15.3326 8.55556C14.0797 6.44444 11.3885 4 8.58447 4C5.78041 4 3.08923 6.44444 1.83635 8.55556C3.08923 10.6667 5.78041 13.1111 8.58447 13.1111ZM8.58447 11.5556C6.92716 11.5556 5.58447 10.2222 5.58447 8.55556C5.58447 6.88889 6.92716 5.55556 8.58447 5.55556C10.2418 5.55556 11.5845 6.88889 11.5845 8.55556C11.5845 10.2222 10.2418 11.5556 8.58447 11.5556ZM8.58447 10C9.36216 10 9.98447 9.37778 9.98447 8.55556C9.98447 7.73333 9.36216 7.11111 8.58447 7.11111C7.80678 7.11111 7.18447 7.73333 7.18447 8.55556C7.18447 9.37778 7.80678 10 8.58447 10Z"/>
-          </svg>
-          <span>Hide Sidebar</span>
-        </button>
-      </div>
-    </aside>
-    
-    <AddBoardModal 
-      isOpen={showAddBoardModal}
-      onClose={() => setShowAddBoardModal(false)}
-    />
+        <div className={styles.bottomSection}>
+          <ThemeToggle />
+          <button className={styles.hideButton} onClick={onToggle}>
+            <svg width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
+              <path d="M8.52257 0.845849C5.29733 0.845849 2.67883 3.46436 2.67883 6.68959C2.67883 9.91482 5.29733 12.5333 8.52257 12.5333C11.7478 12.5333 14.3663 9.91482 14.3663 6.68959C14.3663 3.46436 11.7478 0.845849 8.52257 0.845849ZM1.97598 6.68959C1.97598 3.07701 4.90998 0.143005 8.52257 0.143005C12.1352 0.143005 15.0692 3.07701 15.0692 6.68959C15.0692 10.3022 12.1352 13.2362 8.52257 13.2362C4.90998 13.2362 1.97598 10.3022 1.97598 6.68959Z"/>
+            </svg>
+            Hide Sidebar
+          </button>
+        </div>
+      </aside>
+      
+      {showAddBoardModal && (
+        <AddBoardModal isOpen={showAddBoardModal} onClose={() => setShowAddBoardModal(false)} />
+      )}
     </>
   );
 }

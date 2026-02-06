@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import toast from 'react-hot-toast';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { type Board, type Task, type BoardContextType } from '../types';
 import boardsData from '../../data.json';
@@ -11,19 +12,23 @@ export function BoardProvider({ children }: { children: ReactNode }) {
 
   const addBoard = (board: Board) => {
     setBoards(prev => [...prev, board]);
+    toast.success(`Board "${board.name}" created successfully!`);
   };
 
   const updateBoard = (index: number, board: Board) => {
     setBoards(prev => prev.map((b, i) => i === index ? board : b));
+    toast.success(`Board "${board.name}" updated successfully!`);
   };
 
   const deleteBoard = (index: number) => {
+    const boardName = boards[index]?.name || 'Board';
     setBoards(prev => prev.filter((_, i) => i !== index));
     if (activeBoard === index) {
       setActiveBoard(0);
     } else if (activeBoard !== null && activeBoard > index) {
       setActiveBoard(activeBoard - 1);
     }
+    toast.success(`Board "${boardName}" deleted successfully!`);
   };
 
   const addTask = (boardIndex: number, columnIndex: number, task: Task) => {
@@ -37,6 +42,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         })
       };
     }));
+    toast.success(`Task "${task.title}" created successfully!`);
   };
 
   const updateTask = (boardIndex: number, columnIndex: number, taskIndex: number, task: Task) => {
@@ -53,9 +59,11 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         })
       };
     }));
+    toast.success(`Task "${task.title}" updated successfully!`);
   };
 
   const deleteTask = (boardIndex: number, columnIndex: number, taskIndex: number) => {
+    const taskName = boards[boardIndex]?.columns[columnIndex]?.tasks[taskIndex]?.title || 'Task';
     setBoards(prev => prev.map((board, bi) => {
       if (bi !== boardIndex) return board;
       return {
@@ -69,6 +77,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         })
       };
     }));
+    toast.success(`Task "${taskName}" deleted successfully!`);
   };
 
   const toggleSubtask = (boardIndex: number, columnIndex: number, taskIndex: number, subtaskIndex: number) => {

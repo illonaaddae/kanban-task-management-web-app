@@ -9,6 +9,7 @@
   left: 0;
   top: 0;
   transition: transform 0.3s ease;
+  z-index: 1000;
 }
 
 .boardSection {
@@ -47,6 +48,7 @@
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  text-decoration: none;
 }
 
 .boardItem svg,
@@ -125,8 +127,66 @@
   background: var(--primary-hover);
 }
 
-@media (max-width: 768px) {
+/* Backdrop for mobile overlay */
+.backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.backdropVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile: Hidden (BoardSelectorModal handles navigation) */
+@media (max-width: 767px) {
+  .sidebar {
+    display: none !important;
+  }
+  
+  .showButton {
+    display: none !important;
+  }
+  
+  .backdrop {
+    display: none !important;
+  }
+}
+
+/* Tablet: Overlay mode */
+@media (min-width: 768px) and (max-width: 1024px) {
   .sidebar {
     width: 264px;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .backdrop {
+    display: block;
+  }
+  
+  .hideButton {
+    display: none; /* Hide the "Hide Sidebar" button on tablet */
+  }
+}
+
+/* Desktop: Fixed sidebar (current behavior) */
+@media (min-width: 1025px) {
+  .sidebar {
+    transform: translateX(0) !important;
+  }
+  
+  .backdrop {
+    display: none !important;
   }
 }

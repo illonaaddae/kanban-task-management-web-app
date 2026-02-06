@@ -1,0 +1,43 @@
+.hamburger {
+  display: none; /* Hidden by default on desktop */
+  flex-direction: column;
+  justify-content: space-around;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+}
+
+.line {
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-primary);
+  border-radius: 2px;
+  transition: all 0.3s linear;
+  position: relative;
+  transform-origin: 1px;
+}
+
+/* Hamburger animation when open */
+.hamburger.open .line:nth-child(1) {
+  transform: rotate(45deg);
+}
+
+.hamburger.open .line:nth-child(2) {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.hamburger.open .line:nth-child(3) {
+  transform: rotate(-45deg);
+}
+
+/* Show on mobile and tablet */
+@media (max-width: 1024px) {
+  .hamburger {
+    display: flex;
+  }
+}

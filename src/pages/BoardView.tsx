@@ -1,3 +1,4 @@
+import { useParams, Navigate } from 'react-router-dom';
 import { useBoard } from '../context/BoardContext';
 import { Column } from '../components/board/Column';
 import { EmptyBoard } from '../components/board/EmptyBoard';
@@ -18,11 +19,21 @@ import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortabl
 import { useState } from 'react';
 
 export function BoardView() {
-  const { boards, activeBoard, reorderTasksInColumn, moveTaskBetweenColumns, reorderColumns } = useBoard();
+  const { boardId } = useParams<{ boardId: string }>();
+  const { boards, reorderTasksInColumn, moveTaskBetweenColumns, reorderColumns } = useBoard();
   const [activeId, setActiveId] = useState<string | null>(null);
   const editModal = useModal();
   
-  const board = activeBoard !== null ? boards[activeBoard] : null;
+  // Convert boardId from URL to number
+  const boardIndex = boardId ? parseInt(boardId, 10) : null;
+  const board = boardIndex !== null && boardIndex >= 0 && boardIndex < boards.length 
+    ? boards[boardIndex] 
+    : null;
+
+  // Redirect to dashboard if invalid board ID
+  if (boardId && !board) {
+    return <Navigate to="/" replace />;
+  }
 
   // Configure sensors for drag interactions
   const sensors = useSensors(
@@ -37,7 +48,7 @@ export function BoardView() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || !board || activeBoard === null) {
+    if (!over || !board || boardIndex === null) {
       setActiveId(null);
       return;
     }
@@ -51,7 +62,7 @@ export function BoardView() {
       const newIndex = parseInt(overIdStr.split('-')[1]);
       
       if (oldIndex !== newIndex) {
-        reorderColumns(activeBoard, oldIndex, newIndex);
+        reorderColumns(boardIndex, oldIndex, newIndex);
       }
     }
     // Handle task dragging
@@ -62,11 +73,11 @@ export function BoardView() {
       if (activeColIdx === overColIdx) {
         // Reorder within same column
         if (activeTaskIdx !== overTaskIdx) {
-          reorderTasksInColumn(activeBoard, activeColIdx, activeTaskIdx, overTaskIdx);
+          reorderTasksInColumn(boardIndex, activeColIdx, activeTaskIdx, overTaskIdx);
         }
       } else {
         // Move between columns
-        moveTaskBetweenColumns(activeBoard, activeColIdx, overColIdx, activeTaskIdx, overTaskIdx);
+        moveTaskBetweenColumns(boardIndex, activeColIdx, overColIdx, activeTaskIdx, overTaskIdx);
       }
     }
     // Handle task dropped on column (add to end)
@@ -76,7 +87,7 @@ export function BoardView() {
       
       if (activeColIdx !== newColIdx) {
         const newIndex = board.columns[newColIdx].tasks.length;
-        moveTaskBetweenColumns(activeBoard, activeColIdx, newColIdx, activeTaskIdx, newIndex);
+        moveTaskBetweenColumns(boardIndex, activeColIdx, newColIdx, activeTaskIdx, newIndex);
       }
     }
 
@@ -119,7 +130,7 @@ export function BoardView() {
               <Column
                 key={`column-${index}`}
                 column={column}
-                boardIndex={activeBoard!}
+                boardIndex={boardIndex!}
                 columnIndex={index}
               />
             ))}
@@ -135,11 +146,11 @@ export function BoardView() {
         {activeId ? <div className={styles.dragOverlay}>Dragging...</div> : null}
       </DragOverlay>
       
-      {activeBoard !== null && (
+      {boardIndex !== null && (
         <EditBoardModal
           isOpen={editModal.isOpen}
           onClose={editModal.close}
-          boardIndex={activeBoard}
+          boardIndex={boardIndex}
         />
       )}
     </DndContext>

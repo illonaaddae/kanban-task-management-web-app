@@ -1,0 +1,42 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  padding: 2rem;
+}
+
+.content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.title {
+  font-size: 8rem;
+  font-weight: 700;
+  color: var(--color-main-purple);
+  margin: 0;
+  line-height: 1;
+}
+
+.subtitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 1rem 0;
+}
+
+.description {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}

@@ -10,6 +10,32 @@
   top: 0;
   z-index: 40;
   width: 100%;
+  max-width: 100vw; /* Constrain to viewport width */
+  overflow: hidden; /* Prevent content from overflowing */
+  box-sizing: border-box; /* Include padding in width calculation */
+  gap: 16px;
+}
+
+/* Logo button - hidden on desktop, visible on mobile/tablet */
+.logoButton {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: -8px;
+}
+
+/* Title button - for mobile dropdown */
+.titleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  margin: 0;
 }
 
 .title {
@@ -18,6 +44,14 @@
   color: var(--text-primary);
   margin: 0;
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 .actions {
@@ -25,9 +59,10 @@
   align-items: center;
   gap: 24px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
-.menuWrapper {
+.menuContainer {
   position: relative;
   flex-shrink: 0;
 }
@@ -42,6 +77,11 @@
   padding: 0;
   transition: color 0.2s;
   flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menuButton:hover {
@@ -65,9 +105,9 @@
   z-index: 100;
 }
 
-.menuItem {
+.menu button {
   width: 100%;
-  padding: 8px 0;
+  padding: 12px 0;
   background: none;
   border: none;
   font-size: 13px;
@@ -76,27 +116,85 @@
   cursor: pointer;
   text-align: left;
   transition: color 0.2s;
+  min-height: 44px;
 }
 
-.menuItem:hover {
+.menu button:hover {
   color: var(--text-primary);
 }
 
-.menuItem.delete {
+.menu button.delete {
   color: var(--red);
 }
 
-@media (max-width: 768px) {
-  .header {
-    height: 64px;
-    padding: 0 16px;
+/* Desktop: Show title directly (not a button) */
+@media (min-width: 1025px) {
+  .logoButton,
+  .titleButton {
+    display: none !important;
   }
   
   .title {
+    display: block;
+  }
+}
+
+/* Mobile and Tablet */
+@media (max-width: 1024px) {
+  .header {
+    height: 64px;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  
+  /* Show logo button and title button on mobile/tablet */
+  .logoButton {
+    display: flex;
+  }
+  
+  .titleButton {
+    display: flex;
+  }
+  
+  /* Hide standalone title */
+  .header > .title {
+    display: none;
+  }
+  
+  .titleButton .title {
     font-size: 18px;
+    max-width: calc(100vw - 240px);
   }
   
   .actions {
-    gap: 16px;
+    gap: 12px;
+  }
+  
+  /* Add task button shows only "+" on mobile */
+  .actions button:first-child {
+    padding: 12px 18px;
+    font-size: 0;
+  }
+  
+  .actions button:first-child::before {
+    content: '+';
+    font-size: 24px;
+    line-height: 1;
+  }
+}
+
+/* Mobile specific */
+@media (max-width: 767px) {
+  .header {
+    padding: 0 16px;
+  }
+  
+  .titleButton .title {
+    font-size: 18px;
+    max-width: calc(100vw - 200px);
+  }
+  
+  .actions {
+    gap: 8px;
   }
 }

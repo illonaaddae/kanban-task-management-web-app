@@ -58,3 +58,32 @@
   font-weight: 600;
   pointer-events: none;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 767px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .board {
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  /* Columns are slightly narrower on mobile */
+  .board > * {
+    min-width: 240px;
+  }
+  
+  .newColumn {
+    min-width: 240px;
+    font-size: 20px;
+  }
+}
+
+/* Tablet responsiveness */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .board {
+    gap: 1.25rem;
+  }
+}

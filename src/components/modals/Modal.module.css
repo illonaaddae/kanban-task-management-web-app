@@ -41,3 +41,26 @@
     opacity: 1;
   }
 }
+
+/* Mobile responsiveness */
+@media (max-width: 767px) {
+  .overlay {
+    padding: 16px; /* Margins around modal */
+    align-items: flex-start;
+    padding-top: 64px; /* Space from top for mobile */
+  }
+  
+  .modal {
+    width: 100%;
+    max-width: 343px; /* Figma mobile width */
+    padding: 24px;
+    max-height: calc(100vh - 128px); /* Space for top/bottom margins */
+  }
+}
+
+/* Tablet responsiveness */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .modal {
+    max-width: 520px;
+  }
+}
