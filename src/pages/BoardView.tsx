@@ -1,6 +1,8 @@
 import { useBoard } from '../context/BoardContext';
 import { Column } from '../components/board/Column';
 import { EmptyBoard } from '../components/board/EmptyBoard';
+import { EditBoardModal } from '../components/modals/EditBoardModal';
+import { useModal } from '../hooks/useModal';
 import styles from './BoardView.module.css';
 import {
   DndContext,
@@ -18,6 +20,7 @@ import { useState } from 'react';
 export function BoardView() {
   const { boards, activeBoard, reorderTasksInColumn, moveTaskBetweenColumns, reorderColumns } = useBoard();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const editModal = useModal();
   
   const board = activeBoard !== null ? boards[activeBoard] : null;
 
@@ -121,7 +124,7 @@ export function BoardView() {
               />
             ))}
             
-            <button className={styles.newColumn}>
+            <button className={styles.newColumn} onClick={editModal.open}>
               + New Column
             </button>
           </div>
@@ -131,6 +134,14 @@ export function BoardView() {
       <DragOverlay>
         {activeId ? <div className={styles.dragOverlay}>Dragging...</div> : null}
       </DragOverlay>
+      
+      {activeBoard !== null && (
+        <EditBoardModal
+          isOpen={editModal.isOpen}
+          onClose={editModal.close}
+          boardIndex={activeBoard}
+        />
+      )}
     </DndContext>
   );
 }
