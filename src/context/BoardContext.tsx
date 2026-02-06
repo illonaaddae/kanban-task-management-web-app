@@ -117,6 +117,73 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  // Drag and drop functions
+  const reorderTasksInColumn = (boardIndex: number, columnIndex: number, startIndex: number, endIndex: number) => {
+    setBoards(prev => prev.map((board, bi) => {
+      if (bi !== boardIndex) return board;
+      
+      return {
+        ...board,
+        columns: board.columns.map((col, ci) => {
+          if (ci !== columnIndex) return col;
+          
+          const tasks = [...col.tasks];
+          const [removed] = tasks.splice(startIndex, 1);
+          tasks.splice(endIndex, 0, removed);
+          
+          return { ...col, tasks };
+        })
+      };
+    }));
+  };
+
+  const moveTaskBetweenColumns = (
+    boardIndex: number, 
+    sourceColIndex: number, 
+    destColIndex: number, 
+    taskIndex: number, 
+    newIndex: number
+  ) => {
+    setBoards(prev => prev.map((board, bi) => {
+      if (bi !== boardIndex) return board;
+      
+      const task = board.columns[sourceColIndex].tasks[taskIndex];
+      const newTask = { ...task, status: board.columns[destColIndex].name };
+      
+      const newColumns = board.columns.map((col, ci) => {
+        if (ci === sourceColIndex) {
+          // Remove from source column
+          return { ...col, tasks: col.tasks.filter((_, ti) => ti !== taskIndex) };
+        }
+        return col;
+      });
+      
+      // Insert at specific position in destination column
+      newColumns[destColIndex] = {
+        ...newColumns[destColIndex],
+        tasks: [
+          ...newColumns[destColIndex].tasks.slice(0, newIndex),
+          newTask,
+          ...newColumns[destColIndex].tasks.slice(newIndex)
+        ]
+      };
+      
+      return { ...board, columns: newColumns };
+    }));
+  };
+
+  const reorderColumns = (boardIndex: number, startIndex: number, endIndex: number) => {
+    setBoards(prev => prev.map((board, bi) => {
+      if (bi !== boardIndex) return board;
+      
+      const columns = [...board.columns];
+      const [removed] = columns.splice(startIndex, 1);
+      columns.splice(endIndex, 0, removed);
+      
+      return { ...board, columns };
+    }));
+  };
+
   return (
     <BoardContext.Provider value={{
       boards,
@@ -129,7 +196,10 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       updateTask,
       deleteTask,
       toggleSubtask,
-      moveTask
+      moveTask,
+      reorderTasksInColumn,
+      moveTaskBetweenColumns,
+      reorderColumns
     }}>
       {children}
     </BoardContext.Provider>

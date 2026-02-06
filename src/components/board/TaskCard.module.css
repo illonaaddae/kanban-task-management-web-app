@@ -2,9 +2,14 @@
   background-color: var(--bg-secondary);
   padding: 23px 16px;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: grab;
   box-shadow: 0 4px 6px rgba(54, 78, 126, 0.10);
   transition: all 0.2s ease;
+  touch-action: none;
+}
+
+.card:active {
+  cursor: grabbing;
 }
 
 .card:hover {

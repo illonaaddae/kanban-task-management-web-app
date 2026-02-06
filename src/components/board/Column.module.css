@@ -1,6 +1,7 @@
 .column {
   min-width: 280px;
   flex-shrink: 0;
+  transition: opacity 0.2s ease;
 }
 
 .header {
@@ -8,6 +9,11 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  cursor: grab;
+}
+
+.header:active {
+  cursor: grabbing;
 }
 
 .colorDot {
@@ -28,4 +34,5 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 50px;
 }

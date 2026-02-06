@@ -55,4 +55,8 @@ export interface BoardContextType {
   deleteTask: (boardIndex: number, columnIndex: number, taskIndex: number) => void;
   toggleSubtask: (boardIndex: number, columnIndex: number, taskIndex: number, subtaskIndex: number) => void;
   moveTask: (boardIndex: number, fromColumn: number, toColumn: number, taskIndex: number) => void;
+  // Drag and drop functions
+  reorderTasksInColumn: (boardIndex: number, columnIndex: number, startIndex: number, endIndex: number) => void;
+  moveTaskBetweenColumns: (boardIndex: number, sourceColIndex: number, destColIndex: number, taskIndex: number, newIndex: number) => void;
+  reorderColumns: (boardIndex: number, startIndex: number, endIndex: number) => void;
 }

@@ -6,8 +6,11 @@
 
 .board {
   display: flex;
-  gap: 24px;
-  min-height: calc(100vh - 144px);
+  gap: 1.5rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+  height: 100%;
+  align-items: flex-start;
 }
 
 .empty {
@@ -41,5 +44,17 @@
 }
 
 .newColumn:hover {
-  color: var(--primary);
+  background-color: var(--color-medium-grey);
+  opacity: 0.8;
+}
+
+/* Drag and drop styles */
+.dragOverlay {
+  padding: 1rem;
+  background: var(--color-main-purple);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  pointer-events: none;
 }
