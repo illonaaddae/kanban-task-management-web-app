@@ -1,0 +1,42 @@
+.themeToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.toggleButton {
+  width: 40px;
+  height: 20px;
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  padding: 3px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggleButton:hover {
+  background: var(--primary-hover);
+}
+
+.slider {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggleButton.dark .slider {
+  transform: translateX(20px);
+}

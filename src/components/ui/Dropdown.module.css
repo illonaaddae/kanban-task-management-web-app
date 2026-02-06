@@ -1,0 +1,88 @@
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.trigger {
+  width: 100%;
+  padding: 8px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 23px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.2s;
+}
+
+.trigger:hover {
+  border-color: var(--primary);
+}
+
+.trigger:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.value {
+  text-align: left;
+}
+
+.arrow {
+  transition: transform 0.2s;
+  color: var(--primary);
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0px 10px 20px rgba(54, 78, 126, 0.25);
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.option {
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  line-height: 23px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.option:hover {
+  color: var(--text-primary);
+}
+
+.option.selected {
+  color: var(--primary);
+  font-weight: 500;
+}

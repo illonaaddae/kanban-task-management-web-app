@@ -1,0 +1,22 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+}
+
+.text {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .logo {
+    padding: 20px 16px;
+  }
+  
+  .text {
+    font-size: 20px;
+  }
+}

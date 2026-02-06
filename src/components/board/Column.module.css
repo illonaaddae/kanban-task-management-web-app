@@ -1,0 +1,31 @@
+.column {
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.colorDot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

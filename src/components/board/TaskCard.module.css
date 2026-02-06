@@ -1,0 +1,28 @@
+.card {
+  background-color: var(--bg-secondary);
+  padding: 23px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(54, 78, 126, 0.10);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(54, 78, 126, 0.15);
+}
+
+.title {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 19px;
+}
+
+.subtaskCount {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 15px;
+}

@@ -1,0 +1,48 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+:global(.dark) .label {
+  color: var(--text-primary);
+}
+
+.input {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 23px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.input.error {
+  border-color: var(--red);
+}
+
+.input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.errorText {
+  font-size: 13px;
+  color: var(--red);
+}

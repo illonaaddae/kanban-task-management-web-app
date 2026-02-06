@@ -1,0 +1,101 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  padding-right: 16px;
+  line-height: 23px;
+}
+
+.menuWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menuButton {
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.menuButton:hover {
+  color: var(--primary);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 16px);
+  right: 0;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0px 10px 20px rgba(54, 78, 126, 0.25);
+  min-width: 192px;
+  z-index: 100;
+}
+
+.menuItem {
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  line-height: 23px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.menuItem:hover {
+  color: var(--text-primary);
+}
+
+.menuItem.delete {
+  color: var(--red);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.description {
+  font-size: 13px;
+  line-height: 23px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.subtasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

@@ -1,0 +1,45 @@
+.container {
+  min-height: calc(100vh - 96px);
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.board {
+  display: flex;
+  gap: 24px;
+  min-height: calc(100vh - 144px);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  padding: 32px;
+}  
+
+.empty p {
+  font-size: 18px;
+  color: var(--text-secondary);
+  max-width: 400px;
+}
+
+.newColumn {
+  min-width: 280px;
+  background: linear-gradient(180deg, rgba(99, 95, 199, 0.1) 0%, rgba(99, 95, 199, 0.05) 100%);
+  border: none;
+  border-radius: 6px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.newColumn:hover {
+  color: var(--primary);
+}

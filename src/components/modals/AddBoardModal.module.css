@@ -1,0 +1,79 @@
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 8px;
+}
+
+:global(.dark) .label {
+  color: var(--text-primary);
+}
+
+.columnsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.columnItem {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.columnInput {
+  flex: 1;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  transition: border-color 0.2s;
+}
+
+.columnInput:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.columnInput::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.25;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.removeButton:hover {
+  color: var(--error);
+}

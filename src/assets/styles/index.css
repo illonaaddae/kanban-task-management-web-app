@@ -1,0 +1,94 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Colors - Light Theme */
+  --primary: #635FC7;
+  --primary-hover: #A8A4FF;
+  --primary-light: rgba(99, 95, 199, 0.1);
+  --black: #000112;
+  --very-dark-grey: #20212C;
+  --dark-grey: #2B2C37;
+  --lines-dark: #3E3F4E;
+  --medium-grey: #828FA3;
+  --lines-light: #E4EBFA;
+  --light-grey: #F4F7FD;
+  --white: #FFFFFF;
+  --red: #EA5555;
+  --red-hover: #FF9898;
+  
+  /* Semantic tokens - Light theme */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F4F7FD;
+  --text-primary: #000112;
+  --text-secondary: #828FA3;
+  --border: #E4EBFA;
+}
+
+.dark {
+  /* Semantic tokens - Dark theme */
+  --bg-primary: #2B2C37;
+  --bg-secondary: #20212C;
+  --text-primary: #FFFFFF;
+  --text-secondary: #828FA3;
+  --border: #3E3F4E;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Import Plus Jakarta Sans font */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap');
+
+/* App layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+}
+
+.main-content {
+  flex: 1;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sidebar-open {
+  margin-left: 300px;
+}
+
+.main-content.sidebar-closed {
+  margin-left: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--medium-grey);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .main-content.sidebar-open {
+    margin-left: 264px;
+  }
+}
