@@ -1,6 +1,5 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useBoard } from '../context/BoardContext';
-import toast from 'react-hot-toast';
 import { Column } from '../components/board/Column';
 import { EmptyBoard } from '../components/board/EmptyBoard';
 import { EditBoardModal } from '../components/modals/EditBoardModal';
@@ -42,7 +41,7 @@ export function BoardView() {
     };
     
     updateBoard(boardIndex, updatedBoard);
-    toast.success(`Column "${newColumnName}" added!`);
+    // Toast is shown by updateBoard in BoardContext
   };
   
   // Redirect to dashboard if invalid board ID
