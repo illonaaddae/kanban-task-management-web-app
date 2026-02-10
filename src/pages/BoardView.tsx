@@ -121,7 +121,7 @@ export function BoardView() {
   if (!board.columns || board.columns.length === 0) {
     return (
       <div className={styles.container}>
-        <EmptyBoard onAddColumn={() => console.log('Add column')} />
+        <EmptyBoard onAddColumn={handleAddColumn} />
       </div>
     );
   }

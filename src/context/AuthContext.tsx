@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export interface AuthContextType {
   isLoggedIn: boolean;
@@ -10,17 +10,15 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<string | null>(null);
-
-  // Load auth state from localStorage on mount
-  useEffect(() => {
+  // Initialize state synchronously from localStorage to avoid race conditions
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const savedUser = localStorage.getItem('kanban_user');
-    if (savedUser) {
-      setIsLoggedIn(true);
-      setUser(savedUser);
-    }
-  }, []);
+    return !!savedUser;
+  });
+  
+  const [user, setUser] = useState<string | null>(() => {
+    return localStorage.getItem('kanban_user');
+  });
 
   const login = (username: string) => {
     setIsLoggedIn(true);

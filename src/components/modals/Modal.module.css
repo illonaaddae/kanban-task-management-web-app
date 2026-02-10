@@ -46,9 +46,8 @@
 @media (max-width: 767px) {
   .overlay {
     padding: 0 !important; /* No padding - modal goes edge to edge */
-    align-items: flex-start;
+    align-items: flex-start; /* Align from top to prevent cutoff */
     justify-content: center;
-    padding-top: 16px !important; /* Small top margin */
     overflow-y: auto; /* Allow scrolling if needed */
   }
   
@@ -56,7 +55,7 @@
     width: 100vw !important; /* Full viewport width */
     max-width: none !important; /* Remove max-width constraint */
     padding: 24px;
-    margin: 0 !important; /* No margins */
+    margin: 16px 0 !important; /* Top and bottom margin, no side margins */
     border-radius: 0 !important; /* No border radius for full-width modal */
     max-height: calc(100vh - 32px); /* Ensure fits within viewport */
     overflow-y: auto; /* Allow internal scrolling */
