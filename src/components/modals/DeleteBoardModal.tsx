@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useBoard } from '../../context/BoardContext';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
@@ -16,17 +17,21 @@ export function DeleteBoardModal({
   boardIndex,
   boardName 
 }: DeleteBoardModalProps) {
-  const { deleteBoard, boards, setActiveBoard } = useBoard();
+  const navigate = useNavigate();
+  const { deleteBoard, boards } = useBoard();
 
   const handleDelete = () => {
     deleteBoard(boardIndex);
-    
-    // If we deleted the active board or it was the only board, switch to first remaining board
-    if (boards.length > 1) {
-      setActiveBoard(boardIndex > 0 ? boardIndex - 1 : 0);
-    }
-    
     onClose();
+    
+    // Navigate away from deleted board to prevent broken state
+    if (boards.length <= 1) {
+      // No boards left, go to dashboard
+      navigate('/');
+    } else {
+      // Navigate to first board
+      navigate('/board/0');
+    }
   };
 
   return (

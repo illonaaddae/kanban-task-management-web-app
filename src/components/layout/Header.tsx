@@ -86,6 +86,9 @@ export function Header() {
           </svg>
         </button>
         
+        {/* Standalone title for desktop */}
+        <h1 className={styles.title}>{getPageTitle()}</h1>
+        
         {isOnBoardView && (
           <div className={styles.actions}>
             <Button onClick={handleAddTask}>+ Add New Task</Button>

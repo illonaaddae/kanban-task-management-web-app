@@ -99,3 +99,24 @@
   flex-direction: column;
   gap: 8px;
 }
+
+/* Mobile responsiveness - match other modals */
+@media (max-width: 767px) {
+  .title {
+    font-size: 18px;
+    line-height: 23px;
+  }
+  
+  .description {
+    font-size: 13px;
+    line-height: 23px;
+  }
+  
+  .section {
+    gap: 16px;
+  }
+  
+  .subtasks {
+    gap: 8px;
+  }
+}

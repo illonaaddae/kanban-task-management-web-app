@@ -1,5 +1,6 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useBoard } from '../context/BoardContext';
+import toast from 'react-hot-toast';
 import { Column } from '../components/board/Column';
 import { EmptyBoard } from '../components/board/EmptyBoard';
 import { EditBoardModal } from '../components/modals/EditBoardModal';
@@ -20,7 +21,7 @@ import { useState } from 'react';
 
 export function BoardView() {
   const { boardId } = useParams<{ boardId: string }>();
-  const { boards, reorderTasksInColumn, moveTaskBetweenColumns, reorderColumns } = useBoard();
+  const { boards, reorderTasksInColumn, moveTaskBetweenColumns, reorderColumns, updateBoard } = useBoard();
   const [activeId, setActiveId] = useState<string | null>(null);
   const editModal = useModal();
   
@@ -30,6 +31,20 @@ export function BoardView() {
     ? boards[boardIndex] 
     : null;
 
+  // Handle adding a new column directly
+  const handleAddColumn = () => {
+    if (!board || boardIndex === null) return;
+    
+    const newColumnName = `New Column`;
+    const updatedBoard = {
+      ...board,
+      columns: [...board.columns, { name: newColumnName, tasks: [] }]
+    };
+    
+    updateBoard(boardIndex, updatedBoard);
+    toast.success(`Column "${newColumnName}" added!`);
+  };
+  
   // Redirect to dashboard if invalid board ID
   if (boardId && !board) {
     return <Navigate to="/" replace />;
@@ -135,7 +150,7 @@ export function BoardView() {
               />
             ))}
             
-            <button className={styles.newColumn} onClick={editModal.open}>
+            <button className={styles.newColumn} onClick={handleAddColumn}>
               + New Column
             </button>
           </div>

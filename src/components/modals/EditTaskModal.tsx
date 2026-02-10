@@ -20,6 +20,7 @@ export function EditTaskModal({ isOpen, onClose, boardIndex, columnIndex, taskIn
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState<{ title: string; isCompleted: boolean }[]>([]);
   const [status, setStatus] = useState('');
+  const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([]);
 
   const board = boards[boardIndex];
   const task = board?.columns[columnIndex]?.tasks[taskIndex];
@@ -31,26 +32,48 @@ export function EditTaskModal({ isOpen, onClose, boardIndex, columnIndex, taskIn
       setTitle(task.title);
       setDescription(task.description || '');
       setSubtasks(task.subtasks || []);
+      setSubtaskErrors(new Array(task.subtasks?.length || 0).fill(false));
       setStatus(task.status);
     }
   }, [task]);
 
   const handleAddSubtask = () => {
     setSubtasks([...subtasks, { title: '', isCompleted: false }]);
+    setSubtaskErrors([...subtaskErrors, false]);
   };
 
   const handleRemoveSubtask = (index: number) => {
     setSubtasks(subtasks.filter((_, i) => i !== index));
+    setSubtaskErrors(subtaskErrors.filter((_, i) => i !== index));
   };
 
   const handleSubtaskChange = (index: number, value: string) => {
     const updated = [...subtasks];
     updated[index] = { ...updated[index], title: value };
     setSubtasks(updated);
+    
+    // Clear error if user starts typing
+    if (value.trim()) {
+      const updatedErrors = [...subtaskErrors];
+      updatedErrors[index] = false;
+      setSubtaskErrors(updatedErrors);
+    }
   };
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
+    // Validate subtasks FIRST - check for empty subtasks
+    const errors = subtasks.map(st => st.title.trim() === '');
+    const hasEmptySubtasks = errors.some(error => error);
+    
+    // Always set errors if they exist
+    if (hasEmptySubtasks) {
+      setSubtaskErrors(errors);
+    }
+    
+    // Check title after showing subtask errors
+    if (!title.trim() || hasEmptySubtasks) {
+      return; // Don't submit if title is empty or there are empty subtasks
+    }
 
     const updatedTask = {
       ...task!,
@@ -107,11 +130,14 @@ export function EditTaskModal({ isOpen, onClose, boardIndex, columnIndex, taskIn
             {subtasks.map((subtask, index) => (
               <div key={index} className={styles.subtaskItem}>
                 <input
-                  className={styles.subtaskInput}
+                  className={`${styles.subtaskInput} ${subtaskErrors[index] ? styles.error : ''}`}
                   placeholder="e.g. Make coffee"
                   value={subtask.title}
                   onChange={(e) => handleSubtaskChange(index, e.target.value)}
                 />
+                {subtaskErrors[index] && (
+                  <span className={styles.errorText}>Can't be empty</span>
+                )}
                 <button
                   type="button"
                   className={styles.removeButton}

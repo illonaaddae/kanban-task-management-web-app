@@ -56,8 +56,10 @@
 
 .subtaskItem {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
+  flex-wrap: wrap;
+  position: relative;
 }
 
 .subtaskInput {
@@ -79,9 +81,20 @@
   border-color: var(--primary);
 }
 
+.subtaskInput.error {
+  border-color: var(--red);
+}
+
 .subtaskInput::placeholder {
   color: var(--text-secondary);
   opacity: 0.5;
+}
+
+.errorText {
+  font-size: 13px;
+  color: var(--red);
+  flex-basis: 100%;
+  order: 3;
 }
 
 .removeButton {

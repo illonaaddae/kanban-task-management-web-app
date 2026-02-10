@@ -42,25 +42,38 @@
   }
 }
 
-/* Mobile responsiveness */
+/* Mobile responsiveness - Full width, no side margins per Figma */
 @media (max-width: 767px) {
   .overlay {
-    padding: 16px; /* Margins around modal */
+    padding: 0 !important; /* No padding - modal goes edge to edge */
     align-items: flex-start;
-    padding-top: 64px; /* Space from top for mobile */
+    justify-content: center;
+    padding-top: 16px !important; /* Small top margin */
+    overflow-y: auto; /* Allow scrolling if needed */
   }
   
   .modal {
-    width: 100%;
-    max-width: 343px; /* Figma mobile width */
+    width: 100vw !important; /* Full viewport width */
+    max-width: none !important; /* Remove max-width constraint */
     padding: 24px;
-    max-height: calc(100vh - 128px); /* Space for top/bottom margins */
+    margin: 0 !important; /* No margins */
+    border-radius: 0 !important; /* No border radius for full-width modal */
+    max-height: calc(100vh - 32px); /* Ensure fits within viewport */
+    overflow-y: auto; /* Allow internal scrolling */
   }
 }
 
-/* Tablet responsiveness */
+/* Tablet responsiveness - Centered modal per Figma */
 @media (min-width: 768px) and (max-width: 1024px) {
+  .overlay {
+    padding: 24px;
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+  }
+  
   .modal {
-    max-width: 520px;
+    max-width: 480px; /* Tablet modal width from Figma */
+    max-height: calc(100vh - 48px);
   }
 }
+

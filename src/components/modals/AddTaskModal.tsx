@@ -18,6 +18,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps)
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState<string[]>(['', '']);
   const [status, setStatus] = useState('');
+  const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([false, false]);
 
   const board = boards[boardIndex];
   const statusOptions = board.columns.map(col => ({ value: col.name, label: col.name }));
@@ -29,20 +30,41 @@ export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps)
 
   const handleAddSubtask = () => {
     setSubtasks([...subtasks, '']);
+    setSubtaskErrors([...subtaskErrors, false]);
   };
 
   const handleRemoveSubtask = (index: number) => {
     setSubtasks(subtasks.filter((_, i) => i !== index));
+    setSubtaskErrors(subtaskErrors.filter((_, i) => i !== index));
   };
 
   const handleSubtaskChange = (index: number, value: string) => {
     const updated = [...subtasks];
     updated[index] = value;
     setSubtasks(updated);
+    
+    // Clear error if user starts typing
+    if (value.trim()) {
+      const updatedErrors = [...subtaskErrors];
+      updatedErrors[index] = false;
+      setSubtaskErrors(updatedErrors);
+    }
   };
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
+    // Validate subtasks FIRST - check for empty subtasks
+    const errors = subtasks.map(st => st.trim() === '');
+    const hasEmptySubtasks = errors.some(error => error);
+    
+    // Always set errors if they exist
+    if (hasEmptySubtasks) {
+      setSubtaskErrors(errors);
+    }
+    
+    // Check title after showing subtask errors
+    if (!title.trim() || hasEmptySubtasks) {
+      return; // Don't submit if title is empty or there are empty subtasks
+    }
 
     const columnIndex = board.columns.findIndex(col => col.name === status);
     if (columnIndex === -1) return;
@@ -62,6 +84,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps)
     setTitle('');
     setDescription('');
     setSubtasks(['', '']);
+    setSubtaskErrors([false, false]);
     setStatus(statusOptions[0]?.value || '');
     onClose();
   };
@@ -92,14 +115,17 @@ export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps)
         <div className={styles.field}>
           <label className={styles.label}>Subtasks</label>
           <div className={styles.subtasksList}>
-            {subtasks.map ((subtask, index) => (
+            {subtasks.map((subtask, index) => (
               <div key={index} className={styles.subtaskItem}>
                 <input
-                  className={styles.subtaskInput}
+                  className={`${styles.subtaskInput} ${subtaskErrors[index] ? styles.error : ''}`}
                   placeholder="e.g. Make coffee"
                   value={subtask}
                   onChange={(e) => handleSubtaskChange(index, e.target.value)}
                 />
+                {subtaskErrors[index] && (
+                  <span className={styles.errorText}>Can't be empty</span>
+                )}
                 <button
                   type="button"
                   className={styles.removeButton}

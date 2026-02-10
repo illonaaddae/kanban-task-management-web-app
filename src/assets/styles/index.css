@@ -83,10 +83,14 @@ body {
 @media (min-width: 1025px) {
   .main-content.sidebar-open {
     margin-left: 300px;
+    width: calc(100% - 300px); /* Constrain to available width */
+    max-width: calc(100vw - 300px); /* Prevent overflow */
   }
   
   .main-content.sidebar-closed {
     margin-left: 0;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 

@@ -28,7 +28,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     } else if (activeBoard !== null && activeBoard > index) {
       setActiveBoard(activeBoard - 1);
     }
-    toast.success(`Board "${boardName}" deleted successfully!`);
+    toast.error(`Board "${boardName}" deleted!`);
   };
 
   const addTask = (boardIndex: number, columnIndex: number, task: Task) => {
@@ -77,7 +77,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         })
       };
     }));
-    toast.success(`Task "${taskName}" deleted successfully!`);
+    toast.error(`Task "${taskName}" deleted!`);
   };
 
   const toggleSubtask = (boardIndex: number, columnIndex: number, taskIndex: number, subtaskIndex: number) => {

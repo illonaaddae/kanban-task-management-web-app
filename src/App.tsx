@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -39,25 +39,29 @@ function App() {
         {/* Public route - Login */}
         <Route path="/login" element={<Login />} />
 
-        {/* Protected routes with layout */}
+        {/* Protected routes with shared layout */}
         <Route
-          path="/*"
           element={
             <ProtectedRoute>
-              <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-              
-              <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                <Header />
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/board/:boardId" element={<BoardView />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
+              <>
+                <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+                
+                <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+                  <Header />
+                  <Outlet />
+                </main>
+              </>
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Nested protected routes */}
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/board/:boardId" element={<BoardView />} />
+          <Route path="/admin" element={<Admin />} />
+        </Route>
+        
+        {/* 404 - catches all unknown routes for both auth states */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
