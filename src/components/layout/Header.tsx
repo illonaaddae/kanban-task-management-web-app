@@ -9,6 +9,8 @@ import { EditBoardModal } from '../modals/EditBoardModal';
 import { DeleteBoardModal } from '../modals/DeleteBoardModal';
 import styles from './Header.module.css';
 
+import { ProfileButton } from './ProfileButton';
+
 export function Header() {
   const location = useLocation();
   const boards = useStore((state) => state.boards);
@@ -88,34 +90,38 @@ export function Header() {
         {/* Standalone title for desktop */}
         <h1 className={styles.title}>{getPageTitle()}</h1>
         
-        {isOnBoardView && (
-          <div className={styles.actions}>
-            <Button onClick={handleAddTask}>+ Add New Task</Button>
-            
-            <div className={styles.menuContainer}>
-              <button 
-                className={styles.menuButton}
-                onClick={() => setShowMenu(!showMenu)}
-                aria-label="Board options"
-              >
-                <svg width="5" height="20" viewBox="0 0 5 20" fill="currentColor">
-                  <circle cx="2.5" cy="2.5" r="2.5"/>
-                  <circle cx="2.5" cy="10" r="2.5"/>
-                  <circle cx="2.5" cy="17.5" r="2.5"/>
-                </svg>
-              </button>
+        <div className={styles.actions}>
+          {isOnBoardView && (
+            <>
+              <Button onClick={handleAddTask}>+ Add New Task</Button>
               
-              {showMenu && (
-                <div className={styles.menu}>
-                  <button onClick={handleEditBoard}>Edit Board</button>
-                  <button onClick={handleDeleteBoard} className={styles.delete}>
-                    Delete Board
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+              <div className={styles.menuContainer}>
+                <button 
+                  className={styles.menuButton}
+                  onClick={() => setShowMenu(!showMenu)}
+                  aria-label="Board options"
+                >
+                  <svg width="5" height="20" viewBox="0 0 5 20" fill="currentColor">
+                    <circle cx="2.5" cy="2.5" r="2.5"/>
+                    <circle cx="2.5" cy="10" r="2.5"/>
+                    <circle cx="2.5" cy="17.5" r="2.5"/>
+                  </svg>
+                </button>
+                
+                {showMenu && (
+                  <div className={styles.menu}>
+                    <button onClick={handleEditBoard}>Edit Board</button>
+                    <button onClick={handleDeleteBoard} className={styles.delete}>
+                      Delete Board
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          
+          <ProfileButton />
+        </div>
       </header>
       
       {/* Board Selector Modal for mobile */}
