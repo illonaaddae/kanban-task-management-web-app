@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import boardsData from '../data.json';
+import boardsData from '../../data.json';
 import type { Board, Task, Theme } from '../types';
 
 interface KanbanState {
@@ -40,7 +40,7 @@ interface KanbanState {
 
 export const useKanbanStore = create<KanbanState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       boards: boardsData.boards,
       activeBoard: 0,
       theme: 'light',
