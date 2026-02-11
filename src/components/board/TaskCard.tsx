@@ -10,9 +10,10 @@ interface TaskCardProps {
   boardIndex: number;
   columnIndex: number;
   taskIndex: number;
+  boardId: string;
 }
 
-export function TaskCard({ task, boardIndex, columnIndex, taskIndex }: TaskCardProps) {
+export function TaskCard({ task, boardIndex, columnIndex, taskIndex, boardId }: TaskCardProps) {
   const viewModal = useModal();
   
   const completedSubtasks = task.subtasks.filter(st => st.isCompleted).length;
@@ -72,6 +73,7 @@ export function TaskCard({ task, boardIndex, columnIndex, taskIndex }: TaskCardP
         boardIndex={boardIndex}
         columnIndex={columnIndex}
         taskIndex={taskIndex}
+        boardId={boardId}
       />
     </>
   );

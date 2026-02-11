@@ -218,6 +218,7 @@ export function BoardView() {
                 column={column}
                 boardIndex={0} // We don't use boardIndex anymore in Column? Need to check Column props
                 columnIndex={index}
+                boardId={currentBoard.id!}
               />
             ))}
             

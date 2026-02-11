@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from '../../context/AuthContext';
 import { ProtectedRoute } from '../ProtectedRoute';
 
 function TestComponent() {
@@ -23,7 +22,6 @@ async function renderProtectedRoute(isAuthenticated = false) {
   await act(async () => {
     result = render(
       <MemoryRouter initialEntries={['/protected']}>
-        <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
@@ -35,7 +33,6 @@ async function renderProtectedRoute(isAuthenticated = false) {
               }
             />
           </Routes>
-        </AuthProvider>
       </MemoryRouter>
     );
   });

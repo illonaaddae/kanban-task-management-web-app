@@ -215,7 +215,6 @@ export const useStore = create<StoreState>()(
           // Preserve tasks if we are just updating name/columns
           // But if we update columns, we might lose task mapping if not careful
           // For now, let's assume we need to re-fetch tasks or preserve them if present
-          let activeColumns = currentBoard?.columns || [];
           if (updates.columns && currentBoard?.id === boardId) {
              // If columns changed, we might need to remap tasks?
              // Not easily done here without fetching tasks again or careful merging
@@ -367,22 +366,16 @@ export const useStore = create<StoreState>()(
       },
 
       reorderTasksInColumn: (boardId, columnId, newTasks) => {
-          // Local reorder only (no DB sync assumes no order field)
           const { currentBoard } = get();
           if (currentBoard && currentBoard.id === boardId) {
               const updatedColumns = currentBoard.columns.map(col => {
-                  // Assuming column names are unique and used as IDs or we match in UI
-                  // In BoardView, we use index. Here we passed 'columnId' but really we might need index or name.
-                  // For now assuming we match by what?
-                  // Let's assume the UI passes column NAME or we iterate to find it.
-                  // But standard 'columnId' usually implies UUID?
-                  // Appwrite columns are JSON objects without IDs usually.
-                  // Let's match by comparing task sets or update logic
-                  // Actually, let's just accept newColumns directly in reorderColumns.
-                  // For tasks, we need to know WHICH column changed.
+                  if (col.name === columnId) {
+                       return { ...col, tasks: newTasks };
+                  }
                   return col; 
               });
-              // ... simplified logic above, real implementation requires identifying the column.
+              
+              set({ currentBoard: { ...currentBoard, columns: updatedColumns } });
           }
       }
     }),

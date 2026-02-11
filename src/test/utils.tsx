@@ -1,20 +1,14 @@
-import { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import type { ReactElement, ReactNode } from 'react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../context/AuthContext';
-import { BoardProvider } from '../context/BoardContext';
 import { ThemeProvider } from '../context/ThemeContext';
 
 // All providers wrapper
-function AllProviders({ children }: { children: React.ReactNode }) {
+function AllProviders({ children }: { children: ReactNode }) {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <BoardProvider>
-            {children}
-          </BoardProvider>
-        </AuthProvider>
+        {children}
       </ThemeProvider>
     </BrowserRouter>
   );

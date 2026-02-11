@@ -86,7 +86,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
     };
 
     try {
-        await createTask(board.id, user.$id, newTask);
+        await createTask(board.id, user.id, newTask);
         
         // Reset form
         setTitle('');

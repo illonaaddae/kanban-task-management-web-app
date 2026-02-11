@@ -9,6 +9,7 @@ interface ColumnProps {
   column: ColumnType;
   boardIndex: number;
   columnIndex: number;
+  boardId: string;
 }
 
 const COLUMN_COLORS = [
@@ -17,7 +18,7 @@ const COLUMN_COLORS = [
   '#67E2AE',  // Green
 ];
 
-export function Column({ column, boardIndex, columnIndex }: ColumnProps) {
+export function Column({ column, boardIndex, columnIndex, boardId }: ColumnProps) {
   const color = COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
 
   const {
@@ -69,6 +70,7 @@ export function Column({ column, boardIndex, columnIndex }: ColumnProps) {
               boardIndex={boardIndex}
               columnIndex={columnIndex}
               taskIndex={taskIndex}
+              boardId={boardId}
             />
           ))}
         </div>

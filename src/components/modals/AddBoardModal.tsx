@@ -44,7 +44,7 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
     };
 
     try {
-        await createBoard(user.$id, newBoard);
+        await createBoard(user.id, newBoard);
         // createBoard action updates store and sets current board
         
         // Reset form
