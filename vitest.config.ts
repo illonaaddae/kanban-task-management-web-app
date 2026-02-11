@@ -4,6 +4,9 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_USE_APPWRITE': JSON.stringify('false'),
+  },
   test: {
     environment: 'jsdom',
     globals: true,

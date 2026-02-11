@@ -7,13 +7,12 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface TaskCardProps {
   task: Task;
-  boardIndex: number;
   columnIndex: number;
   taskIndex: number;
   boardId: string;
 }
 
-export function TaskCard({ task, boardIndex, columnIndex, taskIndex, boardId }: TaskCardProps) {
+export function TaskCard({ task, columnIndex, taskIndex, boardId }: TaskCardProps) {
   const viewModal = useModal();
   
   const completedSubtasks = task.subtasks.filter(st => st.isCompleted).length;
@@ -27,11 +26,10 @@ export function TaskCard({ task, boardIndex, columnIndex, taskIndex, boardId }: 
     transition,
     isDragging,
   } = useSortable({
-    id: `task-${boardIndex}-${columnIndex}-${taskIndex}`,
+    id: `task-${columnIndex}-${taskIndex}`,
     data: {
       type: 'task',
       task,
-      boardIndex,
       columnIndex,
       taskIndex,
     },
@@ -70,7 +68,6 @@ export function TaskCard({ task, boardIndex, columnIndex, taskIndex, boardId }: 
         isOpen={viewModal.isOpen}
         onClose={viewModal.close}
         task={task}
-        boardIndex={boardIndex}
         columnIndex={columnIndex}
         taskIndex={taskIndex}
         boardId={boardId}

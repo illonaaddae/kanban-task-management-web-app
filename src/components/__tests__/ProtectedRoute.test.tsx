@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { useStore } from '../../store/store';
 import { ProtectedRoute } from '../ProtectedRoute';
 
 function TestComponent() {
@@ -12,11 +13,13 @@ function LoginPage() {
 }
 
 async function renderProtectedRoute(isAuthenticated = false) {
-  if (isAuthenticated) {
-    localStorage.setItem('kanban_user', 'admin');
-  } else {
-    localStorage.clear();
-  }
+  useStore.setState({
+    loading: false,
+    isAuthenticated,
+    user: isAuthenticated
+      ? { id: '1', name: 'Admin', email: 'admin@test.com', avatar: null }
+      : null,
+  });
 
   let result;
   await act(async () => {
@@ -51,14 +54,7 @@ describe('ProtectedRoute Component', () => {
   it('should render protected content when authenticated', async () => {
     await renderProtectedRoute(true);
 
-    // Wait for auth state to initialize from localStorage
-    await waitFor(
-      () => {
-        expect(screen.getByText('Protected Content')).toBeInTheDocument();
-      },
-      { timeout: 3000 }
-    );
-
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
     expect(screen.queryByText('Login Page')).not.toBeInTheDocument();
   });
 });

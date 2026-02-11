@@ -7,7 +7,6 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
 interface ColumnProps {
   column: ColumnType;
-  boardIndex: number;
   columnIndex: number;
   boardId: string;
 }
@@ -18,7 +17,7 @@ const COLUMN_COLORS = [
   '#67E2AE',  // Green
 ];
 
-export function Column({ column, boardIndex, columnIndex, boardId }: ColumnProps) {
+export function Column({ column, columnIndex, boardId }: ColumnProps) {
   const color = COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
 
   const {
@@ -42,9 +41,9 @@ export function Column({ column, boardIndex, columnIndex, boardId }: ColumnProps
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Generate task IDs for sortable context
+  // Generate task IDs for sortable context (columnIndex-taskIndex only; single-board context)
   const taskIds = column.tasks.map((_, taskIndex) => 
-    `task-${boardIndex}-${columnIndex}-${taskIndex}`
+    `task-${columnIndex}-${taskIndex}`
   );
 
   return (
@@ -65,9 +64,8 @@ export function Column({ column, boardIndex, columnIndex, boardId }: ColumnProps
         <div className={styles.taskList}>
           {column.tasks.map((task, taskIndex) => (
             <TaskCard
-              key={`task-${boardIndex}-${columnIndex}-${taskIndex}`}
+              key={`task-${columnIndex}-${taskIndex}`}
               task={task}
-              boardIndex={boardIndex}
               columnIndex={columnIndex}
               taskIndex={taskIndex}
               boardId={boardId}

@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
+import { useStore } from '../../store/store';
 import { Login } from '../Login';
 
 function renderLogin() {
@@ -13,6 +14,10 @@ function renderLogin() {
 }
 
 describe('Login Component', () => {
+  beforeEach(() => {
+    useStore.setState({ loading: false });
+  });
+
   it('should render login form', () => {
     renderLogin();
 

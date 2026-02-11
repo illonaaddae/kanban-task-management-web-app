@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Sidebar } from './components/layout/Sidebar';
@@ -10,8 +11,12 @@ import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useTheme } from './context/ThemeContext';
 import { useKanbanStore } from './store/kanbanStore';
+import { useStore } from './store/store';
 
 function App() {
+  useEffect(() => {
+    useStore.getState().checkSession();
+  }, []);
   const { theme } = useTheme();
   const isSidebarOpen = useKanbanStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useKanbanStore((state) => state.setSidebarOpen);
