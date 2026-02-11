@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Sidebar } from './components/layout/Sidebar';
@@ -10,16 +9,12 @@ import { Admin } from './pages/Admin';
 import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useTheme } from './context/ThemeContext';
-import { useStore } from './store/store';
+import { useKanbanStore } from './store/kanbanStore';
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme } = useTheme();
-  const checkSession = useStore((state) => state.checkSession);
-
-  useEffect(() => {
-    checkSession();
-  }, [checkSession]);
+  const isSidebarOpen = useKanbanStore((state) => state.isSidebarOpen);
+  const setSidebarOpen = useKanbanStore((state) => state.setSidebarOpen);
 
   return (
     <div className={`app ${theme}`}>
@@ -50,7 +45,10 @@ function App() {
           element={
             <ProtectedRoute>
               <>
-                <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <Sidebar
+                  isOpen={isSidebarOpen}
+                  onToggle={() => setSidebarOpen(!isSidebarOpen)}
+                />
                 
                 <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
                   <Header />

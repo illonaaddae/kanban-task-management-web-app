@@ -1,17 +1,15 @@
 import { createContext, useContext, type ReactNode, useEffect } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { type Theme, type ThemeContextType } from '../types';
+import { useKanbanStore } from '../store/kanbanStore';
+import type { ThemeContextType } from '../types';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useLocalStorage<Theme>('kanban-theme', 'light');
+  const theme = useKanbanStore((state) => state.theme);
 
   useEffect(() => {
-    // Apply theme to document element for global access (including portals)
     document.documentElement.setAttribute('data-theme', theme);
-    
-    // Add/remove dark class on document.documentElement for CSS variables
+
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -19,9 +17,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(current => current === 'light' ? 'dark' : 'light');
-  };
+  const toggleTheme = useKanbanStore((state) => state.toggleTheme);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
@@ -37,3 +33,4 @@ export function useTheme() {
   }
   return context;
 }
+
