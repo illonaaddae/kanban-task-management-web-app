@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Sidebar } from './components/layout/Sidebar';
@@ -10,10 +10,16 @@ import { Admin } from './pages/Admin';
 import { NotFound } from './pages/NotFound';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useTheme } from './context/ThemeContext';
+import { useStore } from './store/store';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { theme } = useTheme();
+  const checkSession = useStore((state) => state.checkSession);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
   return (
     <div className={`app ${theme}`}>

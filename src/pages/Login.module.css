@@ -31,13 +31,107 @@
   margin-bottom: 2rem;
 }
 
+.googleButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e4ebfa !important;
+  transition: all 0.2s ease;
+}
+
+.googleButton:hover {
+  background: #f5f5f5 !important;
+  border-color: var(--color-main-purple) !important;
+}
+
+.googleButton svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.slackButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e4ebfa !important;
+  transition: all 0.2s ease;
+}
+
+.slackButton:hover {
+  background: #f5f5f5 !important;
+  border-color: var(--color-main-purple) !important;
+}
+
+.slackButton svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #611f69; /* Slack brand color */
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.divider span {
+  padding: 0 1rem;
+}
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.hint {
+.toggle {
+  margin-top: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--color-main-purple);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+  padding: 0.5rem;
+  transition: opacity 0.2s;
+}
+
+.toggle:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.loading {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 2rem;
+}
+
+.demo {
   margin-top: 2rem;
   padding: 1rem;
   background: var(--primary-light);
@@ -48,6 +142,27 @@
   border: 1px solid var(--color-main-purple);
 }
 
-.hint strong {
+.demo strong {
   font-weight: 700;
+}
+
+/* Dark mode overrides for OAuth buttons */
+:global(.dark) .googleButton {
+  background: #2b2c37 !important;
+  color: #ffffff !important;
+  border-color: #3e3f4e !important;
+}
+
+:global(.dark) .googleButton:hover {
+  background: #20212c !important;
+}
+
+:global(.dark) .slackButton {
+  background: #2b2c37 !important;
+  color: #ffffff !important;
+  border-color: #3e3f4e !important;
+}
+
+:global(.dark) .slackButton:hover {
+  background: #20212c !important;
 }

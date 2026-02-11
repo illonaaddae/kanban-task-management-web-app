@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
 import styles from './DeleteModal.module.css';
@@ -7,7 +7,8 @@ import styles from './DeleteModal.module.css';
 interface DeleteBoardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  boardIndex: number;
+  boardIndex?: number; // Deprecated
+  boardId?: string;    // New
   boardName: string;
 }
 
@@ -15,22 +16,33 @@ export function DeleteBoardModal({
   isOpen, 
   onClose, 
   boardIndex,
+  boardId,
   boardName 
 }: DeleteBoardModalProps) {
   const navigate = useNavigate();
-  const { deleteBoard, boards } = useBoard();
+  const deleteBoard = useStore((state) => state.deleteBoard);
+  const boards = useStore((state) => state.boards);
+  
+  // Resolve ID
+  const resolvedBoardId = boardId || (typeof boardIndex === 'number' && boards[boardIndex] ? boards[boardIndex].id : null);
 
-  const handleDelete = () => {
-    deleteBoard(boardIndex);
-    onClose();
-    
-    // Navigate away from deleted board to prevent broken state
-    if (boards.length <= 1) {
-      // No boards left, go to dashboard
-      navigate('/');
-    } else {
-      // Navigate to first board
-      navigate('/board/0');
+  const handleDelete = async () => {
+    if (!resolvedBoardId) return;
+
+    try {
+        await deleteBoard(resolvedBoardId);
+        onClose();
+        
+        // Navigation logic after delete
+        // Provide a small delay for state to update or just navigate
+        const remainingBoards = boards.filter(b => b.id !== resolvedBoardId);
+        if (remainingBoards.length > 0) {
+          navigate(`/board/${remainingBoards[0].id}`);
+        } else {
+          navigate('/');
+        }
+    } catch (error) {
+        console.error("Failed to delete board", error);
     }
   };
 

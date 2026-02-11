@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -9,19 +9,27 @@ import styles from './AddTaskModal.module.css';
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  boardIndex: number;
+  boardIndex?: number; // Deprecated
+  boardId?: string;    // New
 }
 
-export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps) {
-  const { boards, addTask } = useBoard();
+export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskModalProps) {
+  const createTask = useStore((state) => state.createTask);
+  const boards = useStore((state) => state.boards);
+  const user = useStore((state) => state.user);
+  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState<string[]>(['', '']);
   const [status, setStatus] = useState('');
   const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([false, false]);
 
-  const board = boards[boardIndex];
-  const statusOptions = board.columns.map(col => ({ value: col.name, label: col.name }));
+  // Resolve board
+  const board = boardId 
+    ? boards.find(b => b.id === boardId) 
+    : (typeof boardIndex === 'number' ? boards[boardIndex] : null);
+
+  const statusOptions = board?.columns.map(col => ({ value: col.name, label: col.name })) || [];
 
   // Set default status to first column
   if (!status && statusOptions.length > 0) {
@@ -51,7 +59,9 @@ export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps)
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!board || !board.id || !user) return;
+
     // Validate subtasks FIRST - check for empty subtasks
     const errors = subtasks.map(st => st.trim() === '');
     const hasEmptySubtasks = errors.some(error => error);
@@ -66,28 +76,31 @@ export function AddTaskModal({ isOpen, onClose, boardIndex }: AddTaskModalProps)
       return; // Don't submit if title is empty or there are empty subtasks
     }
 
-    const columnIndex = board.columns.findIndex(col => col.name === status);
-    if (columnIndex === -1) return;
-
     const newTask = {
       title: title.trim(),
       description: description.trim(),
-      status,
+      status, // status is the column name
       subtasks: subtasks
         .filter(st => st.trim())
         .map(st => ({ title: st.trim(), isCompleted: false }))
     };
 
-    addTask(boardIndex, columnIndex, newTask);
-
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setSubtasks(['', '']);
-    setSubtaskErrors([false, false]);
-    setStatus(statusOptions[0]?.value || '');
-    onClose();
+    try {
+        await createTask(board.id, user.$id, newTask);
+        
+        // Reset form
+        setTitle('');
+        setDescription('');
+        setSubtasks(['', '']);
+        setSubtaskErrors([false, false]);
+        setStatus(statusOptions[0]?.value || '');
+        onClose();
+    } catch (error) {
+        console.error("Failed to create task", error);
+    }
   };
+
+  if (!board) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>

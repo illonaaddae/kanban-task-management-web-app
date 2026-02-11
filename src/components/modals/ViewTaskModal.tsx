@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { type Task } from '../../types';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Checkbox } from '../ui/Checkbox';
 import { Dropdown } from '../ui/Dropdown';
@@ -12,34 +12,59 @@ interface ViewTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   task: Task;
-  boardIndex: number;
-  columnIndex: number;
-  taskIndex: number;
+  boardIndex?: number; // Deprecated
+  columnIndex?: number; // Deprecated
+  taskIndex?: number; // Deprecated
+  boardId: string;
 }
 
 export function ViewTaskModal({ 
   isOpen, 
   onClose, 
   task, 
-  boardIndex, 
-  columnIndex, 
-  taskIndex 
+  boardId
 }: ViewTaskModalProps) {
-  const { boards, toggleSubtask, updateTask } = useBoard();
+  const boards = useStore((state) => state.boards);
+  const updateTask = useStore((state) => state.updateTask);
+  const moveTask = useStore((state) => state.moveTask);
+  
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  const board = boards[boardIndex];
-  const statusOptions = board.columns.map(col => ({ value: col.name, label: col.name }));
+  const board = boards.find(b => b.id === boardId);
+  const statusOptions = board?.columns.map(col => ({ value: col.name, label: col.name })) || [];
   
-  const handleToggleSubtask = (subtaskIndex: number) => {
-    toggleSubtask(boardIndex, columnIndex, taskIndex, subtaskIndex);
+  const handleToggleSubtask = async (subtaskIndex: number) => {
+    if (!task.subtasks || !task.id) return;
+    
+    const updatedSubtasks = [...task.subtasks];
+    updatedSubtasks[subtaskIndex] = {
+      ...updatedSubtasks[subtaskIndex],
+      isCompleted: !updatedSubtasks[subtaskIndex].isCompleted
+    };
+    
+    try {
+      await updateTask(task.id, { subtasks: updatedSubtasks }, boardId);
+    } catch (error) {
+      console.error("Failed to toggle subtask", error);
+    }
   };
   
-  const handleStatusChange = (newStatus: string) => {
-    const updatedTask = { ...task, status: newStatus };
-    updateTask(boardIndex, columnIndex, taskIndex, updatedTask);
+  const handleStatusChange = async (newStatus: string) => {
+    if (!task.id) return;
+    
+    if (newStatus === task.status) return;
+
+    try {
+       // Move task to new column
+       const targetCol = board?.columns.find(c => c.name === newStatus);
+       const newIndex = targetCol ? targetCol.tasks.length : 0;
+       
+       await moveTask(task.id, newStatus, newIndex);
+    } catch (error) {
+       console.error("Failed to update status", error);
+    }
   };
 
   const handleEditClick = () => {
@@ -52,7 +77,9 @@ export function ViewTaskModal({
     setShowDeleteModal(true);
   };
 
-  const completedCount = task.subtasks.filter(st => st.isCompleted).length;
+  if (!task) return null; // Should check this
+
+  const completedCount = task.subtasks?.filter(st => st.isCompleted).length || 0;
 
   return (
     <>
@@ -88,7 +115,7 @@ export function ViewTaskModal({
           <p className={styles.description}>{task.description}</p>
         )}
 
-        {task.subtasks.length > 0 && (
+        {task.subtasks && task.subtasks.length > 0 && (
           <div className={styles.section}>
             <p className={styles.sectionTitle}>
               Subtasks ({completedCount} of {task.subtasks.length})
@@ -117,25 +144,27 @@ export function ViewTaskModal({
       </div>
     </Modal>
     
-    <EditTaskModal
-      isOpen={showEditModal}
-      onClose={() => setShowEditModal(false)}
-      boardIndex={boardIndex}
-      columnIndex={columnIndex}
-      taskIndex={taskIndex}
-    />
+    {task.id && (
+        <EditTaskModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          boardId={boardId}
+          task={task}
+        />
+    )}
     
-    <DeleteTaskModal
-      isOpen={showDeleteModal}
-      onClose={() => {
-        setShowDeleteModal(false);
-        onClose(); // Also close the view modal after deletion
-      }}
-      boardIndex={boardIndex}
-      columnIndex={columnIndex}
-      taskIndex={taskIndex}
-      taskTitle={task.title}
-    />
+    {task.id && (
+        <DeleteTaskModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            onClose(); // Also close the view modal after deletion
+          }}
+          boardId={boardId}
+          taskId={task.id}
+          taskTitle={task.title}
+        />
+    )}
     </>
   );
 }

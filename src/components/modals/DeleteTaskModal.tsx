@@ -1,4 +1,4 @@
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
 import styles from './DeleteModal.module.css';
@@ -6,25 +6,30 @@ import styles from './DeleteModal.module.css';
 interface DeleteTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  boardIndex: number;
-  columnIndex: number;
-  taskIndex: number;
+  boardIndex?: number; // Deprecated
+  columnIndex?: number; // Deprecated
+  taskIndex?: number; // Deprecated
+  boardId: string;
+  taskId: string;
   taskTitle: string;
 }
 
 export function DeleteTaskModal({ 
   isOpen, 
   onClose, 
-  boardIndex, 
-  columnIndex, 
-  taskIndex,
+  boardId,
+  taskId,
   taskTitle 
 }: DeleteTaskModalProps) {
-  const { deleteTask } = useBoard();
+  const deleteTask = useStore((state) => state.deleteTask);
 
-  const handleDelete = () => {
-    deleteTask(boardIndex, columnIndex, taskIndex);
-    onClose();
+  const handleDelete = async () => {
+    try {
+      await deleteTask(taskId, boardId);
+      onClose();
+    } catch (error) {
+      console.error("Failed to delete task", error);
+    }
   };
 
   return (
