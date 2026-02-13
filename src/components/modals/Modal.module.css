@@ -31,6 +31,13 @@
   position: relative;
 }
 
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(20px);
