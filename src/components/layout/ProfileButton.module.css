@@ -71,6 +71,13 @@
   margin-bottom: 12px;
 }
 
+.userName {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
 .userEmail {
   color: var(--text-secondary);
   font-size: 13px;
@@ -83,14 +90,31 @@
   margin: 12px 0;
 }
 
-.menuItem {
+.menuButton {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 13px;
+  gap: 12px;
+  background: none;
+  border: none;
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 10px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.menuButton:hover {
+  background-color: rgba(99, 95, 199, 0.1);
+  color: var(--primary);
+}
+
+.menuButton svg {
+  flex-shrink: 0;
+  stroke: currentColor;
 }
 
 .logoutButton {

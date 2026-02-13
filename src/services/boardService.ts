@@ -1,5 +1,5 @@
 import { databases, DATABASE_ID, BOARDS_COLLECTION_ID, TASKS_COLLECTION_ID } from '../lib/appwrite';
-import { ID, Query } from 'appwrite';
+import { ID, Query, Permission, Role } from 'appwrite';
 import type { Board, Task, Column } from '../types';
 
 export class BoardService {
@@ -42,7 +42,12 @@ export class BoardService {
           columns: JSON.stringify(board.columns),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        }
+        },
+        [
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId)),
+        ]
       );
 
       return {
@@ -149,7 +154,12 @@ export class BoardService {
           subtasks: JSON.stringify(task.subtasks || []),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        }
+        },
+        [
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId)),
+        ]
       );
 
       return {
