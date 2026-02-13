@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Logo } from '../ui/Logo';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { AddBoardModal } from '../modals/AddBoardModal';
@@ -12,17 +12,17 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
-  const { boards } = useBoard();
+  const boards = useStore((state) => state.boards);
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   const location = useLocation();
   
-  // Extract board index from current URL path
-  const getCurrentBoardIndex = () => {
-    const match = location.pathname.match(/\/board\/(\d+)/);
-    return match ? parseInt(match[1], 10) : null;
+  // Extract board ID from current URL path
+  const getCurrentBoardId = () => {
+    const match = location.pathname.match(/\/board\/([^/]+)/);
+    return match ? match[1] : null;
   };
   
-  const activeBoardIndex = getCurrentBoardIndex();
+  const activeBoardId = getCurrentBoardId();
   
   if (!isOpen) {
     return (
@@ -48,11 +48,11 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </h2>
           
           <div className={styles.boardList}>
-            {boards.map((board, index) => (
+            {boards.map((board) => (
               <Link
-                key={index}
-                to={`/board/${index}`}
-                className={`${styles.boardItem} ${activeBoardIndex === index ? styles.active : ''}`}
+                key={board.id}
+                to={`/board/${board.id}`}
+                className={`${styles.boardItem} ${activeBoardId === board.id ? styles.active : ''}`}
                 onClick={onToggle}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

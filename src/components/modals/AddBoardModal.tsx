@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -11,7 +11,8 @@ interface AddBoardModalProps {
 }
 
 export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
-  const { addBoard, setActiveBoard, boards } = useBoard();
+  const createBoard = useStore((state) => state.createBoard);
+  const user = useStore((state) => state.user);
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>(['Todo', 'Doing']);
 
@@ -29,24 +30,31 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
     setColumns(updated);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) return;
+    if (!user) return; // Should not happen if modal is open (protected route)
 
     const filteredColumns = columns.filter(col => col.trim());
     if (filteredColumns.length === 0) return;
 
+    // Create board object - backend will assign IDs
     const newBoard = {
       name: name.trim(),
       columns: filteredColumns.map(col => ({ name: col.trim(), tasks: [] }))
     };
 
-    addBoard(newBoard);
-    setActiveBoard(boards.length); // Set to the newly created board
-
-    // Reset form
-    setName('');
-    setColumns(['Todo', 'Doing']);
-    onClose();
+    try {
+        await createBoard(user.id, newBoard);
+        // createBoard action updates store and sets current board
+        
+        // Reset form
+        setName('');
+        setColumns(['Todo', 'Doing']);
+        onClose();
+    } catch (error) {
+        // Error handling is managed by store/toast usually, or we can add local error state
+        console.error("Failed to create board", error);
+    }
   };
 
   return (

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useBoard } from '../context/BoardContext';
+import { useStore } from '../store/store';
 import styles from './Dashboard.module.css';
 
 export function Dashboard() {
-  const { boards } = useBoard();
+  const boards = useStore((state) => state.boards);
 
   return (
     <div className={styles.dashboard}>
@@ -13,10 +13,10 @@ export function Dashboard() {
       </div>
 
       <div className={styles.boardGrid}>
-        {boards.map((board, index) => (
+        {boards.map((board) => (
           <Link
-            key={index}
-            to={`/board/${index}`}
+            key={board.id}
+            to={`/board/${board.id}`}
             className={styles.boardCard}
           >
             <h2>{board.name}</h2>

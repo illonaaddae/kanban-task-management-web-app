@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Logo } from '../ui/Logo';
 import { Button } from '../ui/Button';
 import { BoardSelectorModal } from '../modals/BoardSelectorModal';
@@ -9,26 +9,28 @@ import { EditBoardModal } from '../modals/EditBoardModal';
 import { DeleteBoardModal } from '../modals/DeleteBoardModal';
 import styles from './Header.module.css';
 
+import { ProfileButton } from './ProfileButton';
+
 export function Header() {
   const location = useLocation();
-  const { boards } = useBoard();
+  const boards = useStore((state) => state.boards);
   const [showMenu, setShowMenu] = useState(false);
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showEditBoardModal, setShowEditBoardModal] = useState(false);
   const [showDeleteBoardModal, setShowDeleteBoardModal] = useState(false);
   
-  // Extract boardId from pathname instead of useParams (Header is outside route context)
+  // Extract boardId from pathname
   const getBoardIdFromPath = (): string | null => {
-    const match = location.pathname.match(/^\/board\/(\d+)$/);
+    // Match /board/:id
+    const match = location.pathname.match(/^\/board\/([^/]+)$/);
     return match ? match[1] : null;
   };
   
   const boardId = getBoardIdFromPath();
-  const boardIndex = boardId ? parseInt(boardId, 10) : null;
+  const currentBoard = boardId ? boards.find(b => b.id === boardId) : null;
   
-  // Simplify board view check - just check if we have a boardId from path
-  const isOnBoardView = boardId !== null && boardIndex !== null && boardIndex >= 0;
+  const isOnBoardView = !!currentBoard;
   
   // Determine page title based on route
   const getPageTitle = () => {
@@ -36,15 +38,14 @@ export function Header() {
       return 'Dashboard';
     }
     if (location.pathname === '/admin') {
+      // Check if Admin exists or is just a placeholder
       return 'Admin Panel';
     }
-    // Use optional chaining to safely get board name
-    if (boardIndex !== null && boardIndex >= 0 && boardIndex < boards.length) {
-      const boardName = boards[boardIndex]?.name;
-      if (boardName) {
-        return boardName;
-      }
+    
+    if (currentBoard) {
+      return currentBoard.name;
     }
+    
     return 'Kanban Board';
   };
   
@@ -89,47 +90,51 @@ export function Header() {
         {/* Standalone title for desktop */}
         <h1 className={styles.title}>{getPageTitle()}</h1>
         
-        {isOnBoardView && (
-          <div className={styles.actions}>
-            <Button onClick={handleAddTask}>+ Add New Task</Button>
-            
-            <div className={styles.menuContainer}>
-              <button 
-                className={styles.menuButton}
-                onClick={() => setShowMenu(!showMenu)}
-                aria-label="Board options"
-              >
-                <svg width="5" height="20" viewBox="0 0 5 20" fill="currentColor">
-                  <circle cx="2.5" cy="2.5" r="2.5"/>
-                  <circle cx="2.5" cy="10" r="2.5"/>
-                  <circle cx="2.5" cy="17.5" r="2.5"/>
-                </svg>
-              </button>
+        <div className={styles.actions}>
+          {isOnBoardView && (
+            <>
+              <Button onClick={handleAddTask}>+ Add New Task</Button>
               
-              {showMenu && (
-                <div className={styles.menu}>
-                  <button onClick={handleEditBoard}>Edit Board</button>
-                  <button onClick={handleDeleteBoard} className={styles.delete}>
-                    Delete Board
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+              <div className={styles.menuContainer}>
+                <button 
+                  className={styles.menuButton}
+                  onClick={() => setShowMenu(!showMenu)}
+                  aria-label="Board options"
+                >
+                  <svg width="5" height="20" viewBox="0 0 5 20" fill="currentColor">
+                    <circle cx="2.5" cy="2.5" r="2.5"/>
+                    <circle cx="2.5" cy="10" r="2.5"/>
+                    <circle cx="2.5" cy="17.5" r="2.5"/>
+                  </svg>
+                </button>
+                
+                {showMenu && (
+                  <div className={styles.menu}>
+                    <button onClick={handleEditBoard}>Edit Board</button>
+                    <button onClick={handleDeleteBoard} className={styles.delete}>
+                      Delete Board
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          
+          <ProfileButton />
+        </div>
       </header>
       
       {/* Board Selector Modal for mobile */}
       <BoardSelectorModal
         isOpen={showBoardSelector}
         onClose={() => setShowBoardSelector(false)}
-        activeBoardIndex={boardIndex}
+        activeBoardId={boardId || undefined}
       />
       
       {isOnBoardView && showAddTaskModal && (
         <AddTaskModal
           isOpen={showAddTaskModal}
-          boardIndex={boardIndex!}
+          boardId={boardId!}
           onClose={() => setShowAddTaskModal(false)}
         />
       )}
@@ -137,7 +142,7 @@ export function Header() {
       {isOnBoardView && showEditBoardModal && (
         <EditBoardModal
           isOpen={showEditBoardModal}
-          boardIndex={boardIndex!}
+          boardId={boardId!}
           onClose={() => setShowEditBoardModal(false)}
         />
       )}
@@ -145,9 +150,9 @@ export function Header() {
       {isOnBoardView && showDeleteBoardModal && (
         <DeleteBoardModal
           isOpen={showDeleteBoardModal}
-          boardIndex={boardIndex!}
+          boardId={boardId!}
           onClose={() => setShowDeleteBoardModal(false)}
-          boardName={boards[boardIndex!]?.name || 'Board'}
+          boardName={currentBoard.name}
         />
       )}
     </>

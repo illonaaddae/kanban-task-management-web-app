@@ -1,22 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import styles from './AddBoardModal.module.css'; // Reuse same styles
 
+// Updated props to work with ID or Index (temporarily support both until full migration?)
+// No, let's force ID usage now as Header will be updated next.
 interface EditBoardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  boardIndex: number;
+  boardIndex?: number; // Deprecated
+  boardId?: string;    // New
 }
 
-export function EditBoardModal({ isOpen, onClose, boardIndex }: EditBoardModalProps) {
-  const { boards, updateBoard } = useBoard();
+export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoardModalProps) {
+  const boards = useStore((state) => state.boards);
+  const updateBoard = useStore((state) => state.updateBoard);
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>([]);
 
-  const board = boards[boardIndex];
+  // Determine which board we are editing
+  // Use passed ID, or fallback to index if ID missing (for safety during migration), or current board?
+  // Ideally Header passes ID.
+  const board = boardId 
+    ? boards.find(b => b.id === boardId) 
+    : (typeof boardIndex === 'number' ? boards[boardIndex] : null);
 
   // Pre-fill with existing board data
   useEffect(() => {
@@ -40,13 +49,13 @@ export function EditBoardModal({ isOpen, onClose, boardIndex }: EditBoardModalPr
     setColumns(updated);
   };
 
-  const handleSubmit = () => {
-    if (!name.trim()) return;
+  const handleSubmit = async () => {
+    if (!name.trim() || !board || !board.id) return;
 
     const filteredColumns = columns.filter(col => col.trim());
     if (filteredColumns.length === 0) return;
 
-    const updatedBoard = {
+    const updatedBoardData = {
       name: name.trim(),
       columns: filteredColumns.map(colName => {
         // Preserve existing tasks if column name unchanged
@@ -55,8 +64,12 @@ export function EditBoardModal({ isOpen, onClose, boardIndex }: EditBoardModalPr
       })
     };
 
-    updateBoard(boardIndex, updatedBoard);
-    onClose();
+    try {
+        await updateBoard(board.id, updatedBoardData);
+        onClose();
+    } catch (error) {
+        console.error("Failed to update board", error);
+    }
   };
 
   if (!board) return null;

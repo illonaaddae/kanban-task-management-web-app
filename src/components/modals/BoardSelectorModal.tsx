@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useBoard } from '../../context/BoardContext';
+import { useStore } from '../../store/store';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { AddBoardModal } from '../modals/AddBoardModal';
 import { Modal } from './Modal';
@@ -9,14 +9,23 @@ import styles from './BoardSelectorModal.module.css';
 interface BoardSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activeBoardIndex: number | null;
+  activeBoardIndex?: number | null; // Deprecated
+  activeBoardId?: string;           // New
 }
 
-export function BoardSelectorModal({ isOpen, onClose, activeBoardIndex }: BoardSelectorModalProps) {
-  const { boards } = useBoard();
+export function BoardSelectorModal({ isOpen, onClose, activeBoardIndex, activeBoardId }: BoardSelectorModalProps) {
+  const boards = useStore((state) => state.boards);
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   
   if (!isOpen) return null;
+
+  // Resolve active state
+  // If activeBoardId provided, use it. Else fallback to index if valid.
+  const isBoardActive = (board: any, index: number) => {
+    if (activeBoardId) return board.id === activeBoardId;
+    if (typeof activeBoardIndex === 'number') return index === activeBoardIndex;
+    return false;
+  };
 
   const handleBoardClick = () => {
     onClose(); // Close modal when a board is selected
@@ -31,9 +40,9 @@ export function BoardSelectorModal({ isOpen, onClose, activeBoardIndex }: BoardS
           <div className={styles.boardList}>
             {boards.map((board, index) => (
               <Link
-                key={index}
-                to={`/board/${index}`}
-                className={`${styles.boardItem} ${activeBoardIndex === index ? styles.active : ''}`}
+                key={board.id}
+                to={`/board/${board.id}`}
+                className={`${styles.boardItem} ${isBoardActive(board, index) ? styles.active : ''}`}
                 onClick={handleBoardClick}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

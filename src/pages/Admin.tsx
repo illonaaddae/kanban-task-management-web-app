@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useBoard } from '../context/BoardContext';
+import { useStore } from '../store/store';
 import { Button } from '../components/ui/Button';
 import styles from './Admin.module.css';
 
 export function Admin() {
-  const { boards } = useBoard();
-  const { user, logout } = useAuth();
+  const boards = useStore((state) => state.boards);
+  const user = useStore((state) => state.user);
+  const logout = useStore((state) => state.logout);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -27,7 +27,7 @@ export function Admin() {
       <div className={styles.header}>
         <div>
           <h1>Admin Dashboard</h1>
-          <p>Welcome back, {user}!</p>
+          <p>Welcome back, {user?.name || 'User'}!</p>
         </div>
         <Button variant="secondary" onClick={handleLogout}>
           Logout
@@ -52,8 +52,8 @@ export function Admin() {
       <div className={styles.content}>
         <h2>Board Overview</h2>
         <div className={styles.boardList}>
-          {boards.map((board, index) => (
-            <div key={index} className={styles.boardItem}>
+          {boards.map((board) => (
+            <div key={board.id} className={styles.boardItem}>
               <h3>{board.name}</h3>
               <div className={styles.boardStats}>
                 <span>{board.columns.length} columns</span>
