@@ -47,8 +47,8 @@ class AppwriteAuthService implements AuthService {
       // Redirect to Slack OAuth
       account.createOAuth2Session(
         OAuthProvider.Slack,
-        `${window.location.origin}/`,
-        `${window.location.origin}/login`
+        `${window.location.origin}/`,  // Success: redirect to dashboard
+        `${window.location.origin}/login`  // Failure: back to login
       );
     } catch (error) {
       console.error('Slack OAuth error:', error);
@@ -59,10 +59,11 @@ class AppwriteAuthService implements AuthService {
   async loginWithGoogle(): Promise<void> {
     try {
       // Redirect to Google OAuth
+      // IMPORTANT: Use window.location.origin without hash to preserve session cookies
       account.createOAuth2Session(
         OAuthProvider.Google,
-        `${window.location.origin}/`,
-        `${window.location.origin}/login`
+        `${window.location.origin}/`,  // Success: redirect to dashboard
+        `${window.location.origin}/login`  // Failure: back to login
       );
     } catch (error) {
       console.error('Google OAuth error:', error);
