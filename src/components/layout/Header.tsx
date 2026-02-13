@@ -69,8 +69,9 @@ export function Header() {
         {/* Logo button - opens board selector on mobile */}
         <button 
           className={styles.logoButton}
-          onClick={() => setShowBoardSelector(true)}
-          aria-label="Open board selector"
+          onClick={() => window.history.back()}
+          aria-label="Go back"
+          title="Go back"
         >
           <Logo />
         </button>

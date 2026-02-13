@@ -116,24 +116,24 @@ export const useStore = create<StoreState>()(
       checkSession: async () => {
         set({ loading: true });
         try {
-            const currentUser = get().user;
-            if (currentUser) {
-                 const verifiedUser = await authService.getCurrentUser();
-                 if (verifiedUser) {
-                     set({ user: verifiedUser, isAuthenticated: true, loading: false });
-                 } else {
-                     set({ user: null, isAuthenticated: false, loading: false });
-                 }
+            // Try to get current user from Appwrite
+            // This will work if there's an active session (including after OAuth)
+            const user = await authService.getCurrentUser();
+            
+            if (user) {
+                set({ user, isAuthenticated: true, loading: false });
+                
+                // Fetch boards for the authenticated user
+                const { fetchBoards } = get();
+                await fetchBoards(user.id);
             } else {
-                const user = await authService.getCurrentUser();
-                if (user) {
-                    set({ user, isAuthenticated: true, loading: false });
-                } else {
-                    set({ loading: false });
-                }
+                // No session found
+                set({ user: null, isAuthenticated: false, loading: false });
             }
         } catch (error) {
-          set({ user: null, isAuthenticated: false, loading: false });
+            console.error('Session check error:', error);
+            // If session check fails, user is not authenticated
+            set({ user: null, isAuthenticated: false, loading: false });
         }
       },
 
