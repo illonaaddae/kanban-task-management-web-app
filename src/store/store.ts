@@ -116,23 +116,29 @@ export const useStore = create<StoreState>()(
       checkSession: async () => {
         set({ loading: true });
         try {
-            // Try to get current user from Appwrite
-            // This will work if there's an active session (including after OAuth)
-            const user = await authService.getCurrentUser();
+            // First, check if this is an OAuth callback (URL has ?userId=&secret=)
+            const params = new URLSearchParams(window.location.search);
+            const hasOAuthParams = params.has('userId') && params.has('secret');
+
+            let user = null;
+
+            if (hasOAuthParams) {
+                // Process OAuth callback: create session from URL params
+                user = await authService.handleOAuthCallback();
+            } else {
+                // Regular session check (existing login)
+                user = await authService.getCurrentUser();
+            }
             
             if (user) {
                 set({ user, isAuthenticated: true, loading: false });
-                
-                // Fetch boards for the authenticated user
                 const { fetchBoards } = get();
                 await fetchBoards(user.id);
             } else {
-                // No session found
                 set({ user: null, isAuthenticated: false, loading: false });
             }
         } catch (error) {
             console.error('Session check error:', error);
-            // If session check fails, user is not authenticated
             set({ user: null, isAuthenticated: false, loading: false });
         }
       },
