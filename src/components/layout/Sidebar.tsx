@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/store';
 import { Logo } from '../ui/Logo';
 import { ThemeToggle } from '../ui/ThemeToggle';
@@ -15,6 +15,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const boards = useStore((state) => state.boards);
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Extract board ID from current URL path
   const getCurrentBoardId = () => {
@@ -37,56 +38,77 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   return (
     <>
       {/* Backdrop for mobile overlay */}
-      <div className={`${styles.backdrop} ${isOpen ? styles.backdropVisible : ''}`} onClick={onToggle} />
-      
-      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
-        <Logo />
-        
+      <div
+        className={`${styles.backdrop} ${isOpen ? styles.backdropVisible : ""}`}
+        onClick={onToggle}
+      />
+
+      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
+        <button
+          className={styles.logoButton}
+          onClick={() => navigate("/")}
+          aria-label="Go to dashboard"
+          title="Go to dashboard"
+        >
+          <Logo />
+        </button>
+
         <div className={styles.boardSection}>
-          <h2 className={styles.boardsHeading}>
-            ALL BOARDS ({boards.length})
-          </h2>
-          
+          <h2 className={styles.boardsHeading}>ALL BOARDS ({boards.length})</h2>
+
           <div className={styles.boardList}>
             {boards.map((board) => (
               <Link
                 key={board.id}
                 to={`/board/${board.id}`}
-                className={`${styles.boardItem} ${activeBoardId === board.id ? styles.active : ''}`}
+                className={`${styles.boardItem} ${activeBoardId === board.id ? styles.active : ""}`}
                 onClick={onToggle}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M0.846133 0.846133C0.304363 1.3879 0 2.12271 0 2.88889V13.1111C0 13.8773 0.304363 14.6121 0.846133 15.1538C1.3879 15.6955 2.12271 16 2.88889 16H13.1111C13.8773 16 14.6121 15.6955 15.1538 15.1538C15.6956 14.6121 16 13.8773 16 13.1111V2.88889C16 2.12271 15.6956 1.3879 15.1538 0.846133C14.6121 0.304363 13.8773 0 13.1111 0H2.88889C2.12271 0 1.3879 0.304363 0.846133 0.846133Z"/>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path d="M0.846133 0.846133C0.304363 1.3879 0 2.12271 0 2.88889V13.1111C0 13.8773 0.304363 14.6121 0.846133 15.1538C1.3879 15.6955 2.12271 16 2.88889 16H13.1111C13.8773 16 14.6121 15.6955 15.1538 15.1538C15.6956 14.6121 16 13.8773 16 13.1111V2.88889C16 2.12271 15.6956 1.3879 15.1538 0.846133C14.6121 0.304363 13.8773 0 13.1111 0H2.88889C2.12271 0 1.3879 0.304363 0.846133 0.846133Z" />
                 </svg>
                 {board.name}
               </Link>
             ))}
-            
-            <button 
+
+            <button
               className={styles.createBoard}
               onClick={() => setShowAddBoardModal(true)}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M0.846133 0.846133C0.304363 1.3879 0 2.12271 0 2.88889V13.1111C0 13.8773 0.304363 14.6121 0.846133 15.1538C1.3879 15.6955 2.12271 16 2.88889 16H13.1111C13.8773 16 14.6121 15.6955 15.1538 15.1538C15.6956 14.6121 16 13.8773 16 13.1111V2.88889C16 2.12271 15.6956 1.3879 15.1538 0.846133C14.6121 0.304363 13.8773 0 13.1111 0H2.88889C2.12271 0 1.3879 0.304363 0.846133 0.846133Z"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path d="M0.846133 0.846133C0.304363 1.3879 0 2.12271 0 2.88889V13.1111C0 13.8773 0.304363 14.6121 0.846133 15.1538C1.3879 15.6955 2.12271 16 2.88889 16H13.1111C13.8773 16 14.6121 15.6955 15.1538 15.1538C15.6956 14.6121 16 13.8773 16 13.1111V2.88889C16 2.12271 15.6956 1.3879 15.1538 0.846133C14.6121 0.304363 13.8773 0 13.1111 0H2.88889C2.12271 0 1.3879 0.304363 0.846133 0.846133Z" />
               </svg>
               + Create New Board
             </button>
           </div>
         </div>
-        
+
         <div className={styles.bottomSection}>
           <ThemeToggle />
           <button className={styles.hideButton} onClick={onToggle}>
             <svg width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
-              <path d="M8.52257 0.845849C5.29733 0.845849 2.67883 3.46436 2.67883 6.68959C2.67883 9.91482 5.29733 12.5333 8.52257 12.5333C11.7478 12.5333 14.3663 9.91482 14.3663 6.68959C14.3663 3.46436 11.7478 0.845849 8.52257 0.845849ZM1.97598 6.68959C1.97598 3.07701 4.90998 0.143005 8.52257 0.143005C12.1352 0.143005 15.0692 3.07701 15.0692 6.68959C15.0692 10.3022 12.1352 13.2362 8.52257 13.2362C4.90998 13.2362 1.97598 10.3022 1.97598 6.68959Z"/>
+              <path d="M8.52257 0.845849C5.29733 0.845849 2.67883 3.46436 2.67883 6.68959C2.67883 9.91482 5.29733 12.5333 8.52257 12.5333C11.7478 12.5333 14.3663 9.91482 14.3663 6.68959C14.3663 3.46436 11.7478 0.845849 8.52257 0.845849ZM1.97598 6.68959C1.97598 3.07701 4.90998 0.143005 8.52257 0.143005C12.1352 0.143005 15.0692 3.07701 15.0692 6.68959C15.0692 10.3022 12.1352 13.2362 8.52257 13.2362C4.90998 13.2362 1.97598 10.3022 1.97598 6.68959Z" />
             </svg>
             Hide Sidebar
           </button>
         </div>
       </aside>
-      
+
       {showAddBoardModal && (
-        <AddBoardModal isOpen={showAddBoardModal} onClose={() => setShowAddBoardModal(false)} />
+        <AddBoardModal
+          isOpen={showAddBoardModal}
+          onClose={() => setShowAddBoardModal(false)}
+        />
       )}
     </>
   );
