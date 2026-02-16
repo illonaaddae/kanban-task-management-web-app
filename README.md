@@ -1,96 +1,83 @@
 # Kanban Task Management Web App
 
-A full-featured task management application built with React, TypeScript, and React Router for the AmaliTech Module Lab.
+A full-featured, production-ready task management application built with **React 19**, **TypeScript**, and **appwrite** for the AmaliTech Module Lab. This project demonstrates scalable state management, secure authentication, and responsive design patterns.
 
-![Kanban App](./preview.jpg)
+![Kanban App Screenshot](./preview.jpg)
 
-## 🚀 Live Demo
+## Table of Contents
 
-[View Live Demo](#) <!-- Add your deployment URL here -->
+1. [Overview](#overview)
+2. [Key Features](#key-features)
+3. [Technology Stack](#technology-stack)
+4. [Getting Started](#getting-started)
+5. [Architecture](#architecture)
+6. [Testing](#testing)
+7. [Deployment](#deployment)
+8. [License](#license)
 
-## 📋 Table of Contents
+---
 
-- [Features](#features)
-- [Technologies](#technologies)
-- [Lab Requirements](#lab-requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Authentication](#authentication)
-- [Deployment](#deployment)
-- [License](#license)
+## Overview
 
-## ✨ Features
+This application serves as a modern productivity tool allowing teams and individuals to organize tasks across customized boards. It moves beyond basic CRUD operations to offer a drag-and-drop interface, real-time updates, and a global state management system powered by **Zustand**.
+
+### Live Demo
+[View Live Application](#) <!-- Replace with actual deployment link -->
+
+---
+
+## Key Features
 
 ### Core Functionality
--  Multi-board task management system
--  Create, read, update, and delete boards
--  Create, read, update, and delete tasks
--  Mark subtasks as complete
--  Move tasks between columns (drag & drop)
--  Board and task status management
+- **Multi-Board Management**: Create, edit, and delete boards to organize different projects.
+- **Task Operations**: Full CRUD capabilities for tasks with subtasks support.
+- **Drag & Drop**: Intuitive drag-and-drop interface for moving tasks between columns (ToDo / Doing / Done).
+- **Subtask Tracking**: Monitor progress within individual tasks.
 
 ### User Experience
--  Responsive design (mobile, tablet, desktop)
--  Dark/Light theme toggle with persistence
--  Show/hide sidebar
--  Form validation
--  Toast notifications
--  Protected routes with authentication
+- **Responsive Interface**: Optimized layout for Mobile, Tablet, and Desktop devices.
+- **Theme Support**: Integrated Dark and Light modes with local persistence.
+- **Form Validation**: robust input validation and error handling.
+- **Interactive Feedback**: Real-time toast notifications for user actions.
 
-### Technical Features
--  Client-side routing with React Router
--  State persistence with LocalStorage
--  TypeScript for type safety
-- CSS Modules for scoped styling
--  Context API for state management
+### Security & State
+- **Authentication**: Secure login and registration powered by Appwrite.
+- **Route Protection**: Guarded routes ensuring restricted access to private boards.
+- **State Persistence**: Automatic saving of user preferences and session data.
 
-## 🛠️ Technologies
+---
 
-- **React 19.2.0** - UI library
-- **TypeScript 5.9.3** - Type safety
-- **React Router 7.13.0** - Client-side routing
-- **Vite 7.2.4** - Build tool
-- **@dnd-kit** - Drag and drop functionality
-- **react-hot-toast** - Toast notifications
+## Technology Stack
 
-## 📚 Lab Requirements
+### Frontend Core
+- **React 19**
+- **TypeScript 5**
+- **Vite** (Build Tool)
 
-This project fulfills all Module Lab requirements:
+### State Management & Routing
+- **Zustand** (Global Store)
+- **React Router 7**
+- **Context API** (Theme/Auth)
 
-###  Task 1: Routing Structure
-- Wrapped app in `<BrowserRouter>` 
-- Defined routes for `/`, `/board/:boardId`, `/login`, `/admin`
-- Added Header and Sidebar on all main routes
+### UI & UX
+- **CSS Modules** (Scoped Styling)
+- **@dnd-kit** (Drag and Drop primitives)
+- **react-hot-toast** (Notifications)
+- **React Hook Form** (Form Handling)
 
-###  Task 2: Dynamic Routing
-- Dashboard displays all boards from data
-- Each board links to `/board/:boardId`
-- BoardView uses `useParams()` to load board data
+### Backend & Services
+- **Appwrite** (Auth, Database, Storage)
 
-###  Task 3: Protected Routes
-- Created `AuthContext` with mock authentication
-- Implemented `ProtectedRoute` component
-- Redirects to `/login` when unauthorized
+---
 
-###  Task 4: Navigation & State
-- Uses `useNavigate()` for programmatic navigation
-- Persists login state with `localStorage`
-- Highlights active board in sidebar
-
-###  Task 5: NotFound Route
-- `*` route renders custom 404 page
-- Includes "Return to Dashboard" and "Go Back" buttons
-
-**See [Lab Compliance Report](./docs/lab_compliance_report.md) for detailed coverage.**
-
-## 🔧 Installation
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
 - npm or yarn
+- Appwrite instance (local or cloud)
 
-### Steps
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -103,189 +90,74 @@ This project fulfills all Module Lab requirements:
    npm install
    ```
 
-3. **Start development server**
+3. **Configure Environment**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+   VITE_APPWRITE_PROJECT_ID=your_project_id
+   VITE_APPWRITE_DATABASE_ID=your_database_id
+   ```
+
+4. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-4. **Open in browser**
-   ```
-   http://localhost:5173
-   ```
+---
 
-## 📖 Usage
+## Architecture
 
-### Development
-
-```bash
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Run linter
-npm run lint
-```
-
-### Testing
-
-```bash
-# Run tests in watch mode
-npm test
-
-# Run tests once
-npm run test:run
-
-# Run tests with UI
-npm run test:ui
-
-# Generate coverage report
-npm run test:coverage
-```
-
-**Test Coverage:** The project includes comprehensive test suites for:
-- Authentication (AuthContext, Login, ProtectedRoute)
-- Theme management (ThemeContext)
-- Routing (NotFound page)
-- Component rendering and user interactions
-
-**Coverage Thresholds:**
-- Lines: 75%
-- Functions: 75%
-- Branches: 70%
-- Statements: 75%
-
-View the coverage report by running `npm run test:coverage` and opening `coverage/index.html`.
-
-### Authentication
-
-**Demo Credentials:**
-- Username: `admin`
-- Password: `admin`
-
-*Note: This uses mock authentication for demonstration purposes. Replace with real authentication in production.*
-
-### Creating Boards & Tasks
-
-1. **Login** with demo credentials
-2. **Create a Board** - Click "+ Create New Board" in sidebar
-3. **Add Columns** - Define columns (e.g., "Todo", "Doing", "Done")
-4. **Create Tasks** - Click "+ Add New Task" button
-5. **Manage Tasks** - Click any task to view, edit, or delete
-6. **Drag & Drop** - Drag tasks between columns to update status
-
-### Theme Toggle
-
-Click the theme toggle button in the sidebar to switch between light and dark modes. Your preference is saved automatically.
-
-## 📁 Project Structure
+The project follows a modular architecture designed for scalability:
 
 ```
-kanban-task-management-web-app/
-├── src/
-│   ├── components/
-│   │   ├── board/          # EmptyBoard, Column, TaskCard
-│   │   ├── layout/         # Header, Sidebar
-│   │   ├── modals/         # All modal components
-│   │   └── ProtectedRoute.tsx
-│   ├── context/
-│   │   ├── AuthContext.tsx      # Authentication state
-│   │   ├── BoardContext.tsx     # Board data & operations
-│   │   └── ThemeContext.tsx     # Theme management
-│   ├── hooks/
-│   │   ├── useAuth.ts          # Authentication hook
-│   │   ├── useBoard.ts         # Board operations hook
-│   │   └── useModal.ts         # Modal state management
-│   ├── pages/
-│   │   ├── Admin.tsx           # Admin page
-│   │   ├── BoardView.tsx       # Individual board view
-│   │   ├── Dashboard.tsx       # All boards overview
-│   │   ├── Login.tsx           # Login page
-│   │   └── NotFound.tsx        # 404 error page
-│   ├── types/
-│   │   └── index.ts            # TypeScript type definitions
-│   ├── App.tsx                 # Route configuration
-│   └── main.tsx                # App entry point
-├── public/                     # Static assets
-└── package.json
+src/
+├── components/       # Reusable UI components (Modals, Inputs, Cards)
+├── context/          # React Contexts (Theme, Auth wrappers)
+├── hooks/            # Custom hooks (useBoardDnd, useAuth)
+├── pages/            # Page-level components (Dashboard, BoardView)
+├── services/         # API integration layer (Appwrite, Mock)
+├── store/            # Zustand store slices (Auth, Board, Task)
+├── styles/           # Global styles and variables
+└── types/            # TypeScript interface definitions
 ```
-
-## 🔐 Authentication
-
-The app uses a mock authentication system for demonstration:
-
-- **Login**: Validates against hardcoded credentials
-- **State**: Persisted in `localStorage`
-- **Protection**: Routes guarded by `ProtectedRoute` component
-- **Navigation**: Automatic redirect to login when unauthorized
-
-**For Production:**
-- Replace with JWT/OAuth authentication
-- Implement backend API
-- Add refresh token mechanism
-- Implement password hashing
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-```
-
-### Netlify
-
-1. Build the project:
-   ```bash
-   npm run build
-   ```
-
-2. Deploy `dist` folder
-
-3. Add `_redirects` file:
-   ```
-   /*  /index.html  200
-   ```
-
-### GitHub Pages
-
-1. Update `vite.config.ts`:
-   ```typescript
-   export default defineConfig({
-     base: '/your-repo-name/',
-     plugins: [react()],
-   })
-   ```
-
-2. Build and deploy:
-   ```bash
-   npm run build
-   gh-pages -d dist
-   ```
-
-## 🎯 Evaluation Criteria
-
-| Criteria | Score | Status |
-|----------|-------|--------|
-| React Router Fundamentals | 20/20 | ✅ Complete |
-| Dynamic Routing & Params | 20/20 | ✅ Complete |
-| Protected Routes | 20/20 | ✅ Complete |
-| Navigation & State | 20/20 | ✅ Complete |
-| Code Quality & Structure | 20/20 | ✅ Complete |
-| **TOTAL** | **100/100** | 🎉 **Perfect Score** |
-
-## 📝 License
-
-This project is part of an educational lab assignment.
 
 ---
 
-**Built with ❤️ for AmaliTech Module Lab**
+## Testing
+
+The application includes a comprehensive test suite covering unit and integration tests.
+
+```bash
+# Run all tests
+npm test
+
+# Run with UI coverage report
+npm run test:ui
+```
+
+**Coverage Areas:**
+- Authentication Logic
+- Protected Routes
+- Theme Context
+- State Store Reducers
+
+---
+
+## Deployment
+
+### Deploy to Vercel
+```bash
+npm install -g vercel
+vercel
+```
+
+### Deploy to Netlify
+1. Build the project: `npm run build`
+2. Deploy the `dist` directory.
+3. Ensure redirect rules are configured for SPA routing (`/* /index.html 200`).
+
+---
+
+## License
+
+This project is open-source and available under the **MIT License**.
