@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useStore } from '../../store/store';
-import { Logo } from '../ui/Logo';
 import { Button } from '../ui/Button';
 import { BoardSelectorModal } from '../modals/BoardSelectorModal';
 import { AddTaskModal } from '../modals/AddTaskModal';
@@ -13,7 +12,7 @@ import styles from './Header.module.css';
 
 export function Header() {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const boards = useStore((state) => state.boards);
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -33,10 +32,7 @@ export function Header() {
   return (
     <>
       <header className={styles.header}>
-        <button className={styles.logoButton} onClick={() => navigate('/')}
-          aria-label="Go to dashboard" title="Go to dashboard">
-          <Logo />
-        </button>
+       
         <button className={styles.titleButton} onClick={() => setShowBoardSelector(true)} aria-label="Select board">
           <h1 className={styles.title}>{getPageTitle()}</h1>
           <svg className={styles.chevron} width="10" height="7" viewBox="0 0 10 7" fill="none">
