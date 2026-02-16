@@ -15,14 +15,16 @@
   gap: 16px;
 }
 
-/* Logo button - hidden on desktop, visible on mobile/tablet */
+/* Logo button - always visible, navigates to dashboard */
+/* Logo button - always visible, navigates to dashboard */
 .logoButton {
-  display: none;
+  display: flex;
   background: none;
   border: none;
   cursor: pointer;
   padding: 8px;
   margin-left: -8px;
+  flex-shrink: 0;
 }
 
 /* Title button - for mobile dropdown */
@@ -128,7 +130,6 @@
 
 /* Desktop: Show title directly (not a button) */
 @media (min-width: 1025px) {
-  .logoButton,
   .titleButton {
     display: none !important;
   }
@@ -198,12 +199,7 @@
   }
 }
 
-/* Desktop: Show standalone title, hide mobile button */
 @media (min-width: 1025px) {
-  .logoButton {
-    display: none !important;
-  }
-  
   .titleButton {
     display: none !important;
   }
