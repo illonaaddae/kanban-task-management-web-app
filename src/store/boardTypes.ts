@@ -1,6 +1,4 @@
 import type { Board, Task, Column } from '../types';
-import { boardService } from '../services/boardService';
-import type { StoreSet, StoreGet } from './store';
 
 export interface BoardState {
   boards: Board[];

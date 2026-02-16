@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/store';
-import type { Board, Task } from '../types';
+import type { Board } from '../types';
 import {
   PointerSensor,
   KeyboardSensor,
