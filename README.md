@@ -22,7 +22,7 @@ A full-featured, production-ready task management application built with **React
 This application serves as a modern productivity tool allowing teams and individuals to organize tasks across customized boards. It moves beyond basic CRUD operations to offer a drag-and-drop interface, real-time updates, and a global state management system powered by **Zustand**.
 
 ### Live Demo
-[View Live Application](#) <!-- Replace with actual deployment link -->
+[View Live Application](https://kanban-task-management-web-app-lab.netlify.app/) <!-- Replace with actual deployment link -->
 
 ---
 
