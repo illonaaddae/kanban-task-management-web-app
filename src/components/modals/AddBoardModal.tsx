@@ -4,6 +4,7 @@ import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ColumnInputs } from '../board/ColumnInputs';
+import toast from 'react-hot-toast';
 import styles from './AddBoardModal.module.css';
 
 interface AddBoardModalProps {
@@ -27,8 +28,12 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
         name: name.trim(),
         columns: filtered.map(c => ({ name: c.trim(), tasks: [] }))
       });
+      toast.success(`Board '${name.trim()}' created!`);
       setName(''); setColumns(['Todo', 'Doing']); onClose();
-    } catch (error) { console.error('Failed to create board', error); }
+    } catch (error) {
+      console.error('Failed to create board', error);
+      toast.error('Failed to create board');
+    }
   };
 
   return (

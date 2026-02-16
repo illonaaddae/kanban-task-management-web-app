@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AuthState, createAuthSlice } from './authSlice';
-import { BoardState } from './boardTypes';
+import { type AuthState, createAuthSlice } from './authSlice';
+import type { BoardState } from './boardTypes';
 import { createBoardSlice } from './boardSlice';
 import { createTaskSlice } from './taskSlice';
 

@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { SubtaskInputs } from '../task/SubtaskInputs';
 import { type Task } from '../../types';
+import toast from 'react-hot-toast';
 import styles from './AddTaskModal.module.css';
 
 interface EditTaskModalProps {
@@ -67,8 +68,12 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
       } else {
         await updateTask(task.id, updatedData, boardId);
       }
+      toast.success('Task updated successfully!');
       onClose();
-    } catch (error) { console.error('Failed to update task', error); }
+    } catch (error) {
+      console.error('Failed to update task', error);
+      toast.error('Failed to update task');
+    }
   };
 
   if (!task) return null;

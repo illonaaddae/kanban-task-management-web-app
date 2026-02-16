@@ -5,6 +5,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { SubtaskInputs } from '../task/SubtaskInputs';
+import toast from 'react-hot-toast';
 import styles from './AddTaskModal.module.css';
 
 interface AddTaskModalProps {
@@ -49,10 +50,14 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
         title: title.trim(), description: description.trim(), status,
         subtasks: subtasks.filter(st => st.trim()).map(st => ({ title: st.trim(), isCompleted: false }))
       });
+      toast.success(`Task '${title.trim()}' created!`);
       setTitle(''); setDescription(''); setSubtasks(['', '']);
       setSubtaskErrors([false, false]); setStatus(statusOptions[0]?.value || '');
       onClose();
-    } catch (error) { console.error('Failed to create task', error); }
+    } catch (error) {
+      console.error('Failed to create task', error);
+      toast.error('Failed to create task');
+    }
   };
 
   if (!board) return null;

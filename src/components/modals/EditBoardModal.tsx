@@ -4,6 +4,7 @@ import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ColumnInputs } from '../board/ColumnInputs';
+import toast from 'react-hot-toast';
 import styles from './AddBoardModal.module.css';
 
 interface EditBoardModalProps {
@@ -39,8 +40,14 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
       })
     };
 
-    try { await updateBoard(board.id, updatedData); onClose(); }
-    catch (error) { console.error('Failed to update board', error); }
+    try {
+      await updateBoard(board.id, updatedData);
+      toast.success('Board updated successfully!');
+      onClose();
+    } catch (error) {
+      console.error('Failed to update board', error);
+      toast.error('Failed to update board');
+    }
   };
 
   if (!board) return null;
