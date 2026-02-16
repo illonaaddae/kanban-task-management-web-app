@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../../store/store';
 import { authService } from '../../services/authService';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import toast from 'react-hot-toast';
 import styles from './EditProfileModal.module.css';
 
 interface EditProfileModalProps {
@@ -20,10 +21,15 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset state when modal opens
-  if (isOpen && user && name !== user.name && !loading) {
-    setName(user.name);
-  }
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen && user) {
+      setName(user.name);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setError(null);
+    }
+  }, [isOpen]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,6 +37,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
       // Validate file size (e.g., max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size must be less than 5MB');
+        toast.error('Image size must be less than 5MB');
         return;
       }
       
@@ -57,10 +64,13 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
       // Update global store with new user data including avatar URL
       setUser(updatedUser);
       
+      toast.success('Profile updated successfully!');
       onClose();
     } catch (err: any) {
       console.error('Profile update failed:', err);
-      setError(err.message || 'Failed to update profile. Please try again.');
+      const message = err.message || 'Failed to update profile. Please try again.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
