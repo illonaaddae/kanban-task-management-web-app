@@ -12,6 +12,14 @@
   z-index: 1000;
 }
 
+.logoButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: block;
+  text-align: left;
+}
+
 .boardSection {
   flex: 1;
   overflow-y: auto;
