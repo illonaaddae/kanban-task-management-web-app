@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store/store';
+import { authService } from '../../services/authService';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
