@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/store';
 import { Logo } from '../ui/Logo';
 import { Button } from '../ui/Button';
@@ -13,6 +13,7 @@ import { ProfileButton } from './ProfileButton';
 
 export function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const boards = useStore((state) => state.boards);
   const [showMenu, setShowMenu] = useState(false);
   const [showBoardSelector, setShowBoardSelector] = useState(false);
@@ -69,9 +70,9 @@ export function Header() {
         {/* Logo button - opens board selector on mobile */}
         <button 
           className={styles.logoButton}
-          onClick={() => window.history.back()}
-          aria-label="Go back"
-          title="Go back"
+          onClick={() => navigate('/')}
+          aria-label="Go to dashboard"
+          title="Go to dashboard"
         >
           <Logo />
         </button>
