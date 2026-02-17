@@ -1,6 +1,6 @@
 import { account, storage, STORAGE_BUCKET_ID } from '../lib/appwrite';
 import { ID, OAuthProvider } from 'appwrite';
-import type { User, AuthService } from './authService';
+import type { User, AuthService } from './authTypes';
 
 export class AppwriteAuthService implements AuthService {
   async login(email: string, password: string): Promise<User> {
@@ -73,18 +73,29 @@ export class AppwriteAuthService implements AuthService {
 
   async handleOAuthCallback(): Promise<User | null> {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const userId = params.get('userId');
-      const secret = params.get('secret');
+      // First, check if we already have an active session
+      try {
+        const user = await account.get();
+        // If successful, we have a session. Just update storage and return user.
+        localStorage.setItem('kanban_user', user.name);
+        return { id: user.$id, email: user.email, name: user.name, avatar: user.prefs?.avatar };
+      } catch {
+        // No active session, proceed with creating one from params
+        const params = new URLSearchParams(window.location.search);
+        const userId = params.get('userId');
+        const secret = params.get('secret');
 
-      if (userId && secret) {
-        await account.createSession(userId, secret);
-        window.history.replaceState({}, '', window.location.pathname);
+        if (userId && secret) {
+          await account.createSession(userId, secret);
+          window.history.replaceState({}, '', window.location.pathname);
+          
+          // Fetch user details after creating session
+          const user = await account.get();
+          localStorage.setItem('kanban_user', user.name);
+          return { id: user.$id, email: user.email, name: user.name, avatar: user.prefs?.avatar };
+        }
       }
-
-      const user = await account.get();
-      localStorage.setItem('kanban_user', user.name);
-      return { id: user.$id, email: user.email, name: user.name, avatar: user.prefs?.avatar };
+      return null;
     } catch (error) {
       console.error('OAuth callback error:', error);
       return null;

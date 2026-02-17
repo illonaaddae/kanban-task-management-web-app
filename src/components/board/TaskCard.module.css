@@ -5,6 +5,15 @@
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(54, 78, 126, 0.10);
   transition: all 0.2s ease;
+  touch-action: none; /* Prevent browser scrolling while dragging */
+  outline: none; /* Remove focus outline */
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+}
+
+.card:focus,
+.card:active {
+  outline: none;
+  border: none;
 }
 
 /* Dark mode: stronger shadow for better visibility */

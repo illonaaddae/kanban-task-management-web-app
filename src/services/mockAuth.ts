@@ -1,4 +1,4 @@
-import type { User, AuthService } from './authService';
+import type { User, AuthService } from './authTypes';
 
 export class MockAuthService implements AuthService {
   async login(email: string, password: string): Promise<User> {
