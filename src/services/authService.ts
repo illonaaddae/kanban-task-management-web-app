@@ -1,6 +1,6 @@
 import type { AuthService } from './authTypes';
-import { AppwriteAuthService } from './AppwriteAuth';
-import { MockAuthService } from './MockAuth';
+import { AppwriteAuthService } from './appwriteAuth';
+import { MockAuthService } from './mockAuth';
 
 export type { User, AuthService } from './authTypes';
 
