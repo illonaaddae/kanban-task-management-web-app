@@ -6,6 +6,7 @@ import { Input } from '../components/ui/Input';
 import { OAuthButtons } from './OAuthButtons';
 import toast from 'react-hot-toast';
 import styles from './Login.module.css';
+import { Loader } from '../components/ui/Loader';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -46,7 +47,7 @@ export function Login() {
   };
 
   if (loading) {
-    return <div className={styles.container}><div className={styles.loading}>Loading...</div></div>;
+    return <Loader fullScreen />;
   }
 
   return (
