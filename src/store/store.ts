@@ -1,9 +1,9 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { type AuthState, createAuthSlice } from './authSlice';
-import type { BoardState } from './boardTypes';
-import { createBoardSlice } from './boardSlice';
-import { createTaskSlice } from './taskSlice';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { type AuthState, createAuthSlice } from "./authSlice";
+import type { BoardState } from "./boardTypes";
+import { createBoardSlice } from "./boardSlice";
+import { createTaskSlice } from "./taskSlice";
 
 export type StoreState = AuthState & BoardState;
 export type StoreSet = (partial: Partial<StoreState>) => void;
@@ -17,13 +17,12 @@ export const useStore = create<StoreState>()(
       ...createTaskSlice(set as StoreSet, get),
     }),
     {
-      name: 'kanban-storage',
+      name: "kanban-storage-v2",
       partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        boards: state.boards,
-        currentBoard: state.currentBoard,
+        // Do NOT persist isAuthenticated — it must be verified
+        // by checkSession on each app load to prevent stale logins.
       }),
-    }
-  )
+    },
+  ),
 );
