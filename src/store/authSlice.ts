@@ -106,6 +106,25 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
 
       if (oauthError) {
         console.error("[checkSession] OAuth error from provider:", oauthError);
+        // Show a user-friendly toast so the user knows why sign-in failed
+        try {
+          const parsed = JSON.parse(oauthError);
+          const { toast } = await import("react-hot-toast");
+          if (parsed.type === "user_missing_id") {
+            toast.error(
+              "Slack sign-in failed: the app is misconfigured. Please contact the admin.",
+              { duration: 6000 },
+            );
+          } else {
+            toast.error(parsed.message || "Sign-in failed. Please try again.", {
+              duration: 5000,
+            });
+          }
+        } catch {
+          // oauthError wasn't JSON — show a generic message
+          const { toast } = await import("react-hot-toast");
+          toast.error("Sign-in failed. Please try again.", { duration: 5000 });
+        }
         set({ user: null, isAuthenticated: false, loading: false });
         return;
       }
