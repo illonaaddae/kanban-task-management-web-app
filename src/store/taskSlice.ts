@@ -26,18 +26,19 @@ export const createTaskSlice = (set: StoreSet, get: StoreGet): TaskSlice => ({
   },
 
   updateTask: async (taskId, updates, boardId) => {
+    const { currentBoard } = get();
+    const previousBoard = currentBoard; // snapshot for rollback
     try {
-      const { currentBoard } = get();
       if (currentBoard?.id === boardId) {
         const updatedColumns = currentBoard.columns.map(col => ({
           ...col,
           tasks: col.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t)
         }));
-        set({ currentBoard: { ...currentBoard, columns: updatedColumns } });
+        set({ currentBoard: { ...currentBoard, columns: updatedColumns } }); // optimistic
       }
       await boardService.updateTask(taskId, updates);
     } catch (error: any) {
-      set({ boardError: error.message });
+      set({ currentBoard: previousBoard, boardError: error.message }); // rollback
       throw error;
     }
   },

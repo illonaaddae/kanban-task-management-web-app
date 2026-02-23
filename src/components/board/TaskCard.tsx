@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type Task } from '../../types';
 import { useModal } from '../../hooks/useModal';
 import { ViewTaskModal } from '../modals/ViewTaskModal';
@@ -12,7 +13,7 @@ interface TaskCardProps {
   boardId: string;
 }
 
-export function TaskCard({ task, columnIndex, taskIndex, boardId }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, columnIndex, taskIndex, boardId }: TaskCardProps) {
   const viewModal = useModal();
   
   const completedSubtasks = task.subtasks.filter(st => st.isCompleted).length;
@@ -74,4 +75,4 @@ export function TaskCard({ task, columnIndex, taskIndex, boardId }: TaskCardProp
       />
     </>
   );
-}
+});

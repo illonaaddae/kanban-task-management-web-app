@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type Column as ColumnType } from '../../types';
 import { TaskCard } from './TaskCard';
 import styles from './Column.module.css';
@@ -17,7 +18,7 @@ const COLUMN_COLORS = [
   '#67E2AE',  // Green
 ];
 
-export function Column({ column, columnIndex, boardId }: ColumnProps) {
+export const Column = memo(function Column({ column, columnIndex, boardId }: ColumnProps) {
   const color = COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
 
   const {
@@ -75,4 +76,4 @@ export function Column({ column, columnIndex, boardId }: ColumnProps) {
       </SortableContext>
     </div>
   );
-}
+});

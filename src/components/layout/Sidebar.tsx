@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/store';
 import { Logo } from '../ui/Logo';
@@ -17,13 +17,12 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Extract board ID from current URL path
-  const getCurrentBoardId = () => {
-    const match = location.pathname.match(/\/board\/([^/]+)/);
-    return match ? match[1] : null;
-  };
-  
-  const activeBoardId = getCurrentBoardId();
+  // Extract board ID from current URL path — memoized so the regex only
+  // re-runs when the pathname actually changes, not on every render
+  const activeBoardId = useMemo(
+    () => location.pathname.match(/\/board\/([^/]+)/)?.[1] ?? null,
+    [location.pathname]
+  );
   
   if (!isOpen) {
     return (

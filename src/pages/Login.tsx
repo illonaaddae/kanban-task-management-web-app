@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/store";
+import { useShallow } from "zustand/react/shallow";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { OAuthButtons } from "./OAuthButtons";
@@ -14,14 +15,19 @@ export function Login() {
   const [name, setName] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const login = useStore((state) => state.login);
-  const logout = useStore((state) => state.logout);
-  const loginWithSlack = useStore((state) => state.loginWithSlack);
-  const loginWithGoogle = useStore((state) => state.loginWithGoogle);
-  const register = useStore((state) => state.register);
-  const loading = useStore((state) => state.loading);
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
-  const user = useStore((state) => state.user);
+  const { login, logout, loginWithSlack, loginWithGoogle, register, loading, isAuthenticated, user } =
+    useStore(
+      useShallow((state) => ({
+        login: state.login,
+        logout: state.logout,
+        loginWithSlack: state.loginWithSlack,
+        loginWithGoogle: state.loginWithGoogle,
+        register: state.register,
+        loading: state.loading,
+        isAuthenticated: state.isAuthenticated,
+        user: state.user,
+      }))
+    );
   const navigate = useNavigate();
   const useAppwrite = import.meta.env.VITE_USE_APPWRITE === "true";
 
