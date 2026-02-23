@@ -1,5 +1,6 @@
 import type { User } from "../services/authService";
 import { authService } from "../services/authService";
+import toast from "react-hot-toast";
 import type { StoreSet, StoreGet } from "./store";
 export interface AuthState {
   user: User | null;
@@ -109,7 +110,6 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
         // Show a user-friendly toast so the user knows why sign-in failed
         try {
           const parsed = JSON.parse(oauthError);
-          const { toast } = await import("react-hot-toast");
           if (parsed.type === "user_missing_id") {
             toast.error(
               "Slack sign-in failed: the app is misconfigured. Please contact the admin.",
@@ -122,7 +122,6 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
           }
         } catch {
           // oauthError wasn't JSON — show a generic message
-          const { toast } = await import("react-hot-toast");
           toast.error("Sign-in failed. Please try again.", { duration: 5000 });
         }
         set({ user: null, isAuthenticated: false, loading: false });
@@ -148,7 +147,6 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
 
         // Only toast after an active OAuth redirect, not on silent page-refresh restores.
         if (isOAuthReturn) {
-          const { toast } = await import("react-hot-toast");
           toast.success(`Signed in as ${user.email}`, { duration: 4000 });
         }
       } else {
