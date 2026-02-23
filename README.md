@@ -125,21 +125,71 @@ src/
 
 ## Testing
 
-The application includes a comprehensive test suite covering unit and integration tests.
+The application has a foundational test suite built with **Vitest** and **React Testing Library**, covering components, global state, mocked API calls, and user interactions.
+
+### Commands
 
 ```bash
-# Run all tests
+# Run all tests once
 npm test
 
-# Run with UI coverage report
+# Run in watch mode (re-runs on file changes)
 npm run test:ui
+
+# Generate coverage report
+npm run test:coverage
 ```
 
-**Coverage Areas:**
-- Authentication Logic
-- Protected Routes
-- Theme Context
-- State Store Reducers
+### Test Structure
+
+Tests are co-located with their source files in `__tests__` subdirectories:
+
+```
+src/
+├── components/
+│   ├── board/__tests__/
+│   │   ├── TaskCard.test.tsx     # Renders title, subtask count, modal on click
+│   │   └── Column.test.tsx       # Renders name, task count, empty state
+│   ├── modals/__tests__/
+│   │   └── AddBoardModal.test.tsx # Form input, submit, validation
+│   └── __tests__/
+│       └── ProtectedRoute.test.tsx # Auth redirect, authenticated access
+├── context/__tests__/
+│   └── ThemeContext.test.tsx     # Theme toggle, persistence, document class
+├── pages/__tests__/
+│   ├── Dashboard.test.tsx        # Loading/error/empty/data states
+│   ├── Login.test.tsx            # Form rendering, input values
+│   └── NotFound.test.tsx         # 404 page rendering
+├── services/__tests__/
+│   └── boardApi.test.ts          # Mocked Appwrite CRUD + error paths + localStorage fallback
+└── store/__tests__/
+    └── boardSlice.test.ts        # fetchBoards, createBoard, deleteBoard state transitions
+```
+
+### What Is Tested
+
+| Area | Test File(s) | Key Assertions |
+|---|---|---|
+| **Environment** | `vitest.config.ts`, `setupTests.ts` | jsdom, globals, jest-dom matchers |
+| **Components** | `TaskCard`, `Column`, `Dashboard` | Props → DOM, loading/error/empty states |
+| **State** | `boardSlice.test.ts` | Loading flags, data population, error handling |
+| **API (Mocked)** | `boardApi.test.ts` | vi.mock on Appwrite, success + error + fallback |
+| **User Interactions** | `AddBoardModal`, `ProtectedRoute` | userEvent / fireEvent, form submission, redirects |
+
+### Configuration
+
+- **Framework:** Vitest v2 with jsdom environment
+- **Config file:** `vitest.config.ts`
+- **Setup file:** `src/setupTests.ts` (registers `@testing-library/jest-dom` matchers)
+- **Coverage provider:** v8 with text + HTML reporters
+- **Coverage report:** `coverage/index.html` after running `npm run test:coverage`
+
+### Adding New Tests
+
+1. Create a `__tests__/` folder next to the file you want to test
+2. Name the file `ComponentName.test.tsx` (or `.test.ts` for non-React)
+3. Mock any external dependencies with `vi.mock()`
+4. Use `useStore.setState(...)` to set up Zustand state for component tests
 
 ---
 
