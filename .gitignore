@@ -31,3 +31,4 @@ dist-ssr
 
 # Build output
 build
+coverage
