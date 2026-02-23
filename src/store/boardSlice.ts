@@ -1,11 +1,19 @@
-import type { Board } from '../types';
-import { boardService } from '../services/boardService';
-import type { StoreSet, StoreGet } from './store';
-import type { BoardState } from './boardTypes';
+import type { Board } from "../types";
+import { boardService } from "../services/boardService";
+import type { StoreSet, StoreGet } from "./store";
+import type { BoardState } from "./boardTypes";
 
-type BoardSlice = Pick<BoardState,
-  'boards' | 'currentBoard' | 'boardLoading' | 'boardError' |
-  'fetchBoards' | 'setCurrentBoard' | 'createBoard' | 'updateBoard' | 'deleteBoard'
+type BoardSlice = Pick<
+  BoardState,
+  | "boards"
+  | "currentBoard"
+  | "boardLoading"
+  | "boardError"
+  | "fetchBoards"
+  | "setCurrentBoard"
+  | "createBoard"
+  | "updateBoard"
+  | "deleteBoard"
 >;
 
 export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
@@ -17,21 +25,27 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
   fetchBoards: async (userId) => {
     set({ boardLoading: true, boardError: null });
     try {
-      const boards = await boardService.getBoards(userId);
-      const currentBoard = get().currentBoard || (boards.length > 0 ? boards[0] : null);
+      const rawBoards = await boardService.getBoards(userId);
+      const boardsWithTasks = await Promise.all(
+        rawBoards.map(async (board) => {
+          if (!board.id) return board;
+          const tasks = await boardService.getTasks(board.id);
+          const columnsWithTasks = board.columns.map((col) => ({
+            ...col,
+            tasks: tasks.filter((task) => task.status === col.name),
+          }));
+          return { ...board, columns: columnsWithTasks };
+        }),
+      );
 
-      if (currentBoard?.id) {
-        const tasks = await boardService.getTasks(currentBoard.id);
-        const columnsWithTasks = currentBoard.columns.map(col => ({
-          ...col,
-          tasks: tasks.filter(task => task.status === col.name)
-        }));
-        const enrichedBoard = { ...currentBoard, columns: columnsWithTasks };
-        const updatedBoards = boards.map(b => b.id === enrichedBoard.id ? enrichedBoard : b);
-        set({ boards: updatedBoards, currentBoard: enrichedBoard, boardLoading: false });
-      } else {
-        set({ boards, currentBoard, boardLoading: false });
-      }
+      // Only reuse currentBoard if it belongs to the fetched set;
+      // otherwise default to the first board (prevents stale data
+      // leaking across accounts).
+      const prev = get().currentBoard;
+      const currentBoard =
+        (prev && boardsWithTasks.find((b) => b.id === prev.id)) ||
+        (boardsWithTasks.length > 0 ? boardsWithTasks[0] : null);
+      set({ boards: boardsWithTasks, currentBoard, boardLoading: false });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
     }
@@ -42,11 +56,14 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
     if (board.id) {
       try {
         const tasks = await boardService.getTasks(board.id);
-        const columnsWithTasks = board.columns.map(col => ({
+        const columnsWithTasks = board.columns.map((col) => ({
           ...col,
-          tasks: tasks.filter(task => task.status === col.name)
+          tasks: tasks.filter((task) => task.status === col.name),
         }));
-        set({ currentBoard: { ...board, columns: columnsWithTasks }, boardLoading: false });
+        set({
+          currentBoard: { ...board, columns: columnsWithTasks },
+          boardLoading: false,
+        });
       } catch (error: any) {
         set({ boardError: error.message, boardLoading: false });
       }
@@ -58,7 +75,11 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
     try {
       const newBoard = await boardService.createBoard(userId, board);
       const { boards } = get();
-      set({ boards: [...boards, newBoard], currentBoard: newBoard, boardLoading: false });
+      set({
+        boards: [...boards, newBoard],
+        currentBoard: newBoard,
+        boardLoading: false,
+      });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
       throw error;
@@ -70,11 +91,16 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
     try {
       const updatedBoard = await boardService.updateBoard(boardId, updates);
       const { boards, currentBoard } = get();
-      const updatedBoards = boards.map(b => b.id === boardId ? { ...b, ...updatedBoard } : b);
+      const updatedBoards = boards.map((b) =>
+        b.id === boardId ? { ...b, ...updatedBoard } : b,
+      );
       set({
         boards: updatedBoards,
-        currentBoard: currentBoard?.id === boardId ? { ...currentBoard, ...updatedBoard } : currentBoard,
-        boardLoading: false
+        currentBoard:
+          currentBoard?.id === boardId
+            ? { ...currentBoard, ...updatedBoard }
+            : currentBoard,
+        boardLoading: false,
       });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
@@ -87,9 +113,14 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
     try {
       await boardService.deleteBoard(boardId);
       const { boards, currentBoard } = get();
-      const updatedBoards = boards.filter(b => b.id !== boardId);
-      const newCurrent = currentBoard?.id === boardId ? (updatedBoards[0] || null) : currentBoard;
-      set({ boards: updatedBoards, currentBoard: newCurrent, boardLoading: false });
+      const updatedBoards = boards.filter((b) => b.id !== boardId);
+      const newCurrent =
+        currentBoard?.id === boardId ? updatedBoards[0] || null : currentBoard;
+      set({
+        boards: updatedBoards,
+        currentBoard: newCurrent,
+        boardLoading: false,
+      });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
       throw error;
