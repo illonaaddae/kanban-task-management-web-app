@@ -3,7 +3,7 @@
   padding: 23px 16px;
   border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(54, 78, 126, 0.10);
+  box-shadow: none;
   transition: all 0.2s ease;
   touch-action: none; /* Prevent browser scrolling while dragging */
   outline: none; /* Remove focus outline */

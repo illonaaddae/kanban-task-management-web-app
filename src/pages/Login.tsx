@@ -8,6 +8,7 @@ import { OAuthButtons } from "./OAuthButtons";
 import toast from "react-hot-toast";
 import styles from "./Login.module.css";
 import { Loader } from "../components/ui/Loader";
+import { Logo } from "../components/ui/Logo";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -74,7 +75,8 @@ export function Login() {
 
     return (
       <div className={styles.container}>
-        <div className={`${styles.card} ${styles.welcomeBack}`}>
+        <div className={styles.leftSide}>
+          <div className={`${styles.card} ${styles.welcomeBack}`}>
           <div className={styles.avatar}>{initials}</div>
           <h1 className={styles.title}>Welcome back!</h1>
           {user?.name && <p className={styles.userName}>{user.name}</p>}
@@ -98,6 +100,15 @@ export function Login() {
             </button>
           </div>
         </div>
+        </div>
+        <div className={styles.rightSide}>
+          <div className={styles.logoWrapper}>
+            <Logo />
+          </div>
+          <p className={styles.description}>
+            A powerful task management tool to keep your projects organized and your team aligned. Track progress, manage workflows, and collaborate seamlessly.
+          </p>
+        </div>
       </div>
     );
   }
@@ -105,7 +116,8 @@ export function Login() {
   // ── Sign-in / Sign-up form ───────────────────────────────────────
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
+      <div className={styles.leftSide}>
+        <div className={styles.card}>
         <h1 className={styles.title}>
           {isRegistering ? "Create Account" : "Welcome Back"}
         </h1>
@@ -178,6 +190,15 @@ export function Login() {
             <strong>Demo:</strong> Enter any username and password to login
           </p>
         )}
+      </div>
+      </div>
+      <div className={styles.rightSide}>
+        <div className={styles.logoWrapper}>
+          <Logo />
+        </div>
+        <p className={styles.description}>
+          A powerful task management tool to keep your projects organized and your team aligned. Track progress, manage workflows, and collaborate seamlessly.
+        </p>
       </div>
     </div>
   );

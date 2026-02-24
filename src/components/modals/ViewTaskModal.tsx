@@ -56,6 +56,9 @@ export function ViewTaskModal({ isOpen, onClose, task, boardId }: ViewTaskModalP
           <TaskActionsMenu onEdit={() => setShowEditModal(true)} onDelete={() => setShowDeleteModal(true)} />
         </div>
         <div className={styles.content}>
+          <div className={styles.section}>
+            <Dropdown label="Current Status" value={task.status} onChange={handleStatusChange} options={statusOptions} />
+          </div>
           {task.description && <p className={styles.description}>{task.description}</p>}
           {task.subtasks && task.subtasks.length > 0 && (
             <div className={styles.section}>
@@ -68,9 +71,6 @@ export function ViewTaskModal({ isOpen, onClose, task, boardId }: ViewTaskModalP
               </div>
             </div>
           )}
-          <div className={styles.section}>
-            <Dropdown label="Current Status" value={task.status} onChange={handleStatusChange} options={statusOptions} />
-          </div>
         </div>
       </Modal>
       {task.id && <EditTaskModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} boardId={boardId} task={task} />}

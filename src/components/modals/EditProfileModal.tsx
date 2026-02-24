@@ -41,7 +41,8 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!user) return;
     setLoading(true); setError(null);
     try {
@@ -62,7 +63,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
-      <div className={styles.container}>
+      <form onSubmit={handleSubmit} className={styles.container}>
         <AvatarUpload avatarUrl={getAvatarUrl()} userInitial={user?.name?.charAt(0).toUpperCase() || ''}
           avatarPreview={avatarPreview} loading={loading} onFileChange={handleAvatarChange}
           onRemovePreview={() => { setAvatarFile(null); setAvatarPreview(null); }} />
@@ -77,12 +78,12 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
           </div>
         </div>
         <div className={styles.actions}>
-          <Button variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={loading}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={loading}>
             {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }

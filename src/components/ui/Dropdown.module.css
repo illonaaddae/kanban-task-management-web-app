@@ -65,6 +65,11 @@
   overflow-y: auto;
 }
 
+.menu.up {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
 .option {
   width: 100%;
   padding: 8px 0;

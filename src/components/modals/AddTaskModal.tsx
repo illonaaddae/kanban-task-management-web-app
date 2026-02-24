@@ -39,7 +39,8 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!board?.id || !user) return;
     const errors = subtasks.map(st => st.trim() === '');
     if (errors.some(Boolean)) { setSubtaskErrors(errors); }
@@ -65,9 +66,10 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className={styles.title}>Add New Task</h2>
-      <div className={styles.content}>
+      <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Title" placeholder="e.g. Take coffee break" value={title}
           onChange={(e) => setTitle(e.target.value)} />
+        <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
         <div className={styles.field}>
           <label className={styles.label}>Description</label>
           <textarea className={styles.textarea} value={description}
@@ -78,9 +80,8 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
           onAdd={() => { setSubtasks([...subtasks, '']); setSubtaskErrors([...subtaskErrors, false]); }}
           onRemove={(i) => { setSubtasks(subtasks.filter((_, j) => j !== i)); setSubtaskErrors(subtaskErrors.filter((_, j) => j !== i)); }}
           onChange={handleSubtaskChange} />
-        <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
-        <Button variant="primary" onClick={handleSubmit} size="large">Create Task</Button>
-      </div>
+        <Button type="submit" variant="primary" size="large">Create Task</Button>
+      </form>
     </Modal>
   );
 }

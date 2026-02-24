@@ -6,7 +6,7 @@ export function ToastProvider() {
 
   return (
     <Toaster
-      position="bottom-right"
+      position="top-center"
       toastOptions={{
         duration: 3000,
         style: {
