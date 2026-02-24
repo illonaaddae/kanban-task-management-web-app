@@ -77,7 +77,11 @@ export function Login() {
       <div className={styles.container}>
         <div className={styles.leftSide}>
           <div className={`${styles.card} ${styles.welcomeBack}`}>
-          <div className={styles.avatar}>{initials}</div>
+          {user?.avatar ? (
+            <img src={user.avatar} alt={user.name || user.email || 'User Avatar'} className={styles.avatarImage} />
+          ) : (
+            <div className={styles.avatar}>{initials}</div>
+          )}
           <h1 className={styles.title}>Welcome back!</h1>
           {user?.name && <p className={styles.userName}>{user.name}</p>}
           <p className={styles.userEmail}>{user?.email}</p>

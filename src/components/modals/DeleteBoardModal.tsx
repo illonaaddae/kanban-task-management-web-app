@@ -35,7 +35,17 @@ export function DeleteBoardModal({
 
     try {
       await deleteBoard(resolvedBoardId);
-      toast.success(`Board '${boardName}' deleted successfully`);
+      toast(`Board '${boardName}' deleted successfully`, {
+        icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        ),
+        style: {
+          background: 'var(--red)',
+          color: '#fff',
+        },
+      });
     } catch (error) {
       console.error('Failed to delete board', error);
       toast.error('Failed to delete board');
