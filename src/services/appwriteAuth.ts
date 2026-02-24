@@ -236,7 +236,7 @@ export class AppwriteAuthService implements AuthService {
           );
           const avatarUrl = storage.getFileView(STORAGE_BUCKET_ID, file.$id);
           const user = await account.get();
-          await account.updatePrefs({ ...user.prefs, avatar: avatarUrl });
+          await account.updatePrefs({ ...user.prefs, avatar: avatarUrl.toString() });
         } catch (uploadError) {
           console.error("Failed to upload avatar:", uploadError);
           throw new Error("Failed to upload profile picture");

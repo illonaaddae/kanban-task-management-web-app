@@ -35,7 +35,13 @@ export function DeleteBoardModal({
 
     try {
       await deleteBoard(resolvedBoardId);
-      toast.success(`Board '${boardName}' deleted successfully`);
+      toast(`Board '${boardName}' deleted successfully`, {
+        icon: '🗑️',
+        style: {
+          background: 'var(--red)',
+          color: '#fff',
+        },
+      });
     } catch (error) {
       console.error('Failed to delete board', error);
       toast.error('Failed to delete board');

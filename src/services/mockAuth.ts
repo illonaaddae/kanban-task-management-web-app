@@ -7,7 +7,7 @@ export class MockAuthService implements AuthService {
       id: "1",
       email,
       name: email.split("@")[0],
-      avatar: undefined,
+      avatar: localStorage.getItem("kanban_avatar") || undefined,
     };
     localStorage.setItem("kanban_user", user.name);
     return user;

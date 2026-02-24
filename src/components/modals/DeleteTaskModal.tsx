@@ -23,7 +23,13 @@ export function DeleteTaskModal({
   const handleDelete = async () => {
     try {
       await deleteTask(taskId, boardId);
-      toast.success(`Task '${taskTitle}' deleted`);
+      toast(`Task '${taskTitle}' deleted`, {
+        icon: '🗑️',
+        style: {
+          background: 'var(--red)',
+          color: '#fff',
+        },
+      });
       onClose();
     } catch (error) {
       console.error('Failed to delete task', error);
