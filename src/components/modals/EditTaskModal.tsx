@@ -49,7 +49,8 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!task?.id || !board) return;
     const errors = subtasks.map(st => st.title.trim() === '');
     if (errors.some(Boolean)) setSubtaskErrors(errors);
@@ -82,9 +83,10 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className={styles.title}>Edit Task</h2>
-      <div className={styles.content}>
+      <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Title" placeholder="e.g. Take coffee break" value={title}
           onChange={(e) => setTitle(e.target.value)} />
+        <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
         <div className={styles.field}>
           <label className={styles.label}>Description</label>
           <textarea className={styles.textarea} value={description}
@@ -95,9 +97,8 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
           onAdd={() => { setSubtasks([...subtasks, { title: '', isCompleted: false }]); setSubtaskErrors([...subtaskErrors, false]); }}
           onRemove={(i) => { setSubtasks(subtasks.filter((_, j) => j !== i)); setSubtaskErrors(subtaskErrors.filter((_, j) => j !== i)); }}
           onChange={handleSubtaskChange} />
-        <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
-        <Button variant="primary" onClick={handleSubmit} size="large">Save Changes</Button>
-      </div>
+        <Button type="submit" variant="primary" size="large">Save Changes</Button>
+      </form>
     </Modal>
   );
 }

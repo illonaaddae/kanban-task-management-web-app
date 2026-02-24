@@ -27,7 +27,8 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
     if (board) { setName(board.name); setColumns(board.columns.map(c => c.name)); }
   }, [board]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!name.trim() || !board?.id) return;
     const filtered = columns.filter(c => c.trim());
     if (!filtered.length) return;
@@ -55,15 +56,15 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className={styles.title}>Edit Board</h2>
-      <div className={styles.content}>
+      <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Board Name" placeholder="e.g. Web Design" value={name}
           onChange={(e) => setName(e.target.value)} />
         <ColumnInputs columns={columns}
           onAdd={() => setColumns([...columns, ''])}
           onRemove={(i) => setColumns(columns.filter((_, j) => j !== i))}
           onChange={(i, v) => { const u = [...columns]; u[i] = v; setColumns(u); }} />
-        <Button variant="primary" onClick={handleSubmit} size="large">Save Changes</Button>
-      </div>
+        <Button type="submit" variant="primary" size="large">Save Changes</Button>
+      </form>
     </Modal>
   );
 }

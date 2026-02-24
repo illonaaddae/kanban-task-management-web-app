@@ -1,10 +1,55 @@
 .container {
   min-height: 100vh;
+  width: 100%;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-primary);
+}
+
+.leftSide {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
   padding: 2rem;
+}
+
+.rightSide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  padding: 2rem;
+  text-align: center;
+}
+
+.logoWrapper {
+  margin: 0 auto 1.5rem auto;
+  display: flex;
+  justify-content: center;
+}
+
+.logoWrapper > div {
+  padding: 0 !important;
+}
+
+.description {
+  color: var(--text-secondary);
+  max-width: 400px;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin: 0 auto;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+  .rightSide {
+    display: none;
+  }
 }
 
 .card {

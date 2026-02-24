@@ -7,9 +7,10 @@ interface DropdownProps {
   options: { value: string; label: string }[];
   label?: string;
   placeholder?: string;
+  direction?: 'down' | 'up';
 }
 
-export function Dropdown({ value, onChange, options, label, placeholder }: DropdownProps) {
+export function Dropdown({ value, onChange, options, label, placeholder, direction = 'down' }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -45,7 +46,7 @@ export function Dropdown({ value, onChange, options, label, placeholder }: Dropd
       </button>
       
       {isOpen && (
-        <ul className={styles.menu} role="listbox">
+        <ul className={`${styles.menu} ${direction === 'up' ? styles.up : ''}`} role="listbox">
           {options.map((option) => (
             <li key={option.value}>
               <button
