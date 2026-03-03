@@ -84,14 +84,9 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
     }
   },
   checkSession: async () => {
-    if (_checkingSession) {
-      console.log("[checkSession] Already checking session, skipping");
-      return;
-    }
+    if (_checkingSession) return;
     _checkingSession = true;
     set({ loading: true });
-
-    console.log("[checkSession] Starting session check");
 
     try {
       const params = new URLSearchParams(window.location.search);
@@ -135,7 +130,6 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
       );
 
       if (user) {
-        console.log("[checkSession] User resolved:", user.email);
         set({
           user,
           isAuthenticated: true,
@@ -150,7 +144,6 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
           toast.success(`Signed in as ${user.email}`, { duration: 4000 });
         }
       } else {
-        console.log("[checkSession] No active session");
         set({ user: null, isAuthenticated: false, loading: false });
       }
     } catch (error: any) {
@@ -158,7 +151,6 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
       set({ user: null, isAuthenticated: false, loading: false });
     } finally {
       _checkingSession = false;
-      console.log("[checkSession] Session check complete");
     }
   },
 });

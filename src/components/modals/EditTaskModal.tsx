@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
@@ -22,6 +22,7 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
   const moveTask = useStore((state) => state.moveTask);
 
   const [title, setTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState<{ title: string; isCompleted: boolean }[]>([]);
   const [status, setStatus] = useState('');
@@ -49,12 +50,17 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!task?.id || !board) return;
+    let hasError = false;
+    if (!title.trim()) { setTitleError('Title cannot be empty'); hasError = true; }
+    else { setTitleError(''); }
+
     const errors = subtasks.map(st => st.title.trim() === '');
-    if (errors.some(Boolean)) setSubtaskErrors(errors);
-    if (!title.trim() || errors.some(Boolean)) return;
+    if (errors.some(Boolean)) { setSubtaskErrors(errors); hasError = true; }
+
+    if (hasError) return;
 
     const updatedData: Partial<Task> = {
       title: title.trim(), description: description.trim(),
@@ -85,11 +91,15 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
       <h2 className={styles.title}>Edit Task</h2>
       <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Title" placeholder="e.g. Take coffee break" value={title}
-          onChange={(e) => setTitle(e.target.value)} />
+          maxLength={100} error={titleError}
+          onChange={(e) => { setTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }} />
         <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
         <div className={styles.field}>
-          <label className={styles.label}>Description</label>
-          <textarea className={styles.textarea} value={description}
+          <div className={styles.labelRow}>
+             <label className={styles.label}>Description</label>
+             <span className={styles.charCount}>{description.length}/500</span>
+          </div>
+          <textarea className={styles.textarea} value={description} maxLength={500}
             placeholder="e.g. It's always good to take a break."
             onChange={(e) => setDescription(e.target.value)} rows={4} />
         </div>

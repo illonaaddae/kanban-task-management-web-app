@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
@@ -27,7 +27,7 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
     if (board) { setName(board.name); setColumns(board.columns.map(c => c.name)); }
   }, [board]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim() || !board?.id) return;
     const filtered = columns.filter(c => c.trim());

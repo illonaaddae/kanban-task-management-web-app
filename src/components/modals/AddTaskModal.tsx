@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
@@ -21,6 +21,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
   const user = useStore((state) => state.user);
 
   const [title, setTitle] = useState('');
+  const [titleError, setTitleError] = useState('');
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState<string[]>(['', '']);
   const [status, setStatus] = useState('');
@@ -39,12 +40,17 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!board?.id || !user) return;
+    let hasError = false;
+    if (!title.trim()) { setTitleError('Title cannot be empty'); hasError = true; }
+    else { setTitleError(''); }
+
     const errors = subtasks.map(st => st.trim() === '');
-    if (errors.some(Boolean)) { setSubtaskErrors(errors); }
-    if (!title.trim() || errors.some(Boolean)) return;
+    if (errors.some(Boolean)) { setSubtaskErrors(errors); hasError = true; }
+
+    if (hasError) return;
 
     try {
       await createTask(board.id, user.id, {
@@ -52,7 +58,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
         subtasks: subtasks.filter(st => st.trim()).map(st => ({ title: st.trim(), isCompleted: false }))
       });
       toast.success(`Task '${title.trim()}' created!`);
-      setTitle(''); setDescription(''); setSubtasks(['', '']);
+      setTitle(''); setTitleError(''); setDescription(''); setSubtasks(['', '']);
       setSubtaskErrors([false, false]); setStatus(statusOptions[0]?.value || '');
       onClose();
     } catch (error) {
@@ -68,11 +74,15 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
       <h2 className={styles.title}>Add New Task</h2>
       <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Title" placeholder="e.g. Take coffee break" value={title}
-          onChange={(e) => setTitle(e.target.value)} />
+          maxLength={100} error={titleError}
+          onChange={(e) => { setTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }} />
         <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
         <div className={styles.field}>
-          <label className={styles.label}>Description</label>
-          <textarea className={styles.textarea} value={description}
+          <div className={styles.labelRow}>
+             <label className={styles.label}>Description</label>
+             <span className={styles.charCount}>{description.length}/500</span>
+          </div>
+          <textarea className={styles.textarea} value={description} maxLength={500}
             placeholder="e.g. It's always good to take a break."
             onChange={(e) => setDescription(e.target.value)} rows={4} />
         </div>

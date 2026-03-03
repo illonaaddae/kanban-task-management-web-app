@@ -22,12 +22,12 @@ const TASKS_COLLECTION = 'tasks';
 
 async function setupDatabase() {
   try {
-    console.log('🚀 Starting Appwrite database setup...\n');
+    console.log(' Starting Appwrite database setup...\n');
 
     // Create database
-    console.log('📦 Creating database...');
+    console.log(' Creating database...');
     const database = await databases.create(DATABASE_ID, 'Kanban Database');
-    console.log('✅ Database created:', database.name);
+    console.log(' Database created:', database.name);
 
     // Create boards collection
     console.log('\n📋 Creating boards collection...');
@@ -36,7 +36,7 @@ async function setupDatabase() {
       BOARDS_COLLECTION,
       'Boards'
     );
-    console.log('✅ Boards collection created');
+    console.log(' Boards collection created');
 
     // Add attributes to boards collection
     console.log('  Adding attributes...');
@@ -45,7 +45,7 @@ async function setupDatabase() {
     await databases.createStringAttribute(DATABASE_ID, BOARDS_COLLECTION, 'columns', 10000, true);
     await databases.createDatetimeAttribute(DATABASE_ID, BOARDS_COLLECTION, 'createdAt', true);
     await databases.createDatetimeAttribute(DATABASE_ID, BOARDS_COLLECTION, 'updatedAt', true);
-    console.log('✅ Boards attributes created');
+    console.log(' Boards attributes created');
 
     // Create tasks collection
     console.log('\n📝 Creating tasks collection...');
@@ -54,7 +54,7 @@ async function setupDatabase() {
       TASKS_COLLECTION,
       'Tasks'
     );
-    console.log('✅ Tasks collection created');
+    console.log(' Tasks collection created');
 
     // Add attributes to tasks collection
     console.log('  Adding attributes...');
@@ -66,10 +66,10 @@ async function setupDatabase() {
     await databases.createStringAttribute(DATABASE_ID, TASKS_COLLECTION, 'subtasks', 10000, false);
     await databases.createDatetimeAttribute(DATABASE_ID, TASKS_COLLECTION, 'createdAt', true);
     await databases.createDatetimeAttribute(DATABASE_ID, TASKS_COLLECTION, 'updatedAt', true);
-    console.log('✅ Tasks attributes created');
+    console.log(' Tasks attributes created');
 
-    console.log('\n🎉 Database setup complete!');
-    console.log('\n📝 Next steps:');
+    console.log('\ Database setup complete!');
+    console.log('\ Next steps:');
     console.log('1. Go to Appwrite Console → Databases → kanban-db');
     console.log('2. Configure permissions for each collection');
     console.log('3. Update your .env file with the database ID');
@@ -78,8 +78,8 @@ async function setupDatabase() {
     console.log('Tasks Collection ID: tasks');
 
   } catch (error) {
-    console.error('\n❌ Error setting up database:', error);
-    console.log('\n💡 If the database already exists, you can skip this step.');
+    console.error('\❌ Error setting up database:', error);
+    console.log('\💡 If the database already exists, you can skip this step.');
   }
 }
 

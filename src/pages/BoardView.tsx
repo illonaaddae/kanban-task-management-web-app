@@ -65,8 +65,9 @@ export function BoardView() {
   if (boardLoading) {
     return (
       <div className={styles.container}>
-        <div className={styles.empty}>
-          <Loader /> <span>Loading board...</span>
+        <div className={styles.loadingState}>
+          <Loader />
+          <span>Loading board...</span>
         </div>
       </div>
     );
