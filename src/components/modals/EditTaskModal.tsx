@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
@@ -50,7 +50,7 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!task?.id || !board) return;
     let hasError = false;

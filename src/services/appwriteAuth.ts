@@ -74,8 +74,6 @@ export class AppwriteAuthService implements AuthService {
   }
 
   async register(email: string, password: string, name: string): Promise<User> {
-    console.log("[Register] Starting registration for:", email);
-    
     // Validate inputs
     if (!name || name.trim().length === 0) {
       throw new Error("Name is required");
@@ -93,18 +91,12 @@ export class AppwriteAuthService implements AuthService {
       // Destroy any existing session before registering
       try {
         await account.deleteSessions();
-        console.log("[Register] Cleared existing sessions");
       } catch {
         /* no session — fine */
       }
       
-      console.log("[Register] Creating user account...");
       const user = await account.create(ID.unique(), email, password, name);
-      console.log("[Register] User created with ID:", user.$id);
-      
-      console.log("[Register] Creating email/password session...");
       await account.createEmailPasswordSession(email, password);
-      console.log("[Register] Session created successfully");
       
       return {
         id: user.$id,
@@ -179,8 +171,6 @@ export class AppwriteAuthService implements AuthService {
   ): Promise<User | null> {
     try {
       if (oauthUserId && oauthSecret) {
-        console.log("[OAuth] Exchanging token for session — userId:", oauthUserId);
-
         // Delete any stale session first so there's no conflict.
         try { await account.deleteSession('current'); } catch { /* no active session */ }
 
@@ -189,8 +179,6 @@ export class AppwriteAuthService implements AuthService {
         // cross-site cookie restrictions entirely.
         await account.createSession(oauthUserId, oauthSecret);
         const user = await account.get();
-
-        console.log("[OAuth] Session created — user:", user.email, "(id:", user.$id + ")");
 
         if (user.$id !== oauthUserId) {
           console.error("[OAuth] User ID mismatch — expected:", oauthUserId, "got:", user.$id);

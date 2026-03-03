@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { authService } from '../../services/authService';
 import { Modal } from './Modal';
@@ -41,7 +41,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
     if (!user) return;
     setLoading(true); setError(null);

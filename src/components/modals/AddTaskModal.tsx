@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
@@ -40,7 +40,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!board?.id || !user) return;
     let hasError = false;

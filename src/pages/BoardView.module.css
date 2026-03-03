@@ -27,6 +27,18 @@
   max-width: 400px;
 }
 
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: calc(100vh - 160px);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .newColumn {
   min-width: 280px;
   background: linear-gradient(180deg, rgba(99, 95, 199, 0.1) 0%, rgba(99, 95, 199, 0.05) 100%);

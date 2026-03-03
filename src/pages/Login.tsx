@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/store";
 import { useShallow } from "zustand/react/shallow";
@@ -32,7 +32,7 @@ export function Login() {
   const navigate = useNavigate();
   const useAppwrite = import.meta.env.VITE_USE_APPWRITE === "true";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       if (isRegistering) {

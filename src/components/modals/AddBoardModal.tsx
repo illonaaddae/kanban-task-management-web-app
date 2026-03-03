@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
@@ -18,7 +18,7 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>(['Todo', 'Doing']);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim() || !user) return;
     const filtered = columns.filter(c => c.trim());
