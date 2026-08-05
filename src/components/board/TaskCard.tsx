@@ -5,6 +5,7 @@ import { ViewTaskModal } from '../modals/ViewTaskModal';
 import styles from './TaskCard.module.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useBoardPermissions } from '../../hooks/useBoardPermissions';
 
 interface TaskCardProps {
   task: Task;
@@ -15,6 +16,7 @@ interface TaskCardProps {
 
 export const TaskCard = memo(function TaskCard({ task, columnIndex, taskIndex, boardId }: TaskCardProps) {
   const viewModal = useModal();
+  const { canEdit } = useBoardPermissions();
   
   const completedSubtasks = task.subtasks.filter(st => st.isCompleted).length;
   const totalSubtasks = task.subtasks.length;
@@ -28,6 +30,7 @@ export const TaskCard = memo(function TaskCard({ task, columnIndex, taskIndex, b
     isDragging,
   } = useSortable({
     id: `task-${columnIndex}-${taskIndex}`,
+    disabled: !canEdit,
     data: {
       type: 'task',
       task,
@@ -49,6 +52,8 @@ export const TaskCard = memo(function TaskCard({ task, columnIndex, taskIndex, b
     }
   };
 
+  // Viewers can still open a card to read it — they just get no drag listeners.
+
   return (
     <>
       <div 
@@ -57,7 +62,7 @@ export const TaskCard = memo(function TaskCard({ task, columnIndex, taskIndex, b
         className={styles.card}
         onClick={handleClick}
         {...attributes}
-        {...listeners}
+        {...(canEdit ? listeners : {})}
       >
         <h4 className={styles.title}>{task.title}</h4>
         <p className={styles.subtaskCount}>

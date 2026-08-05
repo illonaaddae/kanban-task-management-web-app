@@ -1,0 +1,181 @@
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.inviteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Email takes the room it needs; the role select stays a fixed, readable width. */
+.inviteRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.inviteEmail {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.inviteRole {
+  flex: 0 0 8rem;
+}
+
+@media (max-width: 480px) {
+  .inviteRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inviteRole {
+    flex: 1 1 auto;
+  }
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  /* Long member lists scroll inside the modal rather than pushing it off-screen. */
+  max-height: 15rem;
+  overflow-y: auto;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.member:hover {
+  background: var(--bg-secondary);
+}
+
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.initials {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--purple, #635fc7);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.badgeOwner {
+  background: color-mix(in srgb, var(--purple, #635fc7) 18%, transparent);
+  color: var(--purple, #635fc7);
+}
+
+.roleSelect {
+  flex: 0 0 7rem;
+}
+
+.removeButton {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.removeButton:hover:not(:disabled) {
+  color: var(--red, #ea5555);
+  background: color-mix(in srgb, var(--red, #ea5555) 12%, transparent);
+}
+
+.removeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.empty {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 1.5rem 0;
+  margin: 0;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+}

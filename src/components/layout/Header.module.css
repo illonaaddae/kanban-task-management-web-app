@@ -208,3 +208,23 @@
     display: block !important;
   }
 }
+
+/* Shown in place of "+ Add New Task" when the caller only has viewer access. */
+.readOnlyBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .readOnlyBadge {
+    display: none;
+  }
+}

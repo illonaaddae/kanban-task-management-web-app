@@ -11,6 +11,7 @@ type BoardSlice = Pick<
   | "boardError"
   | "fetchBoards"
   | "setCurrentBoard"
+  | "refreshCurrentBoard"
   | "createBoard"
   | "updateBoard"
   | "deleteBoard"
@@ -25,48 +26,56 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
   fetchBoards: async (userId) => {
     set({ boardLoading: true, boardError: null });
     try {
-      const rawBoards = await boardService.getBoards(userId);
-      const boardsWithTasks = await Promise.all(
-        rawBoards.map(async (board) => {
-          if (!board.id) return board;
-          const tasks = await boardService.getTasks(board.id);
-          const columnsWithTasks = board.columns.map((col) => ({
-            ...col,
-            tasks: tasks.filter((task) => task.status === col.name),
-          }));
-          return { ...board, columns: columnsWithTasks };
-        }),
-      );
+      // `GET /boards/:id/full` already nests tasks under their column, ordered
+      // by position. The old code re-derived that by filtering a flat list on
+      // `task.status === col.name`, which lost the ordering and misfiled every
+      // task when two columns shared a name.
+      const boards = await boardService.getBoards(userId);
 
       // Only reuse currentBoard if it belongs to the fetched set;
       // otherwise default to the first board (prevents stale data
       // leaking across accounts).
       const prev = get().currentBoard;
       const currentBoard =
-        (prev && boardsWithTasks.find((b) => b.id === prev.id)) ||
-        (boardsWithTasks.length > 0 ? boardsWithTasks[0] : null);
-      set({ boards: boardsWithTasks, currentBoard, boardLoading: false });
+        (prev && boards.find((b) => b.id === prev.id)) ||
+        (boards.length > 0 ? boards[0] : null);
+      set({ boards, currentBoard, boardLoading: false });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
     }
   },
 
   setCurrentBoard: async (board: Board) => {
-    set({ currentBoard: board, boardLoading: true });
-    if (board.id) {
-      try {
-        const tasks = await boardService.getTasks(board.id);
-        const columnsWithTasks = board.columns.map((col) => ({
-          ...col,
-          tasks: tasks.filter((task) => task.status === col.name),
-        }));
-        set({
-          currentBoard: { ...board, columns: columnsWithTasks },
-          boardLoading: false,
-        });
-      } catch (error: any) {
-        set({ boardError: error.message, boardLoading: false });
-      }
+    // Show the board we already hold, then refresh it from the server so a
+    // board edited in another tab or by a collaborator is not stale.
+    set({ currentBoard: board, boardLoading: Boolean(board.id) });
+    if (!board.id) return;
+
+    try {
+      const fresh = await boardService.getFullBoard(board.id);
+      const { boards } = get();
+      set({
+        currentBoard: fresh,
+        boards: boards.map((b) => (b.id === fresh.id ? fresh : b)),
+        boardLoading: false,
+      });
+    } catch (error: any) {
+      set({ boardError: error.message, boardLoading: false });
+    }
+  },
+
+  refreshCurrentBoard: async () => {
+    const { currentBoard, boards } = get();
+    if (!currentBoard?.id) return;
+
+    try {
+      const fresh = await boardService.getFullBoard(currentBoard.id);
+      set({
+        currentBoard: fresh,
+        boards: boards.map((b) => (b.id === fresh.id ? fresh : b)),
+      });
+    } catch (error: any) {
+      set({ boardError: error.message });
     }
   },
 

@@ -7,6 +7,7 @@ import { EmptyBoard } from "../components/board/EmptyBoard";
 import { EditBoardModal } from "../components/modals/EditBoardModal";
 import { useModal } from "../hooks/useModal";
 import { useBoardDnd } from "../hooks/useBoardDnd";
+import { useBoardPermissions } from "../hooks/useBoardPermissions";
 import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -39,6 +40,7 @@ export function BoardView() {
     })),
   );
   const editModal = useModal();
+  const { canEdit } = useBoardPermissions();
   const { activeId, setActiveId, sensors, handleDragEnd } =
     useBoardDnd(currentBoard);
 
@@ -50,7 +52,7 @@ export function BoardView() {
   }, [boardId, boards, currentBoard, setCurrentBoard]);
 
   const handleAddColumn = () => {
-    if (!currentBoard?.id) return;
+    if (!canEdit || !currentBoard?.id) return;
     const columns = [
       ...currentBoard.columns,
       { name: "New Column", tasks: [] },
@@ -100,7 +102,14 @@ export function BoardView() {
   if (!currentBoard.columns?.length) {
     return (
       <div className={styles.container}>
-        <EmptyBoard onAddColumn={handleAddColumn} />
+        {canEdit ? (
+          <EmptyBoard onAddColumn={handleAddColumn} />
+        ) : (
+          <div className={styles.empty}>
+            <p>This board has no columns yet.</p>
+            <span>You have view-only access, so you cannot add one.</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -127,9 +136,11 @@ export function BoardView() {
                 boardId={currentBoard.id!}
               />
             ))}
-            <button className={styles.newColumn} onClick={handleAddColumn}>
-              + New Column
-            </button>
+            {canEdit && (
+              <button className={styles.newColumn} onClick={handleAddColumn}>
+                + New Column
+              </button>
+            )}
           </div>
         </SortableContext>
       </div>

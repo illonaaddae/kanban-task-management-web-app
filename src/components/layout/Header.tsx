@@ -9,6 +9,9 @@ import { EditBoardModal } from '../modals/EditBoardModal';
 import { DeleteBoardModal } from '../modals/DeleteBoardModal';
 import { BoardActionsMenu } from './BoardActionsMenu';
 import { ProfileButton } from './ProfileButton';
+import { ShareModal } from '../modals/ShareModal';
+import { ActivityPanel } from '../board/ActivityPanel';
+import { useBoardPermissions } from '../../hooks/useBoardPermissions';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -19,6 +22,9 @@ export function Header() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [showEditBoard, setShowEditBoard] = useState(false);
   const [showDeleteBoard, setShowDeleteBoard] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const { canEdit, canManageBoard } = useBoardPermissions();
 
   const boardId = useMemo(
     () => location.pathname.match(/^\/board\/([^/]+)$/)?.[1] ?? null,
@@ -49,8 +55,18 @@ export function Header() {
         <div className={styles.actions}>
           {isOnBoardView && (
             <>
-              <Button onClick={() => setShowAddTask(true)}>+ Add New Task</Button>
-              <BoardActionsMenu onEditBoard={() => setShowEditBoard(true)} onDeleteBoard={() => setShowDeleteBoard(true)} />
+              {/* Read-only for viewers: no create affordance at all. The API
+                  refuses them too, so this is convenience, not the control. */}
+              {canEdit && <Button onClick={() => setShowAddTask(true)}>+ Add New Task</Button>}
+              {!canEdit && <span className={styles.readOnlyBadge}>View only</span>}
+              <BoardActionsMenu
+                canEdit={canEdit}
+                canManageBoard={canManageBoard}
+                onEditBoard={() => setShowEditBoard(true)}
+                onDeleteBoard={() => setShowDeleteBoard(true)}
+                onShareBoard={() => setShowShare(true)}
+                onViewActivity={() => setShowActivity(true)}
+              />
             </>
           )}
           <ProfileButton />
@@ -61,6 +77,12 @@ export function Header() {
       {isOnBoardView && showEditBoard && <EditBoardModal isOpen={showEditBoard} boardId={boardId!} onClose={() => setShowEditBoard(false)} />}
       {isOnBoardView && showDeleteBoard && (
         <DeleteBoardModal isOpen={showDeleteBoard} boardId={boardId!} onClose={() => setShowDeleteBoard(false)} boardName={currentBoard.name} />
+      )}
+      {isOnBoardView && canManageBoard && showShare && (
+        <ShareModal isOpen={showShare} boardId={boardId!} boardName={currentBoard.name} onClose={() => setShowShare(false)} />
+      )}
+      {isOnBoardView && showActivity && (
+        <ActivityPanel isOpen={showActivity} boardId={boardId!} onClose={() => setShowActivity(false)} />
       )}
     </>
   );

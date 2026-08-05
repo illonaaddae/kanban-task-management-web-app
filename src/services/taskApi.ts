@@ -1,82 +1,125 @@
-import { databases, DATABASE_ID, TASKS_COLLECTION_ID } from '../lib/appwrite';
-import { ID, Query, Permission, Role } from 'appwrite';
-import type { Task } from '../types';
+import { api } from "./api";
+import { toTask, type ApiFullBoard, type ApiTaskDocument } from "./apiShapes";
+import type { Task } from "../types";
 
+/**
+ * Task data access against the Express API.
+ *
+ * Signatures are unchanged from the Appwrite version. No localStorage fallback:
+ * a failure throws so the store can record it and the UI can say so.
+ */
+
+/**
+ * Every task on a board, in column-then-position order.
+ *
+ * Flattened out of the nested board response, so each task carries the
+ * `columnId` the frontend needs to move it without a second lookup.
+ */
 export async function getTasks(boardId: string): Promise<Task[]> {
-  try {
-    const response = await databases.listDocuments(
-      DATABASE_ID, TASKS_COLLECTION_ID,
-      [Query.equal('boardId', boardId)]
-    );
-    return response.documents.map(doc => ({
-      id: doc.$id,
-      title: doc.title,
-      description: doc.description || '',
-      status: doc.status,
-      subtasks: doc.subtasks ? JSON.parse(doc.subtasks) : [],
-    }));
-  } catch (error) {
-    console.error('Error fetching tasks:', error);
-    return [];
-  }
+  const full = await api.get<ApiFullBoard>(`/boards/${boardId}/full`);
+
+  return full.columns.flatMap((column) =>
+    column.tasks.map((task) => toTask(task, column.id)),
+  );
 }
 
-export async function createTask(boardId: string, userId: string, task: Omit<Task, 'id'>): Promise<Task> {
-  try {
-    const response = await databases.createDocument(
-      DATABASE_ID, TASKS_COLLECTION_ID, ID.unique(),
-      {
-        title: task.title,
-        description: task.description || '',
-        status: task.status, boardId, userId,
-        subtasks: JSON.stringify(task.subtasks || []),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      [
-        Permission.read(Role.user(userId)),
-        Permission.update(Role.user(userId)),
-        Permission.delete(Role.user(userId)),
-      ]
+/**
+ * Resolves a column name to its id.
+ *
+ * The frontend's `Task.status` is a column *name*; the API needs a `columnId`.
+ * Callers that already know the id should pass it — this is the fallback for
+ * the existing call sites that only have a status.
+ */
+async function resolveColumnId(boardId: string, status: string): Promise<string> {
+  const full = await api.get<ApiFullBoard>(`/boards/${boardId}/full`);
+  const column = full.columns.find((c) => c.name === status);
+
+  if (!column) {
+    throw new Error(
+      `This board has no column called "${status}". Refresh and try again.`,
     );
-    return {
-      id: response.$id, title: response.title,
-      description: response.description || '', status: response.status,
-      subtasks: response.subtasks ? JSON.parse(response.subtasks) : [],
-    };
-  } catch (error) {
-    console.error('Error creating task:', error);
-    throw new Error('Failed to create task');
   }
+
+  return column.id;
 }
 
-export async function updateTask(taskId: string, updates: Partial<Task>): Promise<Task> {
-  try {
-    const updateData: Record<string, unknown> = { updatedAt: new Date().toISOString() };
-    if (updates.title) updateData.title = updates.title;
-    if (updates.description !== undefined) updateData.description = updates.description;
-    if (updates.status) updateData.status = updates.status;
-    if (updates.subtasks) updateData.subtasks = JSON.stringify(updates.subtasks);
+export async function createTask(
+  boardId: string,
+  _userId: string,
+  task: Omit<Task, "id">,
+): Promise<Task> {
+  const columnId = task.columnId ?? (await resolveColumnId(boardId, task.status));
 
-    const response = await databases.updateDocument(
-      DATABASE_ID, TASKS_COLLECTION_ID, taskId, updateData
-    );
-    return {
-      id: response.$id, title: response.title,
-      description: response.description || '', status: response.status,
-      subtasks: response.subtasks ? JSON.parse(response.subtasks) : [],
-    };
-  } catch (error) {
-    console.error('Error updating task:', error);
-    throw new Error('Failed to update task');
+  const { task: created } = await api.post<{ task: ApiTaskDocument }>("/tasks", {
+    boardId,
+    columnId,
+    title: task.title,
+    description: task.description ?? "",
+    subtasks: task.subtasks ?? [],
+    ...(task.dueDate ? { dueDate: task.dueDate } : {}),
+    ...(task.assignedTo ? { assignedTo: task.assignedTo } : {}),
+  });
+
+  return toTask(created, created.columnId);
+}
+
+/**
+ * Partial update. Subtask toggling comes through here.
+ *
+ * `status`, `columnId` and `position` are stripped: the API rejects them on this
+ * route on purpose, because changing a column is a move. Callers that want to
+ * move a task must use `moveTask`, which also keeps both columns' positions
+ * contiguous — something this endpoint cannot do.
+ */
+export async function updateTask(
+  taskId: string,
+  updates: Partial<Task>,
+): Promise<Task> {
+  const payload: Record<string, unknown> = {};
+
+  if (updates.title !== undefined) payload.title = updates.title;
+  if (updates.description !== undefined) payload.description = updates.description;
+  if (updates.subtasks !== undefined) payload.subtasks = updates.subtasks;
+  if (updates.dueDate !== undefined) payload.dueDate = updates.dueDate;
+  if (updates.assignedTo !== undefined) payload.assignedTo = updates.assignedTo;
+
+  if (Object.keys(payload).length === 0) {
+    // Nothing this route can change — a status-only update means "move", and
+    // sending an empty body would just earn a 400.
+    const { task } = await api.get<{ task: ApiTaskDocument }>(`/tasks/${taskId}`);
+    return toTask(task, task.columnId);
   }
+
+  const { task } = await api.patch<{ task: ApiTaskDocument }>(
+    `/tasks/${taskId}`,
+    payload,
+  );
+
+  return toTask(task, task.columnId);
+}
+
+/**
+ * Persists a drag-and-drop.
+ *
+ * One endpoint for both cases: moving across columns and reordering inside a
+ * single column are the same request, differing only in whether `columnId` is
+ * the task's current column. The server closes the gap in the source column and
+ * opens the slot in the target in one bulkWrite, so both end up contiguous, and
+ * rewrites `status` to the target column's name.
+ */
+export async function moveTask(
+  taskId: string,
+  columnId: string,
+  position: number,
+): Promise<Task> {
+  const { task } = await api.patch<{ task: ApiTaskDocument }>(
+    `/tasks/${taskId}/move`,
+    { columnId, position },
+  );
+
+  return toTask(task, task.columnId);
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  try {
-    await databases.deleteDocument(DATABASE_ID, TASKS_COLLECTION_ID, taskId);
-  } catch (error) {
-    console.error('Error deleting task:', error);
-    throw new Error('Failed to delete task');
-  }
+  await api.delete(`/tasks/${taskId}`);
 }

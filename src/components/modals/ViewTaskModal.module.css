@@ -120,3 +120,39 @@
     gap: 8px;
   }
 }
+
+/* Read-only value display — used for viewer mode, due date and assignee. */
+.readOnlyValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 16px;
+}
+
+.metaItem {
+  min-width: 0;
+}
+
+.overdue {
+  color: var(--red, #ea5555);
+}
+
+.overdueTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red, #ea5555) 15%, transparent);
+  color: var(--red, #ea5555);
+}

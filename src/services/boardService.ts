@@ -7,11 +7,14 @@ import * as taskApi from './taskApi';
 
 export const boardService = {
   getBoards: boardApi.getBoards,
+  getFullBoard: boardApi.getFullBoard,
   createBoard: boardApi.createBoard,
   updateBoard: boardApi.updateBoard,
   deleteBoard: boardApi.deleteBoard,
+  reorderColumns: boardApi.reorderColumns,
   getTasks: taskApi.getTasks,
   createTask: taskApi.createTask,
   updateTask: taskApi.updateTask,
   deleteTask: taskApi.deleteTask,
+  moveTask: taskApi.moveTask,
 };

@@ -1,0 +1,2532 @@
+{
+  "info": {
+    "name": "Kanban API",
+    "_postman_id": "8f2c1d40-6b1e-4a3f-9d5c-3e1a7b4c9d20",
+    "description": "Express + MongoDB backend for the Kanban task management app.\n\n## How to use\n\n1. Select an environment (`Kanban API - Dev` or `Kanban API - Prod`).\n2. Run **Auth → Register (owner)** once, or **Auth → Login (owner)** if the account already exists. Either request saves `{{TOKEN}}`, `{{REFRESH_TOKEN}}` and `{{USER_ID}}` to the environment.\n3. Run **Boards → Create board** — it saves `{{BOARD_ID}}`.\n4. Run **Columns → Create column** twice — the first saves `{{COLUMN_ID}}`, the second `{{COLUMN_ID_2}}`.\n5. Run **Tasks → Create task** — it saves `{{TASK_ID}}`.\n6. **Tasks → Move task across columns** then works end to end.\n\nThe **RBAC → viewer is refused** folder is self-contained: it registers a second account, invites it as a viewer, and demonstrates a 403 on every mutation. Run its requests top to bottom.\n\nAll requests use `{{BASE_URL}}`. Every authenticated request sends `Authorization: Bearer {{TOKEN}}`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "SEED_PASSWORD",
+      "value": "Password123!",
+      "description": "Matches the seed script's default. Override per environment."
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"database is connected\", () => {",
+                  "  pm.expect(pm.response.json().data.database).to.eql(\"connected\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/health",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Unauthenticated. Used as the Render health-check path."
+          }
+        },
+        {
+          "name": "Unknown route (404 envelope)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"names the original URL\", () => {",
+                  "  pm.expect(pm.response.json().message).to.include(\"/nope\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nope",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nope"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (owner)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A fresh address each run, so re-running never hits the 409.",
+                  "pm.environment.set(\"OWNER_EMAIL\", `owner-${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "",
+                  "const { user, accessToken, refreshToken } = pm.response.json().data;",
+                  "pm.environment.set(\"TOKEN\", accessToken);",
+                  "pm.environment.set(\"REFRESH_TOKEN\", refreshToken);",
+                  "pm.environment.set(\"USER_ID\", user.id);",
+                  "",
+                  "pm.test(\"password is never returned\", () => {",
+                  "  pm.expect(user).to.not.have.property(\"password\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Board Owner\",\n  \"email\": \"{{OWNER_EMAIL}}\",\n  \"password\": \"{{SEED_PASSWORD}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Saves TOKEN, REFRESH_TOKEN and USER_ID to the environment."
+          }
+        },
+        {
+          "name": "Register — duplicate email (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 Conflict\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Board Owner\",\n  \"email\": \"{{OWNER_EMAIL}}\",\n  \"password\": \"{{SEED_PASSWORD}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Run straight after Register (owner) — the same address is now taken."
+          }
+        },
+        {
+          "name": "Register — validation (400 with details)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"one details entry per bad field\", () => {",
+                  "  const fields = pm.response.json().details.map((d) => d.field);",
+                  "  pm.expect(fields).to.include.members([\"name\", \"email\", \"password\"]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login (owner)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const { user, accessToken, refreshToken } = pm.response.json().data;",
+                  "pm.environment.set(\"TOKEN\", accessToken);",
+                  "pm.environment.set(\"REFRESH_TOKEN\", refreshToken);",
+                  "pm.environment.set(\"USER_ID\", user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{OWNER_EMAIL}}\",\n  \"password\": \"{{SEED_PASSWORD}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Saves TOKEN. Point OWNER_EMAIL at editor@kanban.dev to log in as the seeded board owner."
+          }
+        },
+        {
+          "name": "Login — wrong password (generic 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"message does not say which half was wrong\", () => {",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Invalid credentials\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{OWNER_EMAIL}}\",\n  \"password\": \"definitely-wrong\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login — unknown email (same 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"identical message — no account enumeration\", () => {",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Invalid credentials\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nobody-here@example.com\",\n  \"password\": \"definitely-wrong\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get me — no token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get me — garbled token (401, not 500)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"a malformed token never reaches the 500 path\", () => {",
+                  "  pm.expect(pm.response.code).to.not.eql(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.jwt"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refresh (rotates the pair)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const previous = pm.environment.get(\"REFRESH_TOKEN\");",
+                  "const { accessToken, refreshToken } = pm.response.json().data;",
+                  "",
+                  "pm.test(\"a new refresh token is issued\", () => {",
+                  "  pm.expect(refreshToken).to.not.eql(previous);",
+                  "});",
+                  "",
+                  "pm.environment.set(\"TOKEN\", accessToken);",
+                  "pm.environment.set(\"REFRESH_TOKEN\", refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{REFRESH_TOKEN}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/refresh",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Update me (name, theme, avatar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"theme persisted\", () => {",
+                  "  pm.expect(pm.response.json().data.user.themePreference).to.eql(\"dark\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Board Owner\",\n  \"themePreference\": \"dark\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/users/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update me — bad theme enum (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"details names themePreference\", () => {",
+                  "  pm.expect(pm.response.json().details[0].field).to.eql(\"themePreference\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"themePreference\": \"neon\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/users/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List users — admin only (403 as editor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden for a non-admin\", () => pm.response.to.have.status(403));",
+                  "// 403, not 401: we know who you are, you just may not do this.",
+                  "// Log in as admin@kanban.dev after seeding to get a 200 here."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/users",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Boards",
+      "item": [
+        {
+          "name": "List boards (own + shared)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"every board carries myRole\", () => {",
+                  "  pm.response.json().data.boards.forEach((b) => pm.expect(b).to.have.property(\"myRole\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "",
+                  "const board = pm.response.json().data.board;",
+                  "pm.environment.set(\"BOARD_ID\", board.id);",
+                  "",
+                  "pm.test(\"the creator is the owner\", () => pm.expect(board.myRole).to.eql(\"owner\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Demo Board\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards"
+              ]
+            },
+            "description": "Accepts `name` or `title`. Saves BOARD_ID."
+          }
+        },
+        {
+          "name": "Get board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get full board (nested)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const payload = pm.response.json().data;",
+                  "pm.test(\"nested shape\", () => {",
+                  "  pm.expect(payload).to.have.keys([\"id\", \"name\", \"myRole\", \"collaborators\", \"columns\"]);",
+                  "});",
+                  "pm.test(\"columns are sorted by position\", () => {",
+                  "  const positions = payload.columns.map((c) => c.position);",
+                  "  pm.expect(positions).to.eql([...positions].sort((a, b) => a - b));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/full",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "full"
+              ]
+            },
+            "description": "The single request the frontend renders a board from."
+          }
+        },
+        {
+          "name": "Rename board (owner only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Demo Board (renamed)\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Board activity (paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"pagination metadata is present\", () => {",
+                  "  pm.expect(pm.response.json().data.pagination).to.have.keys([\"page\", \"limit\", \"total\", \"totalPages\"]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/activity?page=1&limit=10",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "activity"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get board — nonexistent (404 before 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "// Existence is resolved first, so a missing board never reports 403."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/000000000000000000000000",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "000000000000000000000000"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get board — malformed id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/not-an-id",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "not-an-id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Columns",
+      "item": [
+        {
+          "name": "Create column (Todo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "",
+                  "const column = pm.response.json().data.column;",
+                  "pm.environment.set(\"COLUMN_ID\", column.id);",
+                  "",
+                  "pm.test(\"appended at the end\", () => pm.expect(column.position).to.be.a(\"number\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Todo\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/columns",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "columns"
+              ]
+            },
+            "description": "Editor or above. position = maxPosition + 1. Saves COLUMN_ID."
+          }
+        },
+        {
+          "name": "Create column (Doing)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.environment.set(\"COLUMN_ID_2\", pm.response.json().data.column.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Doing\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/columns",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "columns"
+              ]
+            },
+            "description": "Saves COLUMN_ID_2 — the move request needs a second column."
+          }
+        },
+        {
+          "name": "Rename column (syncs task status)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"reports how many tasks had status rewritten\", () => {",
+                  "  pm.expect(pm.response.json().data).to.have.property(\"tasksUpdated\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Backlog\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/columns/{{COLUMN_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "columns",
+                "{{COLUMN_ID}}"
+              ]
+            },
+            "description": "The board is resolved from column.boardId — there is no board in this path."
+          }
+        },
+        {
+          "name": "Reorder columns",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"positions are contiguous from 0\", () => {",
+                  "  const positions = pm.response.json().data.columns.map((c) => c.position);",
+                  "  pm.expect(positions).to.eql(positions.map((_, i) => i));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderedColumnIds\": [\"{{COLUMN_ID_2}}\", \"{{COLUMN_ID}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/columns/reorder",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "columns",
+                "reorder"
+              ]
+            },
+            "description": "The payload must list exactly the board's columns — no partial lists."
+          }
+        },
+        {
+          "name": "Reorder — partial list (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"names the missing ids\", () => {",
+                  "  pm.expect(pm.response.json().details[0].message).to.include(\"Missing\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderedColumnIds\": [\"{{COLUMN_ID}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/columns/reorder",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "columns",
+                "reorder"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "",
+                  "const task = pm.response.json().data.task;",
+                  "pm.environment.set(\"TASK_ID\", task.id);",
+                  "",
+                  "pm.test(\"status mirrors the column title\", () => {",
+                  "  pm.expect(task.status).to.be.a(\"string\").that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": \"{{BOARD_ID}}\",\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"title\": \"Wire up the move endpoint\",\n  \"description\": \"Drag-and-drop persistence\",\n  \"dueDate\": \"2026-12-31\",\n  \"subtasks\": [\n    { \"title\": \"Shift source column\", \"isCompleted\": true },\n    { \"title\": \"Shift target column\", \"isCompleted\": false }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            },
+            "description": "Saves TASK_ID. position = end of the column, status = the column's title."
+          }
+        },
+        {
+          "name": "Create task — second, for the move demo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.environment.set(\"TASK_ID_2\", pm.response.json().data.task.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": \"{{BOARD_ID}}\",\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"title\": \"Second task\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create task — validation (400 with details)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"reports every missing field\", () => {",
+                  "  const fields = pm.response.json().details.map((d) => d.field);",
+                  "  pm.expect(fields).to.include.members([\"boardId\", \"columnId\", \"title\"]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update task (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Wire up the move endpoint (updated)\",\n  \"description\": \"Now with position shifting\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}"
+              ]
+            },
+            "description": "PUT and PATCH are both partial here — unmentioned fields are left alone."
+          }
+        },
+        {
+          "name": "Toggle a subtask (PATCH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"both subtasks are now complete\", () => {",
+                  "  const done = pm.response.json().data.task.subtasks.every((s) => s.isCompleted);",
+                  "  pm.expect(done).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subtasks\": [\n    { \"title\": \"Shift source column\", \"isCompleted\": true },\n    { \"title\": \"Shift target column\", \"isCompleted\": true }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}"
+              ]
+            },
+            "description": "Subtask toggling goes through the ordinary update route — the whole array is replaced."
+          }
+        },
+        {
+          "name": "Update task — columnId is rejected here (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"points at the move endpoint\", () => {",
+                  "  pm.expect(pm.response.json().details[0].message).to.include(\"/tasks/:id/move\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{COLUMN_ID_2}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}"
+              ]
+            },
+            "description": "Rejected rather than silently ignored — a client expecting a move would otherwise get a 200 and no move."
+          }
+        },
+        {
+          "name": "Move task across columns",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const task = pm.response.json().data.task;",
+                  "pm.test(\"landed in the target column\", () => {",
+                  "  pm.expect(task.columnId).to.eql(pm.environment.get(\"COLUMN_ID_2\"));",
+                  "});",
+                  "pm.test(\"position is what we asked for\", () => pm.expect(task.position).to.eql(0));",
+                  "pm.test(\"status was rewritten to the target column's title\", () => {",
+                  "  pm.expect(task.status).to.eql(\"Doing\");",
+                  "});",
+                  "",
+                  "// Follow with Boards → Get full board to see both columns'",
+                  "// positions contiguous from 0."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{COLUMN_ID_2}}\",\n  \"position\": 0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/move",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}",
+                "move"
+              ]
+            },
+            "description": "The drag-and-drop persistence endpoint. Closes the gap in the source column and opens a slot in the target, in one bulkWrite."
+          }
+        },
+        {
+          "name": "Move task — same-column reorder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"same endpoint handles a reorder\", () => {",
+                  "  pm.expect(pm.response.json().data.task.columnId).to.eql(pm.environment.get(\"COLUMN_ID\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"position\": 0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID_2}}/move",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID_2}}",
+                "move"
+              ]
+            },
+            "description": "Reordering inside one column is the same request with the task's current columnId."
+          }
+        },
+        {
+          "name": "Move — negative position (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"position\": -1\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/move",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}",
+                "move"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collaborators",
+      "item": [
+        {
+          "name": "Register a second account (to share with)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"VIEWER_EMAIL\", `viewer-${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "",
+                  "const { user, accessToken } = pm.response.json().data;",
+                  "pm.environment.set(\"VIEWER_TOKEN\", accessToken);",
+                  "pm.environment.set(\"VIEWER_ID\", user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Read Only\",\n  \"email\": \"{{VIEWER_EMAIL}}\",\n  \"password\": \"{{SEED_PASSWORD}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Saves VIEWER_TOKEN and VIEWER_ID."
+          }
+        },
+        {
+          "name": "Invite collaborator by email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"collaborator is resolved in the response\", () => {",
+                  "  pm.expect(pm.response.json().data.board.collaborators).to.be.an(\"array\").that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{VIEWER_EMAIL}}\",\n  \"role\": \"viewer\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators"
+              ]
+            },
+            "description": "Owner only. Run RBAC → Register viewer first so VIEWER_EMAIL exists."
+          }
+        },
+        {
+          "name": "Invite — already a collaborator (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 Conflict\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{VIEWER_EMAIL}}\",\n  \"role\": \"viewer\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Invite — the owner (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"explains the owner already has access\", () => {",
+                  "  pm.expect(pm.response.json().message).to.include(\"owner\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{OWNER_EMAIL}}\",\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Invite — no such account (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nobody-here@example.com\",\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators"
+              ]
+            },
+            "description": "Reachable only by the board owner, so this is not an open account-existence oracle."
+          }
+        },
+        {
+          "name": "Promote collaborator to editor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators/{{VIEWER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators",
+                "{{VIEWER_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove collaborator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators/{{VIEWER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators",
+                "{{VIEWER_ID}}"
+              ]
+            },
+            "description": "Also clears the removed user from any task they were assigned."
+          }
+        }
+      ]
+    },
+    {
+      "name": "RBAC — viewer is refused",
+      "description": "Self-contained demonstration that a viewer can read a board but cannot change anything, and that the API enforces this independently of the UI. Runs after Collaborators, which registers the second account and then removes it again — so step 1 legitimately starts with no access.",
+      "item": [
+        {
+          "name": "1. Viewer cannot even read the board yet (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "// 403, not 404 — otherwise a board id could be probed for existence."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Owner invites them as viewer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{VIEWER_EMAIL}}\",\n  \"role\": \"viewer\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Viewer CAN read the board (200, myRole=viewer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"myRole reflects their own grant\", () => {",
+                  "  pm.expect(pm.response.json().data.myRole).to.eql(\"viewer\");",
+                  "});",
+                  "// The frontend reads myRole to switch into read-only mode."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/full",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "full"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Viewer cannot create a task (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"says which role the action needs\", () => {",
+                  "  pm.expect(pm.response.json().message).to.include(\"editor\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": \"{{BOARD_ID}}\",\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"title\": \"Should never exist\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Viewer cannot move a task (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "// Drag-and-drop is blocked in the API, not just hidden in the UI."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"position\": 0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/move",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}",
+                "move"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. Viewer cannot create a column (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Should never exist\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/columns",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "columns"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. Viewer cannot rename the board (403 — owner only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"names the owner requirement\", () => {",
+                  "  pm.expect(pm.response.json().message).to.include(\"owner\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hijacked\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "8. Viewer cannot promote themselves (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators/{{VIEWER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators",
+                "{{VIEWER_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9. Owner promotes them to editor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"editor\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}/collaborators/{{VIEWER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}",
+                "collaborators",
+                "{{VIEWER_ID}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "10. Now they can move a task (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "// The promotion takes effect on the next request — no re-login,",
+                  "// because the board role is read from the board, not the JWT."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": \"{{COLUMN_ID}}\",\n  \"position\": 0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}/move",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID}}",
+                "move"
+              ]
+            }
+          }
+        },
+        {
+          "name": "11. But still cannot delete the board (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "// editor < owner: mutating tasks is allowed, board-level admin is not."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{VIEWER_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "description": "Destructive. Runs last so the rest of the collection can execute in order.",
+      "item": [
+        {
+          "name": "Delete task (re-compacts the column)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID_2}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "tasks",
+                "{{TASK_ID_2}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete column (deletes its tasks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/columns/{{COLUMN_ID_2}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "columns",
+                "{{COLUMN_ID_2}}"
+              ]
+            },
+            "description": "Destructive — the remaining columns are re-compacted from 0."
+          }
+        },
+        {
+          "name": "Delete board (owner only, cascades)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"reports what the cascade removed\", () => {",
+                  "  pm.expect(pm.response.json().data.deleted).to.have.keys([\"columns\", \"tasks\", \"activity\"]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/boards/{{BOARD_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "boards",
+                "{{BOARD_ID}}"
+              ]
+            },
+            "description": "Destructive — run last. Removes the board's columns, tasks and activity."
+          }
+        },
+        {
+          "name": "Logout (invalidates every session)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "// tokenVersion is bumped, so TOKEN and REFRESH_TOKEN are both dead now.",
+                  "// Re-run Login to continue."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Run this last — it invalidates the tokens the rest of the collection uses."
+          }
+        }
+      ]
+    }
+  ]
+}
