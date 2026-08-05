@@ -1,7 +1,21 @@
 import type { User } from "../services/authService";
 import { authService } from "../services/authService";
+import { useKanbanStore } from "./kanbanStore";
 import toast from "react-hot-toast";
 import type { StoreSet, StoreGet } from "./store";
+
+/**
+ * Applies the theme the server has stored for this account.
+ *
+ * Called on every path that establishes a session — login, register, OAuth
+ * return and session restore — so the preference follows the user across
+ * devices rather than living only in this browser's local state.
+ */
+function applyServerTheme(user: User | null): void {
+  if (user?.themePreference) {
+    useKanbanStore.getState().setTheme(user.themePreference);
+  }
+}
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -29,6 +43,7 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
     set({ loading: true, error: null, boards: [], currentBoard: null });
     try {
       const user = await authService.login(email, password);
+      applyServerTheme(user);
       set({ user, isAuthenticated: true });
       await get().fetchBoards(user.id);
       set({ loading: false });
@@ -42,6 +57,7 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
     set({ loading: true, error: null, boards: [], currentBoard: null });
     try {
       const user = await authService.register(email, password, name);
+      applyServerTheme(user);
       set({ user, isAuthenticated: true });
       await get().fetchBoards(user.id);
       set({ loading: false });
@@ -89,6 +105,32 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
     set({ loading: true });
 
     try {
+      // The API backend reports a failed Google sign-in in the URL *fragment*
+      // (`#error=…&error_description=…`), matching where it puts tokens on
+      // success. Handled before anything else so a failed return never falls
+      // through to the token path.
+      const hashParams = new URLSearchParams(
+        window.location.hash.replace(/^#/, ""),
+      );
+      const hashError = hashParams.get("error");
+
+      if (hashError) {
+        // Strip the fragment so a refresh does not replay the error.
+        window.history.replaceState(
+          {},
+          "",
+          window.location.pathname + window.location.search,
+        );
+
+        toast.error(
+          hashParams.get("error_description") ||
+            "Google sign-in failed. Please try again.",
+          { duration: 6000 },
+        );
+        set({ user: null, isAuthenticated: false, loading: false });
+        return;
+      }
+
       const params = new URLSearchParams(window.location.search);
       const oauthUserId = params.get("userId");
       const oauthSecret = params.get("secret");
@@ -130,6 +172,9 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
       );
 
       if (user) {
+        // Covers both the OAuth return and a silent session restore on reload,
+        // so a reload never flashes the wrong theme.
+        applyServerTheme(user);
         set({
           user,
           isAuthenticated: true,

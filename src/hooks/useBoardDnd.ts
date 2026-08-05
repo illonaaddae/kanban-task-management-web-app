@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useStore } from '../store/store';
+import { useBoardPermissions } from './useBoardPermissions';
 import type { Board } from '../types';
 import {
   PointerSensor,
@@ -12,71 +14,104 @@ import {
 export function useBoardDnd(currentBoard: Board | null) {
   const moveTask = useStore((state) => state.moveTask);
   const reorderColumns = useStore((state) => state.reorderColumns);
-  const reorderTasksInColumn = useStore((state) => state.reorderTasksInColumn);
+  const refreshCurrentBoard = useStore((state) => state.refreshCurrentBoard);
+  const { canEdit } = useBoardPermissions();
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const sensors = useSensors(
+  const allSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  // Registering no sensors is what actually disables dragging: dnd-kit never
+  // starts a drag, so a viewer gets no drag preview, no ghost, and no snap-back.
+  // Hooks still run unconditionally above — only the result is swapped.
+  const sensors = canEdit ? allSensors : [];
+
+  /**
+   * Runs an optimistic store action and repairs the board if the write fails.
+   *
+   * The store has already moved the card by the time we get here, so the only
+   * honest rollback is to re-read the board — a locally reconstructed "undo"
+   * would be a guess, and would silently diverge from the server on a partial
+   * failure. A viewer dragging a card lands here with the API's 403 message.
+   */
+  const persist = async (action: () => Promise<void>, what: string) => {
+    try {
+      await action();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : `Could not ${what}. Please try again.`,
+      );
+      await refreshCurrentBoard();
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || !currentBoard?.id) { setActiveId(null); return; }
+    setActiveId(null);
+    // Second line of defence: with no sensors this cannot fire, but a keyboard
+    // drag added later must not slip past the read-only rule.
+    if (!canEdit || !over || !currentBoard?.id) return;
 
     const activeStr = String(active.id);
     const overStr = String(over.id);
 
     if (activeStr.startsWith('column-') && overStr.startsWith('column-')) {
-      handleColumnReorder(activeStr, overStr, currentBoard);
+      await handleColumnReorder(activeStr, overStr, currentBoard);
     } else if (activeStr.startsWith('task-') && overStr.startsWith('task-')) {
-      handleTaskReorder(activeStr, overStr, currentBoard);
+      await handleTaskReorder(activeStr, overStr, currentBoard);
     } else if (activeStr.startsWith('task-') && overStr.startsWith('column-')) {
-      handleTaskToColumn(activeStr, overStr, currentBoard);
+      await handleTaskToColumn(activeStr, overStr, currentBoard);
     }
-    setActiveId(null);
   };
 
-  const handleColumnReorder = (activeStr: string, overStr: string, board: Board) => {
+  const handleColumnReorder = async (activeStr: string, overStr: string, board: Board) => {
     const oldIdx = parseInt(activeStr.split('-')[1]);
     const newIdx = parseInt(overStr.split('-')[1]);
-    if (oldIdx !== newIdx) {
-      const cols = [...board.columns];
-      const [removed] = cols.splice(oldIdx, 1);
-      cols.splice(newIdx, 0, removed);
-      reorderColumns(board.id!, cols);
-    }
+    if (oldIdx === newIdx) return;
+
+    const cols = [...board.columns];
+    const [removed] = cols.splice(oldIdx, 1);
+    cols.splice(newIdx, 0, removed);
+
+    await persist(() => reorderColumns(board.id!, cols), 'reorder the columns');
   };
 
-  const handleTaskReorder = (activeStr: string, overStr: string, board: Board) => {
+  const handleTaskReorder = async (activeStr: string, overStr: string, board: Board) => {
     const [, aCol, aTask] = activeStr.split('-').map(Number);
     const [, oCol, oTask] = overStr.split('-').map(Number);
     const activeCol = board.columns[aCol];
     const task = activeCol?.tasks[aTask];
     if (!task?.id) return;
 
+    // Both branches go through moveTask: the API handles a same-column reorder
+    // as a move into the task's current column, keeping one set of position
+    // semantics instead of two.
     if (aCol === oCol) {
-      if (aTask !== oTask) {
-        const newTasks = [...activeCol.tasks];
-        const [removed] = newTasks.splice(aTask, 1);
-        newTasks.splice(oTask, 0, removed);
-        reorderTasksInColumn(board.id!, activeCol.name, newTasks);
-      }
-    } else {
-      moveTask(task.id, board.columns[oCol].name, oTask);
+      if (aTask === oTask) return;
+      await persist(() => moveTask(task.id!, activeCol.name, oTask), 'reorder the task');
+      return;
     }
+
+    const target = board.columns[oCol];
+    if (!target) return;
+    await persist(() => moveTask(task.id!, target.name, oTask), 'move the task');
   };
 
-  const handleTaskToColumn = (activeStr: string, overStr: string, board: Board) => {
+  const handleTaskToColumn = async (activeStr: string, overStr: string, board: Board) => {
     const [, aCol, aTask] = activeStr.split('-').map(Number);
     const newColIdx = parseInt(overStr.split('-')[1]);
     if (aCol === newColIdx) return;
 
     const task = board.columns[aCol]?.tasks[aTask];
-    if (task?.id) {
-      const target = board.columns[newColIdx];
-      moveTask(task.id, target.name, target.tasks.length);
-    }
+    const target = board.columns[newColIdx];
+    if (!task?.id || !target) return;
+
+    await persist(
+      () => moveTask(task.id!, target.name, target.tasks.length),
+      'move the task',
+    );
   };
 
   return { activeId, setActiveId, sensors, handleDragEnd };

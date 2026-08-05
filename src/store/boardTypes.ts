@@ -1,4 +1,4 @@
-import type { Board, Task, Column } from '../types';
+import type { Board, BoardMember, CollaboratorRole, Task, Column } from '../types';
 
 export interface BoardState {
   boards: Board[];
@@ -6,8 +6,19 @@ export interface BoardState {
   boardLoading: boolean;
   boardError: string | null;
 
+  /** Owner + collaborators of the current board. Feeds sharing and assignment. */
+  members: BoardMember[];
+  membersLoading: boolean;
+
+  fetchMembers: (boardId: string) => Promise<void>;
+  inviteCollaborator: (boardId: string, email: string, role: CollaboratorRole) => Promise<void>;
+  updateCollaboratorRole: (boardId: string, userId: string, role: CollaboratorRole) => Promise<void>;
+  removeCollaborator: (boardId: string, userId: string) => Promise<void>;
+
   fetchBoards: (userId: string) => Promise<void>;
   setCurrentBoard: (board: Board) => void;
+  /** Re-reads the current board from the server — used to roll back a failed drag. */
+  refreshCurrentBoard: () => Promise<void>;
   createBoard: (userId: string, board: Omit<Board, 'id'>) => Promise<void>;
   updateBoard: (boardId: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (boardId: string) => Promise<void>;
