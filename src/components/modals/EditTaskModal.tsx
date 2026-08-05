@@ -5,6 +5,8 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { SubtaskInputs } from '../task/SubtaskInputs';
+import { TaskMetaFields } from '../task/TaskMetaFields';
+import { toDateInputValue, fromDateInputValue } from '../task/taskMeta';
 import { type Task } from '../../types';
 import toast from 'react-hot-toast';
 import styles from './AddTaskModal.module.css';
@@ -27,6 +29,8 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
   const [subtasks, setSubtasks] = useState<{ title: string; isCompleted: boolean }[]>([]);
   const [status, setStatus] = useState('');
   const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([]);
+  const [dueDate, setDueDate] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
 
   const board = boards.find(b => b.id === boardId);
   const statusOptions = board?.columns.map(col => ({ value: col.name, label: col.name })) || [];
@@ -38,6 +42,8 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
       setSubtasks(task.subtasks || []);
       setSubtaskErrors(new Array(task.subtasks?.length || 0).fill(false));
       setStatus(task.status);
+      setDueDate(toDateInputValue(task.dueDate));
+      setAssignedTo(task.assignedTo ?? '');
     }
   }, [task]);
 
@@ -62,9 +68,13 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
 
     if (hasError) return;
 
+    // `status` is deliberately absent: changing a column is a move, and the
+    // update route rejects it. The move below is what actually relocates it.
     const updatedData: Partial<Task> = {
       title: title.trim(), description: description.trim(),
-      status, subtasks: subtasks.filter(st => st.title.trim())
+      dueDate: fromDateInputValue(dueDate),
+      assignedTo: assignedTo || null,
+      subtasks: subtasks.filter(st => st.title.trim())
     };
 
     try {
@@ -78,8 +88,7 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
       toast.success('Task updated successfully!');
       onClose();
     } catch (error) {
-      console.error('Failed to update task', error);
-      toast.error('Failed to update task');
+      toast.error(error instanceof Error ? error.message : 'Failed to update task');
     }
   };
 
@@ -103,6 +112,13 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
             placeholder="e.g. It's always good to take a break."
             onChange={(e) => setDescription(e.target.value)} rows={4} />
         </div>
+        <TaskMetaFields
+          boardId={boardId}
+          dueDate={dueDate}
+          onDueDateChange={setDueDate}
+          assignedTo={assignedTo}
+          onAssignedToChange={setAssignedTo}
+        />
         <SubtaskInputs subtasks={subtaskTitles} subtaskErrors={subtaskErrors}
           onAdd={() => { setSubtasks([...subtasks, { title: '', isCompleted: false }]); setSubtaskErrors([...subtaskErrors, false]); }}
           onRemove={(i) => { setSubtasks(subtasks.filter((_, j) => j !== i)); setSubtaskErrors(subtaskErrors.filter((_, j) => j !== i)); }}

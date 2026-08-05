@@ -1,5 +1,6 @@
-import { createContext, useContext, type ReactNode, useEffect } from 'react';
+import { createContext, useCallback, useContext, type ReactNode, useEffect } from 'react';
 import { useKanbanStore } from '../store/kanbanStore';
+import { saveThemePreference } from '../services/userApi';
 import type { ThemeContextType } from '../types';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -17,7 +18,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [theme]);
 
-  const toggleTheme = useKanbanStore((state) => state.toggleTheme);
+  const toggleLocalTheme = useKanbanStore((state) => state.toggleTheme);
+
+  /**
+   * Flip locally, then tell the server.
+   *
+   * The write is fire-and-forget: the UI has already repainted, and blocking the
+   * toggle on a round trip would make it feel broken on a slow connection. It is
+   * a no-op when signed out, so the login screen never fires a 401.
+   */
+  const toggleTheme = useCallback(() => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    toggleLocalTheme();
+    saveThemePreference(next);
+  }, [theme, toggleLocalTheme]);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

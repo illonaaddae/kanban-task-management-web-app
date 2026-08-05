@@ -5,6 +5,7 @@ import styles from './Column.module.css';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useBoardPermissions } from '../../hooks/useBoardPermissions';
 
 interface ColumnProps {
   column: ColumnType;
@@ -20,6 +21,7 @@ const COLUMN_COLORS = [
 
 export const Column = memo(function Column({ column, columnIndex, boardId }: ColumnProps) {
   const color = COLUMN_COLORS[columnIndex % COLUMN_COLORS.length];
+  const { canEdit } = useBoardPermissions();
 
   const {
     attributes,
@@ -30,6 +32,7 @@ export const Column = memo(function Column({ column, columnIndex, boardId }: Col
     isDragging,
   } = useSortable({
     id: `column-${columnIndex}`,
+    disabled: !canEdit,
     data: {
       type: 'column',
       columnIndex,
@@ -54,7 +57,9 @@ export const Column = memo(function Column({ column, columnIndex, boardId }: Col
       className={styles.column}
       {...attributes}
     >
-      <div className={styles.header} {...listeners}>
+      {/* No listeners for a viewer, so the header never shows a grab cursor
+          or swallows a click as the start of a drag. */}
+      <div className={styles.header} {...(canEdit ? listeners : {})}>
         <div className={styles.colorDot} style={{ backgroundColor: color }} />
         <h3 className={styles.title}>
           {column.name} ({column.tasks.length})

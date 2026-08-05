@@ -5,6 +5,8 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { SubtaskInputs } from '../task/SubtaskInputs';
+import { TaskMetaFields } from '../task/TaskMetaFields';
+import { fromDateInputValue } from '../task/taskMeta';
 import toast from 'react-hot-toast';
 import styles from './AddTaskModal.module.css';
 
@@ -26,6 +28,8 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
   const [subtasks, setSubtasks] = useState<string[]>(['', '']);
   const [status, setStatus] = useState('');
   const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([false, false]);
+  const [dueDate, setDueDate] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
 
   const board = boardId ? boards.find(b => b.id === boardId)
     : (typeof boardIndex === 'number' ? boards[boardIndex] : null);
@@ -55,15 +59,22 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
     try {
       await createTask(board.id, user.id, {
         title: title.trim(), description: description.trim(), status,
+        // Send the column id when we have it — the API needs it, and resolving
+        // by name costs an extra request.
+        columnId: board.columns.find(col => col.name === status)?.id,
+        dueDate: fromDateInputValue(dueDate),
+        assignedTo: assignedTo || null,
         subtasks: subtasks.filter(st => st.trim()).map(st => ({ title: st.trim(), isCompleted: false }))
       });
       toast.success(`Task '${title.trim()}' created!`);
       setTitle(''); setTitleError(''); setDescription(''); setSubtasks(['', '']);
       setSubtaskErrors([false, false]); setStatus(statusOptions[0]?.value || '');
+      setDueDate(''); setAssignedTo('');
       onClose();
     } catch (error) {
-      console.error('Failed to create task', error);
-      toast.error('Failed to create task');
+      // Show the API's message — "Assignee must be a member of this board" and
+      // "requires editor access" are both more useful than a generic failure.
+      toast.error(error instanceof Error ? error.message : 'Failed to create task');
     }
   };
 
@@ -86,6 +97,13 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
             placeholder="e.g. It's always good to take a break."
             onChange={(e) => setDescription(e.target.value)} rows={4} />
         </div>
+        <TaskMetaFields
+          boardId={board.id!}
+          dueDate={dueDate}
+          onDueDateChange={setDueDate}
+          assignedTo={assignedTo}
+          onAssignedToChange={setAssignedTo}
+        />
         <SubtaskInputs subtasks={subtasks} subtaskErrors={subtaskErrors}
           onAdd={() => { setSubtasks([...subtasks, '']); setSubtaskErrors([...subtaskErrors, false]); }}
           onRemove={(i) => { setSubtasks(subtasks.filter((_, j) => j !== i)); setSubtaskErrors(subtaskErrors.filter((_, j) => j !== i)); }}

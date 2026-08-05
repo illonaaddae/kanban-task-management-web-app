@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import styles from "./Login.module.css";
 import { Loader } from "../components/ui/Loader";
 import { Logo } from "../components/ui/Logo";
+import { authProvider } from "../services/authService";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -16,12 +17,11 @@ export function Login() {
   const [name, setName] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const { login, logout, loginWithSlack, loginWithGoogle, register, loading, isAuthenticated, user } =
+  const { login, logout, loginWithGoogle, register, loading, isAuthenticated, user } =
     useStore(
       useShallow((state) => ({
         login: state.login,
         logout: state.logout,
-        loginWithSlack: state.loginWithSlack,
         loginWithGoogle: state.loginWithGoogle,
         register: state.register,
         loading: state.loading,
@@ -30,7 +30,10 @@ export function Login() {
       }))
     );
   const navigate = useNavigate();
-  const useAppwrite = import.meta.env.VITE_USE_APPWRITE === "true";
+  // Mock auth accepts any username; the real providers need an email address.
+  const useAppwrite = authProvider !== "mock";
+  // Google is offered by both real providers. Slack is not offered at all.
+  const showOAuth = authProvider === "api" || authProvider === "appwrite";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,11 +53,13 @@ export function Login() {
     }
   };
 
-  const handleOAuth = async (provider: "google" | "slack") => {
+  const handleOAuth = async () => {
     try {
-      await (provider === "google" ? loginWithGoogle() : loginWithSlack());
-    } catch {
-      toast.error(`Failed to connect with ${provider}`);
+      await loginWithGoogle();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to connect with Google",
+      );
     }
   };
 
@@ -131,12 +136,7 @@ export function Login() {
             : "Sign in to access your boards"}
         </p>
 
-        {useAppwrite && (
-          <OAuthButtons
-            onGoogleLogin={() => handleOAuth("google")}
-            onSlackLogin={() => handleOAuth("slack")}
-          />
-        )}
+        {showOAuth && <OAuthButtons onGoogleLogin={handleOAuth} />}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {isRegistering && (
