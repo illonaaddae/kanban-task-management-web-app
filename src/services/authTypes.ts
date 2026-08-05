@@ -3,6 +3,11 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  /**
+   * The server-stored theme. Optional because the mock and Appwrite providers
+   * do not have one — only the API provider fills it in.
+   */
+  themePreference?: 'light' | 'dark';
 }
 
 export interface AuthService {

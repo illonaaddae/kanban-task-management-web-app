@@ -12,11 +12,16 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
     css: true,
+    // Frontend only. server/ has its own Jest suite — without this, Vitest
+    // globs server/src/tests/**/*.test.ts and fails on `jest` being undefined.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['node_modules/', 'dist/', 'server/'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
+        'server/',
         'src/test/',
         'src/setupTests.ts',
         'scripts/',
