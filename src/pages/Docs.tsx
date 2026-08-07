@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/ui/Logo';
 import { PATHS } from '../routes';
+import { ThemeToggleButton } from '../components/ui/ThemeToggleButton';
 import { DOC_SECTIONS, type DocBlock } from './docsContent';
 import styles from './Docs.module.css';
 
@@ -109,6 +110,7 @@ export function Docs() {
           </Link>
           <span className={styles.navTitle}>Docs</span>
           <div className={styles.navActions}>
+            <ThemeToggleButton />
             <Link to={PATHS.landing} className={styles.navLink}>
               Back to site
             </Link>

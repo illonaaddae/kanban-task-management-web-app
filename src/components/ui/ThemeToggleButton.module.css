@@ -1,0 +1,25 @@
+/* Sized to sit beside a nav link without pushing the bar taller. */
+.button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.button:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(99, 95, 199, 0.1));
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

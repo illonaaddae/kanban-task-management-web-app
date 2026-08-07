@@ -4,15 +4,20 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Landing } from '../Landing';
 import { useStore } from '../../store/store';
 import { PATHS } from '../../routes';
+import { ThemeProvider } from '../../context/ThemeContext';
 
 function renderLanding() {
+  // The nav carries a theme toggle, so the page needs the provider. Its own
+  // MemoryRouter stays, because these tests assert on the signed-in redirect.
   return render(
-    <MemoryRouter initialEntries={[PATHS.landing]}>
-      <Routes>
-        <Route path={PATHS.landing} element={<Landing />} />
-        <Route path={PATHS.dashboard} element={<p>dashboard reached</p>} />
-      </Routes>
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[PATHS.landing]}>
+        <Routes>
+          <Route path={PATHS.landing} element={<Landing />} />
+          <Route path={PATHS.dashboard} element={<p>dashboard reached</p>} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 
@@ -76,5 +81,17 @@ describe('Landing', () => {
     apiLinks.forEach((link) =>
       expect(link).toHaveAttribute('href', expect.stringContaining('github.com')),
     );
+  });
+
+  it('links the portfolio site, not a placeholder', () => {
+    renderLanding();
+
+    // Pinned, because a footer link that quietly rots is worse than an absent one:
+    // it looks like a broken site rather than a missing one.
+    const links = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+
+    expect(links).toContain('https://oceaniccoder.dev');
   });
 });

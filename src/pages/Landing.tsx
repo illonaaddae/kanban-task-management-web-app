@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useStore } from '../store/store';
 import { PATHS } from '../routes';
+import { ThemeToggleButton } from '../components/ui/ThemeToggleButton';
 import { Logo } from '../components/ui/Logo';
 import { InviteArt, PermissionsArt, TeamBoardArt } from './landingArt';
 import styles from './Landing.module.css';
@@ -131,6 +132,9 @@ export function Landing() {
             <Link to={PATHS.docs}>Docs</Link>
           </nav>
           <div className={styles.navActions}>
+            {/* The sidebar switch lives inside the app, so without this a visitor
+                who prefers light had no way to ask for it. */}
+            <ThemeToggleButton />
             <Link to={PATHS.login} className={styles.navSignIn}>
               Sign in
             </Link>
@@ -396,6 +400,16 @@ export function Landing() {
                   verified are here: a placeholder URL in a footer is worse than an
                   absent one, because it looks like a broken site. */}
               <h4>Built by</h4>
+              {/* Apex rather than www: the www host does not present a valid
+                  certificate, so linking it would land visitors on a browser
+                  warning. */}
+              <a
+                href="https://oceaniccoder.dev"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                oceaniccoder.dev
+              </a>
               <a
                 href="https://github.com/illonaaddae"
                 target="_blank"
@@ -426,7 +440,16 @@ export function Landing() {
         </div>
 
         <p className={styles.footerNote}>
-          Built by Illona Addae. Design based on the Frontend Mentor kanban brief.
+          Built by{' '}
+          <a
+            className={styles.footerNoteLink}
+            href="https://oceaniccoder.dev"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Illona Addae
+          </a>
+          . Design based on the Frontend Mentor kanban brief.
         </p>
       </footer>
     </div>
