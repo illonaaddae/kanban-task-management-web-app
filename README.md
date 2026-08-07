@@ -23,7 +23,24 @@ A full-featured, production-ready task management application built with **React
 This application serves as a modern productivity tool allowing teams and individuals to organize tasks across customized boards. It moves beyond basic CRUD operations to offer a drag-and-drop interface, real-time updates, and a global state management system powered by **Zustand**.
 
 ### Live Demo
-[View Live Application](https://kanban-task-management-web-app-lab.netlify.app/) <!-- Replace with actual deployment link -->
+**[Open the live app](https://kanban-task-management-web-app-lab.netlify.app)** · API at **[https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)**
+
+Sign in with a seeded demo account, or register your own:
+
+| Account | Password | Role on the demo board |
+|---|---|---|
+| `editor@kanban.dev` | `Password123!` | **owner** of "Platform Launch" |
+| `viewer@kanban.dev` | `Password123!` | collaborator, **read-only** |
+| `admin@kanban.dev` | `Password123!` | platform admin — bypasses board checks |
+
+Sign in as the viewer to see read-only mode: the board renders in full, but the
+add/edit/delete affordances are gone and dragging is disabled. The API enforces
+the same rules independently, so those actions return 403 even when called
+directly.
+
+> The API runs on Render's free tier, which spins down after ~15 minutes idle.
+> The first request after a quiet period takes 30–60 seconds while it wakes;
+> everything after that is normal speed.
 
 ---
 
@@ -536,7 +553,7 @@ The free instance spins down after roughly 15 minutes idle, so the first request
 after a quiet period takes 30–60 seconds while it wakes. Warm it up before
 demoing. Everything after that is normal speed.
 
-**Live API:** `<!-- TODO: https://your-service.onrender.com -->`
+**Live API:** https://kanban-task-management-web-app-njhs.onrender.com — check [https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)
 
 ### Frontend → Netlify
 
@@ -563,7 +580,7 @@ which Vite copies into `dist/`. Without it, refreshing `/board/<id>` would 404.
 Then set the Netlify URL as `FRONTEND_URL` on Render — it is both the CORS origin
 and where the OAuth flow lands.
 
-**Live app:** `<!-- TODO: https://your-app.netlify.app -->`
+**Live app:** https://kanban-task-management-web-app-lab.netlify.app
 
 ### Google Cloud Console (manual, one-time)
 
