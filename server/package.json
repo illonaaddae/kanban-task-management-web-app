@@ -31,7 +31,6 @@
     "mongoose": "^8.20.0",
     "pino": "^9.13.1",
     "pino-http": "^10.5.0",
-    "typescript": "^5.9.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
@@ -48,6 +47,7 @@
     "pino-pretty": "^13.1.2",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.6",
-    "tsx": "^4.20.7"
+    "tsx": "^4.20.7",
+    "typescript": "^5.9.3"
   }
 }
