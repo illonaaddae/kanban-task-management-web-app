@@ -198,3 +198,20 @@
     display: none !important;
   }
 }
+
+/* The boards heading doubles as the way back to the dashboard. Previously the
+   only route back was clicking the logo, which nobody found. */
+.boardsHeadingLink {
+  display: block;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.boardsHeadingLink:hover {
+  color: var(--primary);
+}
+
+.boardsHeadingActive {
+  color: var(--primary);
+}

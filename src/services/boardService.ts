@@ -12,6 +12,7 @@ export const boardService = {
   updateBoard: boardApi.updateBoard,
   deleteBoard: boardApi.deleteBoard,
   reorderColumns: boardApi.reorderColumns,
+  createColumn: boardApi.createColumn,
   getTasks: taskApi.getTasks,
   createTask: taskApi.createTask,
   updateTask: taskApi.updateTask,

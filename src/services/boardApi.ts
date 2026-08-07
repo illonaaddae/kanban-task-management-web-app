@@ -63,6 +63,18 @@ export async function createBoard(
   return getFullBoard(created.id);
 }
 
+/**
+ * Adds a single column.
+ *
+ * Direct, rather than routing through `updateBoard`'s diff — which would fetch
+ * the board, compare, create, possibly reorder and re-fetch, for what the API
+ * exposes as one POST.
+ */
+export async function createColumn(boardId: string, name: string): Promise<Board> {
+  await api.post(`/boards/${boardId}/columns`, { name });
+  return getFullBoard(boardId);
+}
+
 /** Rewrites column order in one request. Must list exactly the board's columns. */
 export async function reorderColumns(
   boardId: string,

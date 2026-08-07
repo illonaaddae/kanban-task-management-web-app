@@ -25,6 +25,7 @@ export interface BoardState {
   createBoard: (userId: string, board: Omit<Board, 'id'>) => Promise<void>;
   updateBoard: (boardId: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (boardId: string) => Promise<void>;
+  createColumn: (boardId: string, name: string) => Promise<void>;
   createTask: (boardId: string, userId: string, task: Omit<Task, 'id'>) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>, boardId: string) => Promise<void>;
   deleteTask: (taskId: string, boardId: string) => Promise<void>;

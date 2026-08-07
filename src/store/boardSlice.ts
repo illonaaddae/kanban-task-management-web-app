@@ -16,6 +16,7 @@ type BoardSlice = Pick<
   | "createBoard"
   | "updateBoard"
   | "deleteBoard"
+  | "createColumn"
 >;
 
 export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
@@ -115,6 +116,29 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
       });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
+      throw error;
+    }
+  },
+
+  /**
+   * Adds a column without blanking the board.
+   *
+   * Deliberately does not set `boardLoading`: that flag drives the full-page
+   * loader, and replacing the board a user is looking at — to add one column to
+   * it — is what made this feel broken. The modal shows its own pending state
+   * instead.
+   */
+  createColumn: async (boardId, name) => {
+    set({ boardError: null });
+    try {
+      const fresh = await boardService.createColumn(boardId, name);
+      const { boards } = get();
+      set({
+        currentBoard: fresh,
+        boards: boards.map((b) => (b.id === fresh.id ? fresh : b)),
+      });
+    } catch (error: any) {
+      set({ boardError: error.message });
       throw error;
     }
   },

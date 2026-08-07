@@ -53,7 +53,14 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         </button>
 
         <div className={styles.boardSection}>
-          <h2 className={styles.boardsHeading}>ALL BOARDS ({boards.length})</h2>
+          {/* The logo also navigates here, but a logo you have to guess at is
+              not an affordance. This reads as what it is. */}
+          <Link
+            to="/"
+            className={`${styles.boardsHeading} ${styles.boardsHeadingLink} ${location.pathname === '/' ? styles.boardsHeadingActive : ''}`}
+          >
+            ALL BOARDS ({boards.length})
+          </Link>
 
           <div className={styles.boardList}>
             {boards.map((board) => (

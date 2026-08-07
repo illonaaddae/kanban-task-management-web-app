@@ -5,6 +5,7 @@ import { useShallow } from "zustand/react/shallow";
 import { Column } from "../components/board/Column";
 import { EmptyBoard } from "../components/board/EmptyBoard";
 import { EditBoardModal } from "../components/modals/EditBoardModal";
+import { AddColumnModal } from "../components/modals/AddColumnModal";
 import { useModal } from "../hooks/useModal";
 import { useBoardDnd } from "../hooks/useBoardDnd";
 import { useBoardPermissions } from "../hooks/useBoardPermissions";
@@ -22,7 +23,6 @@ export function BoardView() {
     boards,
     currentBoard,
     setCurrentBoard,
-    updateBoard,
     boardLoading,
     boardError,
     fetchBoards,
@@ -32,7 +32,6 @@ export function BoardView() {
       boards: state.boards,
       currentBoard: state.currentBoard,
       setCurrentBoard: state.setCurrentBoard,
-      updateBoard: state.updateBoard,
       boardLoading: state.boardLoading,
       boardError: state.boardError,
       fetchBoards: state.fetchBoards,
@@ -40,6 +39,7 @@ export function BoardView() {
     })),
   );
   const editModal = useModal();
+  const columnModal = useModal();
   const { canEdit } = useBoardPermissions();
   const { activeId, setActiveId, sensors, handleDragEnd } =
     useBoardDnd(currentBoard);
@@ -53,18 +53,16 @@ export function BoardView() {
 
   const handleAddColumn = () => {
     if (!canEdit || !currentBoard?.id) return;
-    const columns = [
-      ...currentBoard.columns,
-      { name: "New Column", tasks: [] },
-    ];
-    updateBoard(currentBoard.id, { columns });
+    columnModal.open();
   };
 
   if (boardId && boards.length > 0 && !boards.find((b) => b.id === boardId)) {
     return <Navigate to="/" replace />;
   }
 
-  if (boardLoading) {
+  // Only when there is no board to render yet. Previously any boardLoading —
+  // including adding a column — blanked the whole board behind a spinner.
+  if (boardLoading && !currentBoard) {
     return (
       <div className={styles.container}>
         <div className={styles.loadingState}>
@@ -149,6 +147,14 @@ export function BoardView() {
           <div className={styles.dragOverlay}>Dragging...</div>
         ) : null}
       </DragOverlay>
+      {currentBoard.id && columnModal.isOpen && (
+        <AddColumnModal
+          isOpen={columnModal.isOpen}
+          onClose={columnModal.close}
+          boardId={currentBoard.id}
+          existingNames={currentBoard.columns.map((column) => column.name)}
+        />
+      )}
       {currentBoard.id && (
         <EditBoardModal
           isOpen={editModal.isOpen}
