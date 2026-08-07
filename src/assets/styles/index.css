@@ -80,6 +80,10 @@ body {
 
 
 /* App layout */
+/* A flex row, so the sidebar sits beside the content.
+   Consequence worth knowing: every direct child is a flex item. A route that owns
+   the whole viewport therefore needs `flex: 1; width: 100%`, or it is sized to its
+   content and leaves the rest of the window showing the body background. */
 .app {
   min-height: 100vh;
   min-height: 100dvh;

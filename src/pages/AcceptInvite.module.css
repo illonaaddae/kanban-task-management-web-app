@@ -4,6 +4,13 @@
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
+  /* `.app` is a flex row so the sidebar can sit beside the content. A full-page
+     route is therefore a flex *item*, and without these it is sized to its own
+     content: the page hugs the left edge and the rest of the viewport shows the
+     body background through a visible seam. */
+  flex: 1;
+  width: 100%;
+  min-width: 0;
   padding: 1.5rem;
   background: var(--bg-secondary);
 }
