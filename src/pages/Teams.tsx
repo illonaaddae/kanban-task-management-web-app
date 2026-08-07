@@ -1,0 +1,565 @@
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
+import { Dropdown } from '../components/ui/Dropdown';
+import { Loader } from '../components/ui/Loader';
+import { ProgressPanel } from '../components/team/ProgressPanel';
+import { AnalyticsPanel } from '../components/team/AnalyticsPanel';
+import { useStore } from '../store/store';
+import { useBoards } from '../queries/boards';
+import {
+  useAcceptMyInvitation,
+  useCreateOrganization,
+  useInviteToOrganization,
+  useMyInvitations,
+  useOrganization,
+  useOrganizations,
+  useOrgInvitations,
+  useRemoveMember,
+  useRenameOrganization,
+  useRevokeInvitation,
+  useUpdateMemberRole,
+} from '../queries/orgs';
+import type { OrgGrantableRole, OrgMember, PendingInvitation } from '../services/orgApi';
+import toast from 'react-hot-toast';
+import styles from './Teams.module.css';
+
+const ROLE_OPTIONS = [
+  { value: 'member', label: 'Member' },
+  { value: 'admin', label: 'Admin' },
+];
+
+function initialsOf(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function MemberAvatar({ member }: { member: OrgMember }) {
+  if (member.avatar) return <img className={styles.avatar} src={member.avatar} alt="" />;
+  return (
+    <div className={styles.initials} aria-hidden="true">
+      {initialsOf(member.name)}
+    </div>
+  );
+}
+
+/** "in 6 days", or "expired" once the link has lapsed. */
+function expiryLabel(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return 'expired';
+  const days = Math.round(ms / 86_400_000);
+  if (days >= 1) return `in ${days} day${days === 1 ? '' : 's'}`;
+  const hours = Math.max(1, Math.round(ms / 3_600_000));
+  return `in ${hours} hour${hours === 1 ? '' : 's'}`;
+}
+
+/**
+ * Teams: membership, invitations and progress.
+ *
+ * A page rather than a modal. Managing people and reading a progress table are
+ * both wide, multi-section jobs, and a dialog reachable only from an avatar menu
+ * is not where anyone looks for either.
+ */
+export function Teams() {
+  const currentUser = useStore((state) => state.user);
+
+  const { data: organizations = [], isPending: orgsLoading } = useOrganizations();
+  const { data: myInvitations = [] } = useMyInvitations();
+  const { data: boards = [] } = useBoards();
+
+  const [activeOrgId, setActiveOrgId] = useState<string | undefined>(undefined);
+  const [progressBoardId, setProgressBoardId] = useState<string | undefined>(undefined);
+
+  // Follow the list rather than mirror it: a team that was just created or just
+  // left must not leave this pointing at nothing.
+  useEffect(() => {
+    if (organizations.length === 0) {
+      setActiveOrgId(undefined);
+      return;
+    }
+    if (!organizations.some((org) => org.id === activeOrgId)) {
+      setActiveOrgId(organizations[0].id);
+    }
+  }, [organizations, activeOrgId]);
+
+  useEffect(() => {
+    if (boards.length > 0 && !boards.some((board) => board.id === progressBoardId)) {
+      setProgressBoardId(boards[0].id);
+    }
+  }, [boards, progressBoardId]);
+
+  const { data: org, isPending: orgLoading } = useOrganization(activeOrgId);
+
+  const canManage =
+    org?.myRole === 'owner' || org?.myRole === 'orgAdmin' || org?.myRole === 'admin';
+  const isOwner = org?.myRole === 'owner';
+
+  const { data: invitations = [] } = useOrgInvitations(activeOrgId, canManage);
+
+  const createOrg = useCreateOrganization();
+  const renameOrg = useRenameOrganization();
+  const invite = useInviteToOrganization();
+  const revoke = useRevokeInvitation();
+  const updateRole = useUpdateMemberRole();
+  const removeMember = useRemoveMember();
+  const acceptMine = useAcceptMyInvitation();
+
+  const [newOrgName, setNewOrgName] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [role, setRole] = useState<OrgGrantableRole>('member');
+  const [renaming, setRenaming] = useState('');
+  /** Which row has a request in flight, so only that row disables. */
+  const [busyId, setBusyId] = useState<string | null>(null);
+  /**
+   * Shown when an invitation was created but its email did not go out. The link
+   * is then the only way in, so it gets room on the page rather than a toast.
+   */
+  const [undeliveredLink, setUndeliveredLink] = useState<string | null>(null);
+
+  const boardOptions = useMemo(
+    () =>
+      boards
+        .filter((board): board is typeof board & { id: string } => Boolean(board.id))
+        .map((board) => ({ value: board.id, label: board.name })),
+    [boards],
+  );
+
+  const fail = (error: unknown, fallback: string) =>
+    toast.error(error instanceof Error ? error.message : fallback);
+
+  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = newOrgName.trim();
+    if (!trimmed) return;
+
+    try {
+      const created = await createOrg.mutateAsync(trimmed);
+      setActiveOrgId(created.id);
+      setNewOrgName('');
+      toast.success(`Created ${created.name}`);
+    } catch (error) {
+      fail(error, 'Could not create the team');
+    }
+  };
+
+  const handleRename = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = renaming.trim();
+    if (!activeOrgId || !trimmed || trimmed === org?.name) return;
+
+    try {
+      await renameOrg.mutateAsync({ orgId: activeOrgId, name: trimmed });
+      setRenaming('');
+      toast.success('Team renamed');
+    } catch (error) {
+      fail(error, 'Could not rename the team');
+    }
+  };
+
+  const handleAcceptMine = async (invitationId: string, orgName: string) => {
+    setBusyId(invitationId);
+    try {
+      await acceptMine.mutateAsync(invitationId);
+      toast.success(`You joined ${orgName}`);
+    } catch (error) {
+      fail(error, 'Could not accept the invitation');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleInvite = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!activeOrgId) return;
+
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError('Enter an email address');
+      return;
+    }
+    setEmailError('');
+    setUndeliveredLink(null);
+
+    try {
+      const result = await invite.mutateAsync({ orgId: activeOrgId, email: trimmed, role });
+      setEmail('');
+
+      if (result.emailSent) {
+        toast.success(`Invitation sent to ${trimmed}`);
+      } else {
+        // Not a failure: the invitation exists and the link works.
+        setUndeliveredLink(result.acceptUrl);
+        toast.error(
+          result.emailError ?? 'The invitation was created but the email could not be sent',
+          { duration: 6000 },
+        );
+      }
+    } catch (error) {
+      // The API distinguishes an existing member (409), a duplicate pending
+      // invitation (409) and inviting yourself (400) — its wording beats
+      // anything generic here.
+      fail(error, 'Could not send the invitation');
+    }
+  };
+
+  const handleRoleChange = async (member: OrgMember, nextRole: string) => {
+    if (!activeOrgId || nextRole === member.role) return;
+    setBusyId(member.id);
+    try {
+      await updateRole.mutateAsync({
+        orgId: activeOrgId,
+        userId: member.id,
+        role: nextRole as OrgGrantableRole,
+      });
+      toast.success(`${member.name} is now ${nextRole === 'admin' ? 'an admin' : 'a member'}`);
+    } catch (error) {
+      fail(error, 'Could not change the role');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRemove = async (member: OrgMember) => {
+    if (!activeOrgId) return;
+    const isSelf = member.id === currentUser?.id;
+    setBusyId(member.id);
+    try {
+      await removeMember.mutateAsync({ orgId: activeOrgId, userId: member.id });
+      toast.success(isSelf ? 'You left the team' : `Removed ${member.name}`);
+    } catch (error) {
+      fail(error, 'Could not remove them');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRevoke = async (invitation: PendingInvitation) => {
+    if (!activeOrgId) return;
+    setBusyId(invitation.id);
+    try {
+      await revoke.mutateAsync({ orgId: activeOrgId, invitationId: invitation.id });
+      toast.success(`Invitation to ${invitation.email} revoked`);
+    } catch (error) {
+      fail(error, 'Could not revoke it');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const copyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Invitation link copied');
+    } catch {
+      // Clipboard access needs a secure context and can be refused outright.
+      toast.error('Could not copy — select the link and copy it manually');
+    }
+  };
+
+  return (
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Teams</h1>
+        <p className={styles.subtitle}>
+          Invite people by email — they do not need an account yet. Share a board with
+          a teammate to assign them tasks on it.
+        </p>
+      </header>
+
+      {/* Invitations addressed to this account, first: somebody who registered
+          after being invited comes here looking for exactly this. */}
+      {myInvitations.length > 0 && (
+        <section className={styles.callout}>
+          <h2 className={styles.sectionTitle}>Invitations for you</h2>
+          {myInvitations.map((invitation) => (
+            <div key={invitation.id} className={styles.row}>
+              <div className={styles.identity}>
+                <div className={styles.name}>{invitation.organizationName}</div>
+                <div className={styles.email}>
+                  as {invitation.role} · expires {expiryLabel(invitation.expiresAt)}
+                </div>
+              </div>
+              <Button
+                size="small"
+                disabled={busyId === invitation.id}
+                onClick={() =>
+                  void handleAcceptMine(invitation.id, invitation.organizationName)
+                }
+              >
+                Accept
+              </Button>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {orgsLoading && organizations.length === 0 ? (
+        <div className={styles.loading}>
+          <Loader />
+        </div>
+      ) : organizations.length === 0 ? (
+        <section className={styles.card}>
+          <h2 className={styles.sectionTitle}>Create your first team</h2>
+          <p className={styles.hint}>
+            A team is the people you work with. Once someone is in it, sharing a board
+            with them is a click instead of a typed-out email address.
+          </p>
+          <form className={styles.stackForm} onSubmit={handleCreate}>
+            <Input
+              label="Team name"
+              placeholder="e.g. Design Squad"
+              value={newOrgName}
+              maxLength={120}
+              onChange={(event) => setNewOrgName(event.target.value)}
+            />
+            <Button type="submit" variant="primary" size="large" disabled={createOrg.isPending}>
+              {createOrg.isPending ? 'Creating…' : 'Create team'}
+            </Button>
+          </form>
+        </section>
+      ) : (
+        <div className={styles.columns}>
+          <div className={styles.mainColumn}>
+            <section className={styles.card}>
+              <div className={styles.cardHead}>
+                <h2 className={styles.sectionTitle}>
+                  {org?.name ?? 'Team'}{' '}
+                  <span className={styles.count}>
+                    · {org?.members.length ?? 0} member
+                    {(org?.members.length ?? 0) === 1 ? '' : 's'}
+                  </span>
+                </h2>
+                {organizations.length > 1 && (
+                  <div className={styles.picker}>
+                    <Dropdown
+                      value={activeOrgId ?? ''}
+                      onChange={setActiveOrgId}
+                      options={organizations.map((o) => ({ value: o.id, label: o.name }))}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {orgLoading && !org ? (
+                <div className={styles.loading}>
+                  <Loader />
+                </div>
+              ) : (
+                <div className={styles.list}>
+                  {org?.members.map((member) => {
+                    const isTeamOwner = member.role === 'owner';
+                    const isSelf = member.id === currentUser?.id;
+                    const busy = busyId === member.id;
+
+                    return (
+                      <div key={member.id} className={styles.row}>
+                        <MemberAvatar member={member} />
+                        <div className={styles.identity}>
+                          <div className={styles.name}>
+                            {member.name}
+                            {isSelf && <span className={styles.you}> (you)</span>}
+                          </div>
+                          <div className={styles.email}>{member.email}</div>
+                        </div>
+
+                        {isTeamOwner ? (
+                          // The owner is the team's `owner` field, not a member
+                          // entry — there is nothing to change here.
+                          <span className={`${styles.badge} ${styles.badgeOwner}`}>Owner</span>
+                        ) : (
+                          <>
+                            {canManage ? (
+                              <div className={styles.roleSelect}>
+                                <Dropdown
+                                  value={member.role}
+                                  onChange={(value) => void handleRoleChange(member, value)}
+                                  options={ROLE_OPTIONS}
+                                />
+                              </div>
+                            ) : (
+                              <span className={styles.badge}>
+                                {member.role === 'admin' ? 'Admin' : 'Member'}
+                              </span>
+                            )}
+
+                            {/* Anyone may remove themselves — that is "leave". */}
+                            {(canManage || isSelf) && (
+                              <button
+                                type="button"
+                                className={styles.removeButton}
+                                onClick={() => void handleRemove(member)}
+                                disabled={busy}
+                                title={isSelf ? 'Leave team' : `Remove ${member.name}`}
+                              >
+                                {isSelf ? 'Leave' : 'Remove'}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Team-wide first for an admin: it answers "how is the team doing"
+                before "how is this one board doing". */}
+            {canManage && (
+              <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Team analytics</h2>
+                <p className={styles.hint}>
+                  Every board belonging to {org?.name ?? 'this team'}, and who is
+                  carrying what across all of them.
+                </p>
+                <AnalyticsPanel orgId={activeOrgId} canManage={canManage} />
+              </section>
+            )}
+
+            <section className={styles.card}>
+              <div className={styles.cardHead}>
+                <h2 className={styles.sectionTitle}>Progress by board</h2>
+                {boardOptions.length > 1 && (
+                  <div className={styles.picker}>
+                    <Dropdown
+                      value={progressBoardId ?? ''}
+                      onChange={setProgressBoardId}
+                      options={boardOptions}
+                    />
+                  </div>
+                )}
+              </div>
+              <p className={styles.hint}>
+                Per board, because access is per board — a teammate only appears here
+                once the board is shared with them.
+              </p>
+              <ProgressPanel boardId={progressBoardId} />
+            </section>
+          </div>
+
+          <aside className={styles.sideColumn}>
+            {canManage && (
+              <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Invite someone</h2>
+                <form className={styles.stackForm} onSubmit={handleInvite}>
+                  <Input
+                    label="Email address"
+                    type="email"
+                    placeholder="teammate@example.com"
+                    value={email}
+                    error={emailError}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (event.target.value.trim()) setEmailError('');
+                    }}
+                  />
+                  <Dropdown
+                    label="Role"
+                    value={role}
+                    onChange={(value) => setRole(value as OrgGrantableRole)}
+                    options={ROLE_OPTIONS}
+                  />
+                  <Button type="submit" variant="primary" size="large" disabled={invite.isPending}>
+                    {invite.isPending ? 'Sending…' : 'Send invitation'}
+                  </Button>
+                </form>
+
+                {undeliveredLink && (
+                  <div className={styles.linkFallback}>
+                    <p className={styles.hint}>
+                      The invitation is valid but the email did not go out. Send this
+                      link instead — it works once.
+                    </p>
+                    <code className={styles.link}>{undeliveredLink}</code>
+                    <Button size="small" onClick={() => void copyLink(undeliveredLink)}>
+                      Copy link
+                    </Button>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {canManage && invitations.length > 0 && (
+              <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Pending ({invitations.length})</h2>
+                <div className={styles.list}>
+                  {invitations.map((invitation) => (
+                    <div key={invitation.id} className={styles.row}>
+                      <div className={styles.initials} aria-hidden="true">@</div>
+                      <div className={styles.identity}>
+                        <div className={styles.name}>{invitation.email}</div>
+                        <div className={styles.email}>
+                          {invitation.role === 'admin' ? 'Admin' : 'Member'} · expires{' '}
+                          {expiryLabel(invitation.expiresAt)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => void handleRevoke(invitation)}
+                        disabled={busyId === invitation.id}
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {isOwner && (
+              <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Rename team</h2>
+                <form className={styles.stackForm} onSubmit={handleRename}>
+                  <Input
+                    label="Team name"
+                    placeholder={org?.name}
+                    value={renaming}
+                    maxLength={120}
+                    onChange={(event) => setRenaming(event.target.value)}
+                  />
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    size="large"
+                    disabled={renameOrg.isPending || !renaming.trim()}
+                  >
+                    {renameOrg.isPending ? 'Saving…' : 'Rename'}
+                  </Button>
+                </form>
+              </section>
+            )}
+
+            <section className={styles.card}>
+              <h2 className={styles.sectionTitle}>New team</h2>
+              <form className={styles.stackForm} onSubmit={handleCreate}>
+                <Input
+                  label="Team name"
+                  placeholder="e.g. Marketing"
+                  value={newOrgName}
+                  maxLength={120}
+                  onChange={(event) => setNewOrgName(event.target.value)}
+                />
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="large"
+                  disabled={createOrg.isPending || !newOrgName.trim()}
+                >
+                  {createOrg.isPending ? 'Creating…' : 'Create team'}
+                </Button>
+              </form>
+            </section>
+          </aside>
+        </div>
+      )}
+    </main>
+  );
+}
+
+export default Teams;

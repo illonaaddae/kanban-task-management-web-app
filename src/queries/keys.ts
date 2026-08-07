@@ -14,15 +14,21 @@ export const queryKeys = {
     members: (boardId: string) => ['boards', 'members', boardId] as const,
     activity: (boardId: string, page: number, limit: number) =>
       ['boards', 'activity', boardId, page, limit] as const,
+    progress: (boardId: string) => ['boards', 'progress', boardId] as const,
   },
   tasks: {
     detail: (taskId: string) => ['tasks', 'detail', taskId] as const,
+    /** Assigned to the signed-in user, across every board they can reach. */
+    mine: () => ['tasks', 'mine'] as const,
   },
   orgs: {
     all: () => ['orgs'] as const,
     list: () => ['orgs', 'list'] as const,
     detail: (orgId: string) => ['orgs', 'detail', orgId] as const,
     invitations: (orgId: string) => ['orgs', 'invitations', orgId] as const,
+    /** Spans every team the caller is in, so it is not keyed by one org. */
+    teammates: () => ['orgs', 'teammates'] as const,
+    analytics: (orgId: string) => ['orgs', 'analytics', orgId] as const,
   },
   invitations: {
     /** Waiting for the signed-in user's own address. */

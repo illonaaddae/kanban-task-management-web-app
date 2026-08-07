@@ -5,6 +5,7 @@ import type { TaskDocument } from "../models/Task";
 import type { UserDocument } from "../models/User";
 import { columnRepository } from "../repositories/columnRepository";
 import { taskRepository } from "../repositories/taskRepository";
+import { organizationRepository } from "../repositories/organizationRepository";
 import { userRepository } from "../repositories/userRepository";
 import type { CreateTaskInput, UpdateTaskInput } from "../schemas/taskSchemas";
 import { AppError } from "../utils/AppError";
@@ -38,6 +39,10 @@ async function requireColumnOnBoard(
 /**
  * A task may only be assigned to someone who can actually see the board.
  * Returns the assignee so callers can name them in the activity entry.
+ *
+ * "Can see it" has to mean the same thing here as in `boardAccess`, which counts
+ * team membership as access. Checking only owner-or-collaborator made a teammate
+ * unassignable on their own team's board — the exact thing team boards exist for.
  */
 async function requireAssignable(
   board: BoardDocument,
@@ -48,11 +53,22 @@ async function requireAssignable(
     (c) => c.user.toString() === assignedTo,
   );
 
-  if (!isOwner && !isCollaborator) {
+  let isTeammate = false;
+  if (!isOwner && !isCollaborator && board.organization) {
+    const org = await organizationRepository.findById(board.organization);
+    isTeammate =
+      !!org &&
+      (org.owner.toString() === assignedTo ||
+        org.members.some((m) => m.user.toString() === assignedTo));
+  }
+
+  if (!isOwner && !isCollaborator && !isTeammate) {
     throw AppError.badRequest("Assignee must be a member of this board", [
       {
         field: "assignedTo",
-        message: "That user is not the owner or a collaborator on this board",
+        message: board.organization
+          ? "That user is not on this board or in its team"
+          : "That user is not the owner or a collaborator on this board",
       },
     ]);
   }

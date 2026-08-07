@@ -41,6 +41,8 @@ export function Header() {
 
   const pageTitle = useMemo(() => {
     if (location.pathname === '/' || location.pathname === '') return 'Dashboard';
+    if (location.pathname === '/teams') return 'Teams';
+    if (location.pathname === '/my-tasks') return 'My Tasks';
     if (location.pathname === '/admin') return 'Admin Panel';
     return currentBoard?.name || 'Kanban Board';
   }, [location.pathname, currentBoard]);

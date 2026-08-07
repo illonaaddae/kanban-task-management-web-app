@@ -12,6 +12,14 @@ export interface ICollaborator {
 export interface IBoard {
   title: string;
   owner: Types.ObjectId;
+  /**
+   * The team this board belongs to, when it belongs to one.
+   *
+   * Optional on purpose: personal boards are the default and must keep working
+   * untouched. When set, every member of that team can reach the board without
+   * being invited to it individually — which is the whole point of a team board.
+   */
+  organization?: Types.ObjectId;
   collaborators: ICollaborator[];
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +72,11 @@ const boardSchema = new Schema<IBoard, BoardModel, Record<string, never>, Record
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
+    },
+    organization: {
+      type: Schema.Types.ObjectId,
+      ref: "Organization",
       index: true,
     },
     // Columns live in their own collection — a board never embeds them.

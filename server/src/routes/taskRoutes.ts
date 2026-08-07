@@ -6,6 +6,7 @@ import {
   moveTask,
   updateTask,
 } from "../controllers/taskController";
+import { listMyTasks } from "../controllers/progressController";
 import { protect } from "../middlewares/auth";
 import { boardAccess } from "../middlewares/boardAccess";
 import { loadTask } from "../middlewares/loadTask";
@@ -20,6 +21,13 @@ import {
 const router = Router();
 
 router.use(protect);
+
+/**
+ * Everything assigned to the caller. Declared before "/:id" so "mine" is never
+ * parsed as a task id, and needs no boardAccess: it resolves the caller's own
+ * boards internally rather than being scoped to one.
+ */
+router.get("/mine", listMyTasks);
 
 // The board comes from the validated body — boardAccess resolves it there.
 router.post("/", validate(createTaskSchema), boardAccess("editor"), createTask);

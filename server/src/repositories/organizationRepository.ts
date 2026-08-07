@@ -42,6 +42,20 @@ export const organizationRepository = {
       .exec();
   },
 
+  /**
+   * Every organization the user belongs to, with member identities resolved.
+   * Backs the teammate picker, which needs names and emails rather than ids.
+   */
+  findForUserPopulated(userId: UserId): Promise<OrganizationDocument[]> {
+    return Organization.find({
+      $or: [{ owner: userId }, { "members.user": userId }],
+    })
+      .populate("owner", "name email avatar")
+      .populate("members.user", "name email avatar")
+      .sort({ createdAt: 1 })
+      .exec();
+  },
+
   updateById(
     id: OrgId,
     updates: Partial<{ name: string }>,

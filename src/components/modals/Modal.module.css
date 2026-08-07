@@ -32,6 +32,40 @@
   position: relative;
 }
 
+.close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  /* 44px of hit area for a 16px glyph. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.close:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Keep the heading clear of the button. */
+.modal > .title,
+.modal > h2:first-of-type {
+  padding-right: 2.5rem;
+}
+
 .title {
   font-size: 18px;
   font-weight: 700;

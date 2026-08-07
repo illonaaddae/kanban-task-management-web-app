@@ -61,6 +61,37 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           <Logo />
         </button>
 
+        {/* Above the boards deliberately: "what am I meant to be doing" comes
+            before "which board was that on". */}
+        <nav className={styles.nav}>
+          <Link
+            to="/my-tasks"
+            className={`${styles.navItem} ${location.pathname === '/my-tasks' ? styles.navItemActive : ''}`}
+            onClick={closeIfDrawer}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+            My Tasks
+          </Link>
+          <Link
+            to="/teams"
+            className={`${styles.navItem} ${location.pathname === '/teams' ? styles.navItemActive : ''}`}
+            onClick={closeIfDrawer}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            Teams
+          </Link>
+        </nav>
+
         <div className={styles.boardSection}>
           {/* The logo also navigates here, but a logo you have to guess at is
               not an affordance. This reads as what it is. */}

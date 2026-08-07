@@ -1,5 +1,5 @@
 import { useBoardMembers } from '../../queries/boards';
-import { Input } from '../ui/Input';
+import { DatePicker } from '../ui/DatePicker';
 import { Dropdown } from '../ui/Dropdown';
 
 const UNASSIGNED = '';
@@ -42,12 +42,7 @@ export function TaskMetaFields({
 
   return (
     <>
-      <Input
-        label="Due date"
-        type="date"
-        value={dueDate}
-        onChange={(event) => onDueDateChange(event.target.value)}
-      />
+      <DatePicker label="Due date" value={dueDate} onChange={onDueDateChange} />
       <Dropdown
         label="Assignee"
         value={assignedTo}

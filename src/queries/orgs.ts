@@ -69,6 +69,44 @@ export function useInvitationPreview(token: string | undefined) {
   });
 }
 
+/** Everyone across the caller's teams, for the share picker. */
+export function useTeammates() {
+  return useQuery({
+    queryKey: queryKeys.orgs.teammates(),
+    queryFn: orgApi.getTeammates,
+    enabled: tokenStore.isAuthenticated,
+  });
+}
+
+/** Per-person progress on one board. `undefined` disables rather than guessing. */
+export function useBoardProgress(boardId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.boards.progress(boardId ?? 'none'),
+    queryFn: () => orgApi.getBoardProgress(boardId!),
+    enabled: Boolean(boardId) && tokenStore.isAuthenticated,
+  });
+}
+
+/** Everything assigned to the signed-in user. The member's landing view. */
+export function useMyTasks() {
+  return useQuery({
+    queryKey: queryKeys.tasks.mine(),
+    queryFn: orgApi.getMyTasks,
+    enabled: tokenStore.isAuthenticated,
+  });
+}
+
+/** Team-wide roll-up. Gated on the caller being an admin, which the API enforces. */
+export function useTeamAnalytics(orgId: string | undefined, canManage: boolean) {
+  return useQuery({
+    queryKey: queryKeys.orgs.analytics(orgId ?? 'none'),
+    queryFn: () => orgApi.getTeamAnalytics(orgId!),
+    // A plain member gets a 403; not asking is kinder than showing them an error
+    // for something they were never meant to see.
+    enabled: Boolean(orgId) && canManage && tokenStore.isAuthenticated,
+  });
+}
+
 // ── Writes ──────────────────────────────────────────────────────────────────
 
 export function useCreateOrganization() {

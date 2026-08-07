@@ -53,6 +53,11 @@ export interface Board {
   id?: string;
   name: string;
   columns: Column[];
+  /**
+   * The team this board belongs to, when it belongs to one. Every member of that
+   * team can reach it without a per-board invitation.
+   */
+  organizationId?: string | null;
   /** The caller's effective role, from the full-board payload. */
   myRole?: BoardRole;
   /** Everyone with access, owner first. Populated by the detail endpoints. */

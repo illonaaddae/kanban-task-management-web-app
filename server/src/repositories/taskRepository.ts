@@ -43,6 +43,21 @@ export const taskRepository = {
     return Task.find({ boardId }).sort({ position: 1 }).exec();
   },
 
+  /** Tasks assigned to one person across a set of boards. */
+  findAssignedInBoards(userId: UserId, boardIds: BoardId[]): Promise<TaskDocument[]> {
+    if (boardIds.length === 0) return Promise.resolve([]);
+
+    return Task.find({ assignedTo: userId, boardId: { $in: boardIds } })
+      .sort({ dueDate: 1, position: 1 })
+      .exec();
+  },
+
+  /** Every task on a set of boards. Backs the team analytics roll-up. */
+  findByBoardIds(boardIds: BoardId[]): Promise<TaskDocument[]> {
+    if (boardIds.length === 0) return Promise.resolve([]);
+    return Task.find({ boardId: { $in: boardIds } }).exec();
+  },
+
   findByColumnId(columnId: ColumnId): Promise<TaskDocument[]> {
     return Task.find({ columnId }).sort({ position: 1 }).exec();
   },

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/store';
 import { SettingsModal } from '../modals/SettingsModal';
 import { EditProfileModal } from '../modals/EditProfileModal';
-import { TeamModal } from '../modals/TeamModal';
 import { ProfileDropdown } from './ProfileDropdown';
 import styles from './ProfileButton.module.css';
 
@@ -11,8 +11,8 @@ export function ProfileButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showTeams, setShowTeams] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const getAvatarUrl = () => {
     if (user?.avatar) return user.avatar;
@@ -50,15 +50,12 @@ export function ProfileButton() {
           <ProfileDropdown
             onSettings={() => { setIsOpen(false); setShowSettings(true); }}
             onEditProfile={() => { setIsOpen(false); setShowEditProfile(true); }}
-            onTeams={() => { setIsOpen(false); setShowTeams(true); }}
+            onTeams={() => { setIsOpen(false); navigate('/teams'); }}
           />
         )}
       </div>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
       <EditProfileModal isOpen={showEditProfile} onClose={() => setShowEditProfile(false)} />
-      {/* Mounted only while open: the modal fires three queries, and a signed-in
-          user who never opens it should not pay for them. */}
-      {showTeams && <TeamModal isOpen onClose={() => setShowTeams(false)} />}
     </>
   );
 }
