@@ -10,7 +10,9 @@ import { BoardActionsMenu } from './BoardActionsMenu';
 import { ProfileButton } from './ProfileButton';
 import { ShareModal } from '../modals/ShareModal';
 import { ActivityPanel } from '../board/ActivityPanel';
+import { ChatPanel } from '../board/ChatPanel';
 import { useBoardPermissions } from '../../hooks/useBoardPermissions';
+import { useAiStatus } from '../../queries/orgs';
 import { HamburgerButton } from '../ui/HamburgerButton';
 import { useKanbanStore } from '../../store/kanbanStore';
 import styles from './Header.module.css';
@@ -26,7 +28,9 @@ export function Header() {
   const [showDeleteBoard, setShowDeleteBoard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const { canEdit, canManageBoard } = useBoardPermissions();
+  const { data: aiStatus } = useAiStatus();
   const isSidebarOpen = useKanbanStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useKanbanStore((state) => state.setSidebarOpen);
 
@@ -74,6 +78,22 @@ export function Header() {
               {/* Sharing was previously only reachable from the overflow menu,
                   where nobody found it. It is the entry point for assigning
                   work to teammates, so it earns a visible button. */}
+              {/* Editors only, and only with a key configured: a reply can offer a
+                  change, and a viewer has nothing to do with one. The `/` command
+                  bar is the same feature without the transcript. */}
+              {canEdit && aiStatus?.enabled && (
+                <button
+                  className={styles.askButton}
+                  onClick={() => setShowChat(true)}
+                  title="Ask about this board"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  <span>Ask</span>
+                </button>
+              )}
               {canManageBoard && (
                 <button
                   className={styles.shareButton}
@@ -122,6 +142,11 @@ export function Header() {
           effect setting state for a panel nobody can see yet. */}
       {isOnBoardView && showActivity && (
         <ActivityPanel isOpen boardId={boardId!} onClose={() => setShowActivity(false)} />
+      )}
+      {/* Also mounted only while open, so closing it discards the transcript rather
+          than leaving a stale conversation about a board that has since changed. */}
+      {isOnBoardView && showChat && (
+        <ChatPanel isOpen boardId={boardId!} onClose={() => setShowChat(false)} />
       )}
     </>
   );

@@ -341,6 +341,13 @@
   min-width: 0;
 }
 
+/* The button keeps its label on one line. Without this it is a flex item that
+   shrinks to whatever is left and wraps "Create board" onto two rows. */
+.inlineForm > *:last-child {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 @media (max-width: 600px) {
   .inlineForm {
     flex-direction: column;
@@ -355,4 +362,84 @@
 
 .danger .sectionTitle {
   color: var(--red);
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────────
+   Replaces a two-column grid of nine cards. Grouping by intent means the danger
+   zone is not one glance away from Rename, and progress is not below the fold. */
+
+.tabBar {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  /* Scrolls rather than wrapping on a phone, so the row stays one line. */
+  overflow-x: auto;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  flex-shrink: 0;
+  padding: 0.625rem 0.875rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  min-height: 2.75rem;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tabCount {
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.625rem;
+  background: var(--bg-secondary);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabActive .tabCount {
+  background: var(--primary-light, rgba(99, 95, 199, 0.15));
+  color: var(--primary);
+}
+
+/* One column now: the cards were fighting for width, not short of it. */
+.panel {
+  max-width: 52rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.teamHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.teamName {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }

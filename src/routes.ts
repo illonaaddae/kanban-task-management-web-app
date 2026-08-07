@@ -9,6 +9,7 @@ export const PATHS = {
   /** Public marketing page. Signed-in visitors are redirected to the dashboard. */
   landing: '/',
   login: '/login',
+  docs: '/docs',
   dashboard: '/boards',
   board: (boardId: string) => `/board/${boardId}`,
   myTasks: '/my-tasks',

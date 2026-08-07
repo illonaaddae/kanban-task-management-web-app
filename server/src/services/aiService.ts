@@ -97,6 +97,56 @@ const teamPlanSchema = z.object({
   columns: z.array(z.string().min(1).max(80)).min(2).max(6),
 });
 
+/**
+ * One recognised instruction about a board.
+ *
+ * A closed set of actions rather than free-form output. A chat window would let the
+ * model reply with anything and leave the client to guess what to do with it; this
+ * can only ever name an action the app already implements, and `unknown` is a first
+ * class answer rather than a failure.
+ */
+const commandPlanSchema = z.object({
+  action: z.enum(["move_task", "assign_task", "set_due_date", "create_task", "unknown"]),
+  /** Echoed back so the confirmation names what the user typed about. */
+  taskTitle: z.string().max(200).default(""),
+  columnName: z.string().max(80).default(""),
+  assigneeName: z.string().max(120).default(""),
+  /**
+   * `yyyy-mm-dd`, or empty.
+   *
+   * Deliberately wider than ten characters. A relative phrase like "next Friday" is
+   * a thing the model does return, and capping the length here rejected the whole
+   * plan over one optional field: a perfectly good "move this task" instruction died
+   * because a date came back in prose. The service normalises it instead.
+   */
+  dueDate: z.string().max(40).default(""),
+  newTaskTitle: z.string().max(200).default(""),
+  /** Shown to the user as the thing they are about to approve. */
+  summary: z.string().max(300),
+});
+
+export type CommandPlan = z.infer<typeof commandPlanSchema>;
+
+/**
+ * A reply, plus an action when the message asked for one.
+ *
+ * The two are separate on purpose. Answering a question is safe and can be shown
+ * immediately; proposing a change has to go through the same confirm-then-apply path
+ * as everything else, so it arrives as a plan rather than as something already done.
+ */
+const chatReplySchema = z.object({
+  reply: z.string().min(1).max(1200),
+  /** Present only when the message asked for a change. */
+  action: commandPlanSchema.nullable().default(null),
+});
+
+export type ChatReply = z.infer<typeof chatReplySchema>;
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export type TaskSuggestion = z.infer<typeof taskSuggestionSchema>;
 export type TeamPlan = z.infer<typeof teamPlanSchema>;
 
@@ -243,6 +293,176 @@ export const aiService = {
     );
 
     return parseJson(raw, taskSuggestionSchema, "task suggestion");
+  },
+
+  /**
+   * Answers a question about a board, and proposes a change when one is asked for.
+   *
+   * Grounded in the board that was passed in: the model is told to answer from that
+   * and to say when something is not in it, rather than producing a confident guess
+   * about a task list it cannot see.
+   *
+   * A change never happens here. It comes back as `action`, which the client
+   * resolves against real records and the user confirms, exactly like the command
+   * bar. The conversation is the interface; the safety is unchanged.
+   */
+  async chat(
+    userId: string,
+    messages: ChatMessage[],
+    board: { name: string; columns: string[]; tasks: string[]; people: string[] },
+  ): Promise<ChatReply> {
+    checkRateLimit(userId);
+
+    // Clamped per message as well as capped in count, so one long paste cannot
+    // dominate the request even within the eight-message limit.
+    const transcript = messages
+      .slice(-8)
+      .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${clamp(message.content, 600)}`)
+      .join("\n");
+
+    const raw = await respond(
+      [
+        "You are an assistant inside a kanban app, talking about one board.",
+        "Answer from the board given below and nothing else. If something is not in it,",
+        "say so plainly rather than guessing: a confident wrong answer about somebody's",
+        "task list is worse than admitting you cannot see it.",
+        "Keep replies to a few sentences.",
+        "When the user asks for a change, describe it in `reply` and fill in `action`,",
+        "copying task, column and person names exactly from the lists below.",
+        "Set `action` to null for questions, greetings and anything you cannot do.",
+        "Never claim to have made a change: the user has to approve it first.",
+      ].join(" "),
+      [
+        `Board: ${clamp(board.name, 120)}`,
+        `Columns: ${board.columns.slice(0, 12).join(", ")}`,
+        `Tasks: ${board.tasks.slice(0, 40).join(" | ")}`,
+        `People: ${board.people.slice(0, 20).join(", ")}`,
+        `Today: ${new Date().toISOString().slice(0, 10)}`,
+        "",
+        transcript,
+      ].join("\n"),
+      "chat_reply",
+      {
+        type: "object",
+        properties: {
+          reply: { type: "string" },
+          action: {
+            type: ["object", "null"],
+            properties: {
+              action: {
+                type: "string",
+                enum: ["move_task", "assign_task", "set_due_date", "create_task", "unknown"],
+              },
+              taskTitle: { type: "string" },
+              columnName: { type: "string" },
+              assigneeName: { type: "string" },
+              dueDate: { type: "string" },
+              newTaskTitle: { type: "string" },
+              summary: { type: "string" },
+            },
+            required: [
+              "action",
+              "taskTitle",
+              "columnName",
+              "assigneeName",
+              "dueDate",
+              "newTaskTitle",
+              "summary",
+            ],
+            additionalProperties: false,
+          },
+        },
+        required: ["reply", "action"],
+        additionalProperties: false,
+      },
+    );
+
+    const parsed = parseJson(raw, chatReplySchema, "chat reply");
+
+    // Same normalisation as the command bar: a relative date is not actionable, and
+    // an `unknown` action is not worth offering as a button.
+    if (parsed.action) {
+      const action = parsed.action;
+      if (action.action === "unknown") return { ...parsed, action: null };
+      if (action.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(action.dueDate)) {
+        return { ...parsed, action: { ...action, dueDate: "" } };
+      }
+    }
+
+    return parsed;
+  },
+
+  /**
+   * Reads one instruction about a board and names the action it asks for.
+   *
+   * Returns a plan, never a change. The caller matches the named task, column and
+   * person against the board it already holds, shows what it found, and only then
+   * calls the ordinary endpoints. A misread instruction therefore produces a wrong
+   * confirmation prompt, which a person rejects, rather than a wrong write.
+   */
+  async interpretCommand(
+    userId: string,
+    instruction: string,
+    board: { name: string; columns: string[]; tasks: string[]; people: string[] },
+  ): Promise<CommandPlan> {
+    checkRateLimit(userId);
+
+    const raw = await respond(
+      [
+        "You read one instruction about a kanban board and name the action it asks for.",
+        "Choose exactly one action from the list, and use `unknown` when the instruction",
+        "does not clearly match one: guessing is worse than admitting you did not understand.",
+        "Copy task, column and person names from the board's own lists rather than",
+        "paraphrasing, so the caller can match them exactly.",
+        "For a due date return an absolute yyyy-mm-dd date, never a relative phrase.",
+        "Write the summary as one plain sentence describing what will happen.",
+      ].join(" "),
+      [
+        `Board: ${clamp(board.name, 120)}`,
+        `Columns: ${board.columns.slice(0, 12).join(", ")}`,
+        `Tasks: ${board.tasks.slice(0, 40).join(" | ")}`,
+        `People: ${board.people.slice(0, 20).join(", ")}`,
+        `Today: ${new Date().toISOString().slice(0, 10)}`,
+        `Instruction: ${clamp(instruction, 300)}`,
+      ].join("\n"),
+      "command_plan",
+      {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["move_task", "assign_task", "set_due_date", "create_task", "unknown"],
+          },
+          taskTitle: { type: "string" },
+          columnName: { type: "string" },
+          assigneeName: { type: "string" },
+          dueDate: { type: "string" },
+          newTaskTitle: { type: "string" },
+          summary: { type: "string" },
+        },
+        required: [
+          "action",
+          "taskTitle",
+          "columnName",
+          "assigneeName",
+          "dueDate",
+          "newTaskTitle",
+          "summary",
+        ],
+        additionalProperties: false,
+      },
+    );
+
+    const plan = parseJson(raw, commandPlanSchema, "command plan");
+
+    // A relative or malformed date cannot be acted on. Dropping it here beats
+    // failing later with a validation error that does not explain itself.
+    if (plan.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(plan.dueDate)) {
+      logger.warn({ dueDate: plan.dueDate }, "Discarded a non-ISO date from a command");
+      return { ...plan, dueDate: "" };
+    }
+
+    return plan;
   },
 
   /**

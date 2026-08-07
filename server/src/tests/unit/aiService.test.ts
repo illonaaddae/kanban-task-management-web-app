@@ -272,3 +272,223 @@ describe("aiService.planTeam", () => {
     ).rejects.toMatchObject({ statusCode: 502 });
   });
 });
+
+describe("aiService.interpretCommand", () => {
+  beforeEach(withAiConfigured);
+
+  const board = {
+    name: "Platform Launch",
+    columns: ["Todo", "Doing", "Done"],
+    tasks: ["Fix the login redirect", "Write the changelog"],
+    people: ["Ama Mensah", "Kofi Boateng"],
+  };
+
+  const plan = (overrides: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      action: "move_task",
+      taskTitle: "Fix the login redirect",
+      columnName: "Done",
+      assigneeName: "",
+      dueDate: "",
+      newTaskTitle: "",
+      summary: "Move it to Done.",
+      ...overrides,
+    });
+
+  it("names the action and echoes the board's own wording", async () => {
+    create.mockResolvedValue(ok(plan()));
+
+    const result = await aiService.interpretCommand("u1", "move the login fix to done", board);
+
+    expect(result.action).toBe("move_task");
+    // Copied from the board, so the caller can match it exactly rather than fuzzily.
+    expect(result.taskTitle).toBe("Fix the login redirect");
+    expect(result.columnName).toBe("Done");
+  });
+
+  it("passes the board's real names to the model", async () => {
+    create.mockResolvedValue(ok(plan()));
+
+    await aiService.interpretCommand("u1", "move the login fix to done", board);
+
+    const [payload] = create.mock.calls[0];
+    // Inventing a plausible column name is the failure this prevents.
+    expect(payload.input).toContain("Todo, Doing, Done");
+    expect(payload.input).toContain("Fix the login redirect");
+    expect(payload.input).toContain("Ama Mensah");
+  });
+
+  it("accepts unknown as an answer", async () => {
+    create.mockResolvedValue(
+      ok(plan({ action: "unknown", summary: "Not sure what that means." })),
+    );
+
+    const result = await aiService.interpretCommand("u1", "make it better somehow", board);
+
+    // Guessing an action would be worse than admitting the instruction was unclear.
+    expect(result.action).toBe("unknown");
+  });
+
+  it("discards a relative due date rather than passing it on", async () => {
+    create.mockResolvedValue(
+      ok(plan({ action: "set_due_date", dueDate: "next Friday" })),
+    );
+
+    const result = await aiService.interpretCommand("u1", "due next friday", board);
+
+    // The client cannot act on a phrase, and letting it through would fail later
+    // with a validation error that explains nothing.
+    expect(result.dueDate).toBe("");
+  });
+
+  it("keeps a well-formed date", async () => {
+    create.mockResolvedValue(
+      ok(plan({ action: "set_due_date", dueDate: "2026-09-01" })),
+    );
+
+    const result = await aiService.interpretCommand("u1", "due first of september", board);
+
+    expect(result.dueDate).toBe("2026-09-01");
+  });
+
+  it("rejects an action outside the closed set", async () => {
+    // A chat window would let the model reply with anything; this can only name an
+    // action the app implements.
+    create.mockResolvedValue(ok(plan({ action: "delete_the_board" })));
+
+    await expect(
+      aiService.interpretCommand("u1", "burn it down", board),
+    ).rejects.toMatchObject({ statusCode: 502 });
+  });
+
+  it("counts against the same rate limit", async () => {
+    create.mockResolvedValue(ok(plan()));
+
+    for (let i = 0; i < 8; i += 1) {
+      await aiService.interpretCommand("u1", "move the login fix to done", board);
+    }
+
+    await expect(
+      aiService.interpretCommand("u1", "move the login fix to done", board),
+    ).rejects.toMatchObject({ statusCode: 429 });
+  });
+});
+
+describe("aiService.chat", () => {
+  beforeEach(withAiConfigured);
+
+  const board = {
+    name: "Platform Launch",
+    columns: ["Todo", "Doing", "Done"],
+    tasks: ["Fix the login redirect", "Write the changelog"],
+    people: ["Ama Mensah"],
+  };
+
+  const reply = (overrides: Record<string, unknown> = {}) =>
+    JSON.stringify({ reply: "Two tasks are open.", action: null, ...overrides });
+
+  const action = (overrides: Record<string, unknown> = {}) => ({
+    action: "move_task",
+    taskTitle: "Fix the login redirect",
+    columnName: "Done",
+    assigneeName: "",
+    dueDate: "",
+    newTaskTitle: "",
+    summary: "Move it to Done.",
+    ...overrides,
+  });
+
+  it("answers a question with no action attached", async () => {
+    create.mockResolvedValue(ok(reply()));
+
+    const result = await aiService.chat("u1", [{ role: "user", content: "what is open?" }], board);
+
+    expect(result.reply).toBe("Two tasks are open.");
+    // A question is not a change, so there is nothing to confirm.
+    expect(result.action).toBeNull();
+  });
+
+  it("attaches an action when a change is asked for", async () => {
+    create.mockResolvedValue(ok(reply({ action: action() })));
+
+    const result = await aiService.chat(
+      "u1",
+      [{ role: "user", content: "move the login fix to done" }],
+      board,
+    );
+
+    expect(result.action?.action).toBe("move_task");
+    expect(result.action?.taskTitle).toBe("Fix the login redirect");
+  });
+
+  it("grounds the reply in the board rather than letting it guess", async () => {
+    create.mockResolvedValue(ok(reply()));
+
+    await aiService.chat("u1", [{ role: "user", content: "what is open?" }], board);
+
+    const [payload] = create.mock.calls[0];
+    expect(payload.input).toContain("Fix the login redirect");
+    expect(payload.input).toContain("Todo, Doing, Done");
+    expect(payload.instructions).toMatch(/nothing else/i);
+    // Claiming to have made a change it has not made is the worst failure here.
+    expect(payload.instructions).toMatch(/never claim to have made a change/i);
+  });
+
+  it("keeps only the last eight messages", async () => {
+    create.mockResolvedValue(ok(reply()));
+
+    const long: Array<{ role: "user" | "assistant"; content: string }> = Array.from(
+      { length: 20 },
+      (_, i) => ({ role: i % 2 === 0 ? "user" : "assistant", content: `message ${i}` }),
+    );
+
+    await aiService.chat("u1", long, board);
+
+    const [payload] = create.mock.calls[0];
+    // Without a cap the transcript grows every turn and each request pays for all
+    // of it.
+    expect(payload.input).not.toContain("message 0");
+    expect(payload.input).toContain("message 19");
+  });
+
+  it("clamps a single very long message", async () => {
+    create.mockResolvedValue(ok(reply()));
+
+    await aiService.chat("u1", [{ role: "user", content: "x".repeat(5000) }], board);
+
+    const [payload] = create.mock.calls[0];
+    expect(payload.input.length).toBeLessThan(1600);
+  });
+
+  it("drops an unknown action rather than offering a useless button", async () => {
+    create.mockResolvedValue(
+      ok(reply({ reply: "Not sure.", action: action({ action: "unknown" }) })),
+    );
+
+    const result = await aiService.chat("u1", [{ role: "user", content: "do a thing" }], board);
+
+    expect(result.action).toBeNull();
+  });
+
+  it("discards a relative date on an attached action", async () => {
+    create.mockResolvedValue(
+      ok(reply({ action: action({ action: "set_due_date", dueDate: "next Tuesday" }) })),
+    );
+
+    const result = await aiService.chat("u1", [{ role: "user", content: "due next tuesday" }], board);
+
+    expect(result.action?.dueDate).toBe("");
+  });
+
+  it("counts against the same rate limit", async () => {
+    create.mockResolvedValue(ok(reply()));
+
+    for (let i = 0; i < 8; i += 1) {
+      await aiService.chat("u1", [{ role: "user", content: "hello" }], board);
+    }
+
+    await expect(
+      aiService.chat("u1", [{ role: "user", content: "hello" }], board),
+    ).rejects.toMatchObject({ statusCode: 429 });
+  });
+});

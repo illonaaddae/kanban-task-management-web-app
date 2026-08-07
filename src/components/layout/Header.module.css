@@ -234,7 +234,8 @@
 
 /* Share: promoted out of the overflow menu, because it is how a user invites
    the teammates they then assign tasks to - undiscoverable there. */
-.shareButton {
+.shareButton,
+.askButton {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -250,7 +251,8 @@
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.shareButton:hover {
+.shareButton:hover,
+.askButton:hover {
   color: var(--primary);
   border-color: var(--primary);
   background: var(--primary-light, rgba(99, 95, 199, 0.1));
@@ -258,11 +260,13 @@
 
 /* On narrow screens keep the icon, drop the word. */
 @media (max-width: 640px) {
-  .shareButton span {
+  .shareButton span,
+  .askButton span {
     display: none;
   }
 
-  .shareButton {
+  .shareButton,
+  .askButton {
     padding: 8px;
     border-radius: 50%;
   }
