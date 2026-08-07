@@ -2,6 +2,16 @@ import request from "supertest";
 import app from "../../app";
 
 describe("GET /health", () => {
+  it("names the database it is connected to", async () => {
+    // "connected" alone hid a connection string with no path, which silently
+    // used `test` instead of the intended database. The name makes that
+    // visible from the outside.
+    const res = await request(app).get("/health").expect(200);
+
+    expect(res.body.data.databaseName).toBeTruthy();
+    expect(res.body.data.databaseName).not.toBe("(none)");
+  });
+
   it("reports ok with uptime and timestamp while the DB is connected", async () => {
     const res = await request(app).get("/health").expect(200);
 
