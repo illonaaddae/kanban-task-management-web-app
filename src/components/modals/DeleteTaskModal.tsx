@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
@@ -19,8 +20,13 @@ export function DeleteTaskModal({
   isOpen, onClose, boardId, taskId, taskTitle
 }: DeleteTaskModalProps) {
   const deleteTask = useStore((state) => state.deleteTask);
+  const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
+    // A second click would 404 and show a spurious error, since the first
+    // request already removed it.
+    if (deleting) return;
+    setDeleting(true);
     try {
       await deleteTask(taskId, boardId);
       toast(`Task '${taskTitle}' deleted`, {
@@ -36,8 +42,9 @@ export function DeleteTaskModal({
       });
       onClose();
     } catch (error) {
-      console.error('Failed to delete task', error);
-      toast.error('Failed to delete task');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete task');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -48,7 +55,9 @@ export function DeleteTaskModal({
         Are you sure you want to delete the '{taskTitle}' task and its subtasks? This action cannot be reversed.
       </p>
       <div className={styles.actions}>
-        <Button variant="destructive" onClick={handleDelete} size="large">Delete</Button>
+        <Button variant="destructive" onClick={handleDelete} size="large" disabled={deleting}>
+          {deleting ? 'Deleting…' : 'Delete'}
+        </Button>
         <Button variant="secondary" onClick={onClose} size="large">Cancel</Button>
       </div>
     </Modal>

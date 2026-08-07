@@ -19,6 +19,7 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
   const updateBoard = useStore((state) => state.updateBoard);
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const board = boardId ? boards.find(b => b.id === boardId)
     : (typeof boardIndex === 'number' ? boards[boardIndex] : null);
@@ -29,7 +30,7 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim() || !board?.id) return;
+    if (!name.trim() || !board?.id || saving) return;
     const filtered = columns.filter(c => c.trim());
     if (!filtered.length) return;
 
@@ -41,13 +42,15 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
       })
     };
 
+    setSaving(true);
     try {
       await updateBoard(board.id, updatedData);
       toast.success('Board updated successfully!');
       onClose();
     } catch (error) {
-      console.error('Failed to update board', error);
-      toast.error('Failed to update board');
+      toast.error(error instanceof Error ? error.message : 'Failed to update board');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -63,7 +66,9 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
           onAdd={() => setColumns([...columns, ''])}
           onRemove={(i) => setColumns(columns.filter((_, j) => j !== i))}
           onChange={(i, v) => { const u = [...columns]; u[i] = v; setColumns(u); }} />
-        <Button type="submit" variant="primary" size="large">Save Changes</Button>
+        <Button type="submit" variant="primary" size="large" disabled={saving}>
+          {saving ? 'Saving…' : 'Save Changes'}
+        </Button>
       </form>
     </Modal>
   );

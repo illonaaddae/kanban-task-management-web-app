@@ -28,6 +28,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
   const [subtasks, setSubtasks] = useState<string[]>(['', '']);
   const [status, setStatus] = useState('');
   const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([false, false]);
+  const [saving, setSaving] = useState(false);
   const [dueDate, setDueDate] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
 
@@ -46,7 +47,9 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!board?.id || !user) return;
+    // Without this a second click — or Enter while the first request is in
+    // flight — creates the task twice.
+    if (!board?.id || !user || saving) return;
     let hasError = false;
     if (!title.trim()) { setTitleError('Title cannot be empty'); hasError = true; }
     else { setTitleError(''); }
@@ -56,6 +59,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
 
     if (hasError) return;
 
+    setSaving(true);
     try {
       await createTask(board.id, user.id, {
         title: title.trim(), description: description.trim(), status,
@@ -75,6 +79,8 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
       // Show the API's message — "Assignee must be a member of this board" and
       // "requires editor access" are both more useful than a generic failure.
       toast.error(error instanceof Error ? error.message : 'Failed to create task');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -108,7 +114,9 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
           onAdd={() => { setSubtasks([...subtasks, '']); setSubtaskErrors([...subtaskErrors, false]); }}
           onRemove={(i) => { setSubtasks(subtasks.filter((_, j) => j !== i)); setSubtaskErrors(subtaskErrors.filter((_, j) => j !== i)); }}
           onChange={handleSubtaskChange} />
-        <Button type="submit" variant="primary" size="large">Create Task</Button>
+        <Button type="submit" variant="primary" size="large" disabled={saving}>
+          {saving ? 'Creating task…' : 'Create Task'}
+        </Button>
       </form>
     </Modal>
   );

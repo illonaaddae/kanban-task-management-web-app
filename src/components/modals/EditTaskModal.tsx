@@ -29,6 +29,7 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
   const [subtasks, setSubtasks] = useState<{ title: string; isCompleted: boolean }[]>([]);
   const [status, setStatus] = useState('');
   const [subtaskErrors, setSubtaskErrors] = useState<boolean[]>([]);
+  const [saving, setSaving] = useState(false);
   const [dueDate, setDueDate] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
 
@@ -58,7 +59,7 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!task?.id || !board) return;
+    if (!task?.id || !board || saving) return;
     let hasError = false;
     if (!title.trim()) { setTitleError('Title cannot be empty'); hasError = true; }
     else { setTitleError(''); }
@@ -67,6 +68,8 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
     if (errors.some(Boolean)) { setSubtaskErrors(errors); hasError = true; }
 
     if (hasError) return;
+
+    setSaving(true);
 
     // `status` is deliberately absent: changing a column is a move, and the
     // update route rejects it. The move below is what actually relocates it.
@@ -89,6 +92,8 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
       onClose();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update task');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -123,7 +128,9 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
           onAdd={() => { setSubtasks([...subtasks, { title: '', isCompleted: false }]); setSubtaskErrors([...subtaskErrors, false]); }}
           onRemove={(i) => { setSubtasks(subtasks.filter((_, j) => j !== i)); setSubtaskErrors(subtaskErrors.filter((_, j) => j !== i)); }}
           onChange={handleSubtaskChange} />
-        <Button type="submit" variant="primary" size="large">Save Changes</Button>
+        <Button type="submit" variant="primary" size="large" disabled={saving}>
+          {saving ? 'Saving…' : 'Save Changes'}
+        </Button>
       </form>
     </Modal>
   );
