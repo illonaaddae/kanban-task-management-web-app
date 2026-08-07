@@ -67,7 +67,7 @@ export function useBoardDnd(currentBoard: Board | null) {
 
     const orderedColumnIds = columns.map((column) => column.id).filter(Boolean) as string[];
     if (orderedColumnIds.length !== columns.length) {
-      toast.error('Cannot reorder columns — refresh the board and try again.');
+      toast.error('Cannot reorder columns - refresh the board and try again.');
       return;
     }
 

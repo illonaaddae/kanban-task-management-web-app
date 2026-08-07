@@ -1,7 +1,7 @@
 /**
  * Date conversions shared by the task modals.
  *
- * Kept out of the component file so it exports components only — mixing the two
+ * Kept out of the component file so it exports components only - mixing the two
  * breaks Fast Refresh for the component.
  */
 

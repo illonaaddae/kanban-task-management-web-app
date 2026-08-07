@@ -4,7 +4,7 @@ import { env } from "./env";
 export const logger = pino({
   level: env.isTest ? "silent" : env.LOG_LEVEL,
 
-  // Never let a credential reach the log sink — Render retains logs, and an
+  // Never let a credential reach the log sink - Render retains logs, and an
   // Authorization header logged once is a token leaked for its whole lifetime.
   redact: {
     paths: [

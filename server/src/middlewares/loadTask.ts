@@ -10,7 +10,7 @@ import { catchAsync } from "../utils/catchAsync";
  * Mount order is: validate params → loadTask → boardAccess(minRole).
  *
  * A task that does not exist is a 404. A task inside someone else's board
- * falls through to `boardAccess`, which answers 403 — so a task id cannot be
+ * falls through to `boardAccess`, which answers 403 - so a task id cannot be
  * probed for existence through a 404-vs-403 difference.
  */
 export const loadTask: RequestHandler = catchAsync(async (req, _res, next) => {

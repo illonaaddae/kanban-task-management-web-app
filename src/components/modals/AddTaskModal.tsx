@@ -47,8 +47,8 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Without this a second click — or Enter while the first request is in
-    // flight — creates the task twice.
+    // Without this a second click - or Enter while the first request is in
+    // flight - creates the task twice.
     if (!board?.id || saving) return;
     let hasError = false;
     if (!title.trim()) { setTitleError('Title cannot be empty'); hasError = true; }
@@ -65,7 +65,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
         boardId: board.id,
         task: {
           title: title.trim(), description: description.trim(), status,
-          // Send the column id when we have it — the API needs it, and resolving
+          // Send the column id when we have it - the API needs it, and resolving
           // by name costs an extra request.
           columnId: board.columns.find(col => col.name === status)?.id,
           dueDate: fromDateInputValue(dueDate),
@@ -79,7 +79,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
       setDueDate(''); setAssignedTo('');
       onClose();
     } catch (error) {
-      // Show the API's message — "Assignee must be a member of this board" and
+      // Show the API's message - "Assignee must be a member of this board" and
       // "requires editor access" are both more useful than a generic failure.
       toast.error(error instanceof Error ? error.message : 'Failed to create task');
     } finally {

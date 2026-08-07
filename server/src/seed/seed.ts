@@ -4,6 +4,7 @@ import { logger } from "../config/logger";
 import { ActivityLog } from "../models/ActivityLog";
 import { Board } from "../models/Board";
 import { Column } from "../models/Column";
+import { Organization } from "../models/Organization";
 import { Task } from "../models/Task";
 import { User, type UserDocument, type UserRole } from "../models/User";
 
@@ -44,7 +45,9 @@ interface SeedBoard {
 // Resolved from server/src/seed → repo root, so it works under tsx and dist.
 const DATA_JSON = path.resolve(__dirname, "../../../data.json");
 
-/** Which board in data.json becomes the demo board — the richest one. */
+/** Which board in data.json becomes the demo board - the richest one. */
+const DEMO_TEAM_NAME = "Platform Team";
+
 const DEMO_BOARD_NAME = "Platform Launch";
 
 const DEFAULT_PASSWORD = "Password123!";
@@ -65,7 +68,7 @@ const USERS: SeedUserSpec[] = [
 /**
  * Upserts one user, always resetting the password so a re-seed leaves the
  * printed credentials valid. Assigning through the document (not
- * findOneAndUpdate) is required — the bcrypt hook lives in `pre("save")`.
+ * findOneAndUpdate) is required - the bcrypt hook lives in `pre("save")`.
  */
 async function upsertUser(spec: SeedUserSpec, password: string): Promise<UserDocument> {
   const existing = await User.findOne({ email: spec.email }).select("+password");
@@ -131,6 +134,37 @@ async function wipePreviousDemoBoard(ownerId: UserDocument["_id"]): Promise<void
   );
 }
 
+/**
+ * Creates the demo team, with the editor owning it and the viewer a member.
+ *
+ * Without this a freshly seeded install shows Teams, My Tasks and analytics all
+ * empty, and the whole feature reads as unbuilt. Idempotent by name and owner,
+ * matching how the demo board is handled.
+ */
+async function upsertDemoTeam(
+  ownerId: UserDocument["_id"],
+  memberIds: UserDocument["_id"][],
+): Promise<InstanceType<typeof Organization>> {
+  const existing = await Organization.findOne({
+    name: DEMO_TEAM_NAME,
+    owner: ownerId,
+  });
+
+  const members = memberIds.map((user) => ({
+    user,
+    role: "member" as const,
+    joinedAt: new Date(),
+  }));
+
+  if (existing) {
+    existing.members = members;
+    await existing.save();
+    return existing;
+  }
+
+  return Organization.create({ name: DEMO_TEAM_NAME, owner: ownerId, members });
+}
+
 function daysFromNow(days: number): Date {
   const date = new Date();
   date.setDate(date.getDate() + days);
@@ -158,11 +192,22 @@ async function seed(): Promise<void> {
   const demo = loadDemoBoard();
   await wipePreviousDemoBoard(editor._id);
 
-  // The editor owns the demo board; the viewer is invited read-only, which is
-  // what makes the RBAC demo runnable straight after seeding.
+  // The admin is a team member as well as a platform admin, so the team has more
+  // than two people in it and the analytics table has something to sort.
+  const team = await upsertDemoTeam(editor._id, [viewer._id, created.admin._id]);
+
+  /**
+   * The editor owns the demo board and it belongs to the demo team, so every team
+   * member can reach it without a per-board invitation.
+   *
+   * The viewer is *also* an explicit viewer collaborator, which is the more
+   * interesting case: the explicit entry overrides the team's editor default, so
+   * the RBAC demo still has somebody who genuinely cannot change anything.
+   */
   const board = await Board.create({
     title: demo.name,
     owner: editor._id,
+    organization: team._id,
     collaborators: [{ user: viewer._id, role: "viewer" }],
   });
 
@@ -257,6 +302,8 @@ async function seed(): Promise<void> {
   // ── Summary ──────────────────────────────────────────────────────────────
   logger.info(
     {
+      team: team.name,
+      teamMembers: team.members.length + 1,
       board: board.title,
       columns: demo.columns.length,
       tasks: taskCount,
@@ -270,7 +317,7 @@ async function seed(): Promise<void> {
   // Printed rather than logged: these are the credentials the grader needs,
   // and the logger is silent at LOG_LEVEL=silent / in production.
   console.log(`
-Seeded users — all three share the same password:
+Seeded users - all three share the same password:
 
   admin    ${admin.email}    (global admin, bypasses board checks)
   editor   ${editor.email}   (owns "${board.title}")
@@ -278,7 +325,7 @@ Seeded users — all three share the same password:
 
   password  ${password}${usingDefault ? "   <- default; set SEED_PASSWORD to override" : "   (from SEED_PASSWORD)"}
 
-Board "${board.title}" — ${demo.columns.length} columns, ${taskCount} tasks, ${subtaskCount} subtasks.
+Board "${board.title}" - ${demo.columns.length} columns, ${taskCount} tasks, ${subtaskCount} subtasks.
 One task is assigned to ${viewer.email} and due in 7 days.
 `);
 }

@@ -15,6 +15,11 @@ function requireBoard(req: Request) {
   return req.board;
 }
 
+function requireUser(req: Request) {
+  if (!req.user) throw AppError.unauthorized("You are not logged in");
+  return req.user;
+}
+
 function requireColumn(req: Request) {
   if (!req.column) {
     throw new AppError("Column was not loaded for this route", 500);
@@ -24,7 +29,11 @@ function requireColumn(req: Request) {
 
 export const createColumn = catchAsync(async (req: Request, res: Response) => {
   const { title } = req.body as CreateColumnInput;
-  const column = await columnService.create(requireBoard(req), title);
+  const column = await columnService.create(
+    requireBoard(req),
+    title,
+    requireUser(req),
+  );
 
   res.status(201).json({ status: "success", data: { column } });
 });
@@ -34,6 +43,7 @@ export const updateColumn = catchAsync(async (req: Request, res: Response) => {
   const { column, tasksUpdated } = await columnService.rename(
     requireColumn(req),
     title,
+    requireUser(req),
   );
 
   res.status(200).json({ status: "success", data: { column, tasksUpdated } });
@@ -41,7 +51,7 @@ export const updateColumn = catchAsync(async (req: Request, res: Response) => {
 
 export const deleteColumn = catchAsync(async (req: Request, res: Response) => {
   const column = requireColumn(req);
-  const deleted = await columnService.remove(column);
+  const deleted = await columnService.remove(column, requireUser(req));
 
   res.status(200).json({
     status: "success",
@@ -53,7 +63,11 @@ export const reorderColumns = catchAsync(async (req: Request, res: Response) => 
   const board = requireBoard(req);
   const { orderedColumnIds } = req.body as ReorderColumnsInput;
 
-  const columns = await columnService.reorder(board._id, orderedColumnIds);
+  const columns = await columnService.reorder(
+    board._id,
+    orderedColumnIds,
+    requireUser(req),
+  );
 
   res.status(200).json({ status: "success", data: { columns } });
 });

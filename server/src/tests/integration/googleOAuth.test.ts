@@ -77,7 +77,7 @@ afterEach(() => {
   global.fetch = REAL_FETCH;
 });
 
-describe("GET /auth/google — not configured", () => {
+describe("GET /auth/google - not configured", () => {
   it("returns 503 with the documented message", async () => {
     const res = await request(app).get("/auth/google").expect(503);
 
@@ -109,7 +109,7 @@ describe("GET /auth/google — not configured", () => {
   });
 });
 
-describe("GET /auth/google — redirect", () => {
+describe("GET /auth/google - redirect", () => {
   beforeEach(configureOAuth);
 
   it("302s to Google's consent screen with the expected parameters", async () => {
@@ -162,7 +162,7 @@ describe("GET /auth/google — redirect", () => {
   });
 });
 
-describe("GET /auth/google/callback — state verification", () => {
+describe("GET /auth/google/callback - state verification", () => {
   beforeEach(configureOAuth);
 
   it("403s when the state does not match the cookie", async () => {
@@ -240,7 +240,7 @@ describe("GET /auth/google/callback — state verification", () => {
   });
 });
 
-describe("GET /auth/google/callback — successful sign-in", () => {
+describe("GET /auth/google/callback - successful sign-in", () => {
   beforeEach(configureOAuth);
 
   /** Drives a full callback with a valid state. */
@@ -267,7 +267,7 @@ describe("GET /auth/google/callback — successful sign-in", () => {
     const location = res.headers.location as string;
     expect(location.startsWith(`${env.FRONTEND_URL}/login#`)).toBe(true);
 
-    // A fragment, not a query string — tokens must never reach a server log.
+    // A fragment, not a query string - tokens must never reach a server log.
     expect(location).not.toContain("?token=");
 
     const fragment = new URLSearchParams(location.split("#")[1]);
@@ -358,7 +358,7 @@ describe("GET /auth/google/callback — successful sign-in", () => {
   });
 });
 
-describe("GET /auth/google/callback — account upsert", () => {
+describe("GET /auth/google/callback - account upsert", () => {
   beforeEach(configureOAuth);
 
   async function completeFlow() {
@@ -381,7 +381,7 @@ describe("GET /auth/google/callback — account upsert", () => {
     mockGoogle(profile);
     await completeFlow();
 
-    // Second sign-in, same googleId but a changed email — sub is what matters.
+    // Second sign-in, same googleId but a changed email - sub is what matters.
     mockGoogle({ ...profile, email: "changed@example.com" });
     await completeFlow();
 
@@ -403,7 +403,7 @@ describe("GET /auth/google/callback — account upsert", () => {
 
     await completeFlow();
 
-    // Still one account — signing in with Google did not create a duplicate.
+    // Still one account - signing in with Google did not create a duplicate.
     expect(await User.countDocuments({ email: "linkme@example.com" })).toBe(1);
     const user = await User.findById(existing.user.id).select("+password");
     expect(user?.googleId).toBe("link-sub");
@@ -428,7 +428,7 @@ describe("GET /auth/google/callback — account upsert", () => {
       .expect(200);
   });
 
-  it("does NOT link on an unverified email — it creates a separate account", async () => {
+  it("does NOT link on an unverified email - it creates a separate account", async () => {
     // Linking on an unverified address would let anyone who can get Google to
     // emit someone else's email take over that account.
     await registerAndLogin(app, { email: "victim@example.com" });
@@ -565,7 +565,7 @@ describe("browser failures redirect instead of showing JSON", () => {
     });
 
     it("does not leak an internal message when the failure is a bug", async () => {
-      // A non-AppError must not have its message forwarded — it could carry
+      // A non-AppError must not have its message forwarded - it could carry
       // driver strings or file paths.
       global.fetch = (() => {
         throw new Error("ECONNREFUSED 10.0.0.5:443 internal-detail");
@@ -609,7 +609,7 @@ describe("browser failures redirect instead of showing JSON", () => {
   });
 });
 
-describe("GET /auth/google/callback — Google-side failures", () => {
+describe("GET /auth/google/callback - Google-side failures", () => {
   beforeEach(configureOAuth);
 
   async function completeFlow() {

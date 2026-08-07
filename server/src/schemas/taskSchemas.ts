@@ -33,7 +33,7 @@ export const createTaskSchema = z.object({
 
 /**
  * Rejects a field that belongs to the move endpoint instead of silently
- * dropping it — a client that PATCHes `{ columnId }` expecting a move would
+ * dropping it - a client that PATCHes `{ columnId }` expecting a move would
  * otherwise get a 200 and no move.
  */
 function belongsToMove(field: string) {

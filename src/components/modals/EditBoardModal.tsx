@@ -5,6 +5,8 @@ import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ColumnInputs } from '../board/ColumnInputs';
+import { Dropdown } from '../ui/Dropdown';
+import { useOrganizations } from '../../queries/orgs';
 import toast from 'react-hot-toast';
 import styles from './AddBoardModal.module.css';
 
@@ -17,16 +19,24 @@ interface EditBoardModalProps {
 
 export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoardModalProps) {
   const { data: boards = [] } = useBoards();
+  const { data: organizations = [] } = useOrganizations();
   const updateBoard = useUpdateBoard();
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>([]);
+  // '' is "just me". Tracked separately from the board so an unchanged edit does
+  // not send organizationId at all.
+  const [organizationId, setOrganizationId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const board = boardId ? boards.find(b => b.id === boardId)
     : (typeof boardIndex === 'number' ? boards[boardIndex] : null);
 
   useEffect(() => {
-    if (board) { setName(board.name); setColumns(board.columns.map(c => c.name)); }
+    if (board) {
+      setName(board.name);
+      setColumns(board.columns.map(c => c.name));
+      setOrganizationId(board.organizationId ?? '');
+    }
   }, [board]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -35,12 +45,18 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
     const filtered = columns.filter(c => c.trim());
     if (!filtered.length) return;
 
+    const currentOrg = board.organizationId ?? '';
     const updatedData = {
       name: name.trim(),
       columns: filtered.map(colName => {
         const existing = board.columns.find(c => c.name === colName);
         return existing || { name: colName.trim(), tasks: [] };
-      })
+      }),
+      // Sent only when it actually changed. `null` detaches the board from its
+      // team, which is a different instruction from leaving it where it is.
+      ...(organizationId !== currentOrg
+        ? { organizationId: organizationId === '' ? null : organizationId }
+        : {}),
     };
 
     setSaving(true);
@@ -63,6 +79,17 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
       <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Board Name" placeholder="e.g. Web Design" value={name}
           onChange={(e) => setName(e.target.value)} />
+        {organizations.length > 0 && (
+          <Dropdown
+            label="Team"
+            value={organizationId}
+            onChange={setOrganizationId}
+            options={[
+              { value: '', label: 'Just me' },
+              ...organizations.map((org) => ({ value: org.id, label: org.name })),
+            ]}
+          />
+        )}
         <ColumnInputs columns={columns}
           onAdd={() => setColumns([...columns, ''])}
           onRemove={(i) => setColumns(columns.filter((_, j) => j !== i))}

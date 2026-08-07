@@ -9,7 +9,7 @@ import { catchAsync } from "../utils/catchAsync";
  * What the caller may do on one specific board.
  *
  * `admin` is the global platform role reaching a board it has no explicit
- * relationship with — it is not a board-level grant.
+ * relationship with - it is not a board-level grant.
  */
 export type EffectiveRole = "viewer" | "editor" | "owner" | "admin";
 
@@ -25,10 +25,10 @@ const RANK: Record<EffectiveRole, number> = {
 
 /**
  * Where the board id comes from, most specific first:
- *   1. `req.boardId`        — set by a column/task resource loader
- *   2. `req.params.boardId` — nested routes like /boards/:boardId/columns
- *   3. `req.params.id`      — /boards/:id
- *   4. `req.body.boardId`   — creation routes such as POST /tasks
+ *   1. `req.boardId`        - set by a column/task resource loader
+ *   2. `req.params.boardId` - nested routes like /boards/:boardId/columns
+ *   3. `req.params.id`      - /boards/:id
+ *   4. `req.body.boardId`   - creation routes such as POST /tasks
  *
  * The body is last so a path can never be overridden by the payload. It is
  * only consulted on routes whose schema already validated it as an ObjectId.
@@ -48,9 +48,9 @@ function resolveBoardId(req: Request): string | undefined {
 /**
  * The caller's relationship to a board, most specific first:
  *
- *   1. owner              — they created it
- *   2. collaborator entry — they were invited to this board specifically
- *   3. team membership    — the board belongs to a team they are in
+ *   1. owner              - they created it
+ *   2. collaborator entry - they were invited to this board specifically
+ *   3. team membership    - the board belongs to a team they are in
  *
  * An explicit collaborator entry beats the team default, which is what makes it
  * possible to hold one person to `viewer` on a board their whole team can edit.
@@ -68,7 +68,7 @@ async function relationshipTo(
 
   // Team boards are shared work: a member who cannot move a card cannot do the
   // job the board exists for, so membership grants `editor`. Downgrading a
-  // specific person is still possible — add them as a `viewer` collaborator and
+  // specific person is still possible - add them as a `viewer` collaborator and
   // the branch above wins.
   const org = await organizationRepository.findById(board.organization);
   if (!org) return null;
@@ -84,7 +84,7 @@ async function relationshipTo(
  *
  * Order matters: the board is resolved and 404s **before** any permission
  * check, so a genuinely missing board never reports 403. A board that exists
- * but is not shared with the caller returns 403 — deliberately, per the RBAC
+ * but is not shared with the caller returns 403 - deliberately, per the RBAC
  * spec, so column and task routes cannot be turned into a 404-vs-403 probe
  * for ids belonging to other people's boards.
  *
@@ -101,7 +101,7 @@ export const boardAccess = (minRole: MinBoardRole): RequestHandler =>
       throw AppError.badRequest("No board was specified for this request");
     }
 
-    // Existence first — 404 before any permission reasoning.
+    // Existence first - 404 before any permission reasoning.
     const board = await boardRepository.findById(boardId);
     if (!board) {
       throw AppError.notFound("Board not found");
@@ -120,7 +120,7 @@ export const boardAccess = (minRole: MinBoardRole): RequestHandler =>
     // platform admin with no relationship to this board.
     const myRole: EffectiveRole = relationship ?? "admin";
 
-    // A global admin bypasses the rank check entirely — including when their
+    // A global admin bypasses the rank check entirely - including when their
     // board relationship is a lower role than the route demands.
     if (!isGlobalAdmin && RANK[myRole] < RANK[minRole]) {
       throw AppError.forbidden(

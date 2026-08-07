@@ -20,7 +20,7 @@ function extractBearerToken(req: Request): string | null {
 /**
  * Authenticates the request and attaches the full user document to `req.user`.
  *
- * Every failure is a 401 with its own message — missing, invalid, expired,
+ * Every failure is a 401 with its own message - missing, invalid, expired,
  * deleted user, stale session. A garbled token is caught and mapped, never
  * allowed to surface as a 500.
  */

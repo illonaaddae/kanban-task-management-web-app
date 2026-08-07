@@ -16,7 +16,7 @@ import userRoutes from "./routes/userRoutes";
 
 const app: Express = express();
 
-// Render terminates TLS at its proxy — without this req.protocol/ip are wrong.
+// Render terminates TLS at its proxy - without this req.protocol/ip are wrong.
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
@@ -38,7 +38,7 @@ app.use(
   }),
 );
 
-// Bearer tokens, not cookies — no `credentials` flag needed, but the origin
+// Bearer tokens, not cookies - no `credentials` flag needed, but the origin
 // is still locked to the deployed frontend.
 app.use(
   cors({

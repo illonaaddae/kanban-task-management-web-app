@@ -218,7 +218,7 @@ describe("POST /tasks", () => {
       expect(res.body.message).toBe("Column not found on this board");
     });
 
-    it("404 — same message — when the column belongs to another board", async () => {
+    it("404 - same message - when the column belongs to another board", async () => {
       const s = await seed();
       const other = await seed();
 
@@ -325,7 +325,7 @@ describe("GET /tasks/:id", () => {
     expect(res.body.data.task).toMatchObject({ id: task.id, title: "Readable" });
   });
 
-  it("403 for an outsider — a task id is not an existence oracle", async () => {
+  it("403 for an outsider - a task id is not an existence oracle", async () => {
     const s = await seed();
     const task = await addTask(s, s.todo, "Private");
 
@@ -651,7 +651,7 @@ describe("PATCH /tasks/:id/move", () => {
     });
   });
 
-  describe("same-column reorder — the same code path", () => {
+  describe("same-column reorder - the same code path", () => {
     it("moves a task down", async () => {
       const { s, b } = await seedFour();
 
@@ -808,11 +808,12 @@ describe("GET /boards/:id/activity", () => {
       .set(s.owner.authHeader)
       .expect(200);
 
-    // 1 board.created + 2 collaborator.added + 3 task.created
+    // 1 board.created + 2 collaborator.added + 3 column.created + 3 task.created.
+    // Creating a column used to leave no trace at all.
     expect(res.body.data.pagination).toEqual({
       page: 1,
       limit: 20,
-      total: 6,
+      total: 9,
       totalPages: 1,
     });
     expect(res.body.data.activity[0].action).toBe("task.created");
@@ -831,8 +832,8 @@ describe("GET /boards/:id/activity", () => {
     expect(page1.body.data.pagination).toEqual({
       page: 1,
       limit: 2,
-      total: 6,
-      totalPages: 3,
+      total: 9,
+      totalPages: 5,
     });
 
     const page3 = await request(app)

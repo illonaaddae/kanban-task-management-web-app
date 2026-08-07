@@ -8,7 +8,7 @@ import { catchAsync } from "../utils/catchAsync";
  * What the caller may do in one specific organization.
  *
  * `admin` here is the *platform* role reaching an organization it has no
- * membership in — distinct from the org-level `admin` grant, which is
+ * membership in - distinct from the org-level `admin` grant, which is
  * `orgAdmin`. Naming them apart avoids the one confusion this two-level model
  * invites.
  */
@@ -26,8 +26,8 @@ const RANK: Record<EffectiveOrgRole, number> = {
 
 /**
  * Where the organization id comes from, most specific first:
- *   1. `req.params.orgId` — nested routes like /orgs/:orgId/members
- *   2. `req.params.id`    — /orgs/:id
+ *   1. `req.params.orgId` - nested routes like /orgs/:orgId/members
+ *   2. `req.params.id`    - /orgs/:id
  *
  * The body is deliberately not consulted: no organization route takes an org id
  * in its payload, so accepting one would only add a way to smuggle it past a
@@ -54,7 +54,7 @@ function relationshipTo(
  *
  * Same order as `boardAccess`: existence 404s *before* any permission
  * reasoning, so a missing organization never reports 403. An organization that
- * exists but does not include the caller returns 403, not 404 — otherwise the
+ * exists but does not include the caller returns 403, not 404 - otherwise the
  * response distinguishes "no such org" from "not your org", which is an
  * existence probe for other people's teams.
  *

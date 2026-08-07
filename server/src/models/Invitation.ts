@@ -16,7 +16,7 @@ export interface IInvitation {
   role: OrgMemberRole;
   invitedBy: Types.ObjectId;
   /**
-   * SHA-256 of the token that went out in the email — never the token itself.
+   * SHA-256 of the token that went out in the email - never the token itself.
    * A leaked database dump then yields no usable invitation links, and lookup
    * is still a single indexed read because we hash the incoming token the same
    * way.
@@ -82,7 +82,7 @@ const invitationSchema = new Schema<IInvitation, InvitationModel>(
 
 /**
  * One live invitation per address per organization, enforced in the database
- * rather than by a read-then-write in the service — two admins inviting the same
+ * rather than by a read-then-write in the service - two admins inviting the same
  * person at once would otherwise both pass the check. Partial, so accepted and
  * revoked rows accumulate as history without blocking a re-invite.
  */
@@ -92,7 +92,7 @@ invitationSchema.index(
 );
 
 /**
- * An expired invitation is dead weight — the token no longer works, and the row
+ * An expired invitation is dead weight - the token no longer works, and the row
  * only exists so the UI can say "expired". Mongo drops it an hour after it
  * lapses. `expireAfterSeconds` counts from the value of `expiresAt` itself.
  */

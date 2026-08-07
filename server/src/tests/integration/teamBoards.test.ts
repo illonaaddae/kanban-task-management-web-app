@@ -72,7 +72,7 @@ describe("POST /boards with a team", () => {
     expect(stored?.organization?.toString()).toBe(orgId);
   });
 
-  it("403s a team the caller is not in — otherwise this publishes into someone else's team", async () => {
+  it("403s a team the caller is not in - otherwise this publishes into someone else's team", async () => {
     const outsider = await registerAndLogin(app);
     const stranger = await registerAndLogin(app);
     const orgId = await createOrg(stranger, "Not Yours");
@@ -128,7 +128,7 @@ describe("team board access", () => {
     const boardId = await createTeamBoard(owner, orgId);
     const columnId = await createColumn(owner, boardId);
 
-    // Never invited to this board specifically — membership is the grant.
+    // Never invited to this board specifically - membership is the grant.
     const read = await request(app)
       .get(`/boards/${boardId}/full`)
       .set(member.authHeader)
@@ -281,6 +281,81 @@ describe("team board access", () => {
       .get(`/boards/${personal.body.data.board.id}/full`)
       .set(member.authHeader)
       .expect(403);
+  });
+});
+
+describe("GET /boards/:id on a team board", () => {
+  it("reports team members separately from collaborators", async () => {
+    const owner = await registerAndLogin(app, { name: "Owner Person" });
+    const teammate = await registerAndLogin(app, { name: "Team Person" });
+    const invited = await registerAndLogin(app, { name: "Invited Person" });
+    const orgId = await createOrg(owner, "Shape Team");
+    await joinTeam(owner, orgId, teammate);
+    const boardId = await createTeamBoard(owner, orgId);
+
+    await request(app)
+      .post(`/boards/${boardId}/collaborators`)
+      .set(owner.authHeader)
+      .send({ email: invited.user.email, role: "viewer" })
+      .expect(201);
+
+    const res = await request(app)
+      .get(`/boards/${boardId}`)
+      .set(owner.authHeader)
+      .expect(200);
+
+    const { board } = res.body.data;
+
+    // A teammate has no collaborator entry, so merging the two would make the
+    // share modal offer a "remove" that silently does nothing.
+    expect(board.collaborators).toHaveLength(1);
+    expect(board.teamMembers).toHaveLength(1);
+    expect(board.teamMembers[0]).toMatchObject({
+      id: teammate.user.id,
+      name: "Team Person",
+      role: "editor",
+    });
+    expect(board.organizationName).toBe("Shape Team");
+  });
+
+  it("does not list the owner or an existing collaborator twice", async () => {
+    const owner = await registerAndLogin(app);
+    const both = await registerAndLogin(app);
+    const orgId = await createOrg(owner);
+    await joinTeam(owner, orgId, both);
+    const boardId = await createTeamBoard(owner, orgId);
+
+    // In the team *and* explicitly invited: their real role is the collaborator
+    // one, and appearing twice would show contradictory rows.
+    await request(app)
+      .post(`/boards/${boardId}/collaborators`)
+      .set(owner.authHeader)
+      .send({ email: both.user.email, role: "viewer" })
+      .expect(201);
+
+    const res = await request(app)
+      .get(`/boards/${boardId}`)
+      .set(owner.authHeader)
+      .expect(200);
+
+    expect(res.body.data.board.teamMembers).toEqual([]);
+    expect(res.body.data.board.collaborators).toHaveLength(1);
+  });
+
+  it("omits the field entirely on a personal board", async () => {
+    const owner = await registerAndLogin(app);
+    const created = await request(app)
+      .post("/boards")
+      .set(owner.authHeader)
+      .send({ title: "Personal" })
+      .expect(201);
+
+    const res = await request(app)
+      .get(`/boards/${created.body.data.board.id}`)
+      .set(owner.authHeader)
+      .expect(200);
+
+    expect(res.body.data.board.teamMembers).toBeUndefined();
   });
 });
 
@@ -478,7 +553,7 @@ describe("GET /orgs/:id/analytics", () => {
     const second = await createTeamBoard(owner, orgId, "Board Two");
     const secondTodo = await createColumn(owner, second, "Todo");
     // Two columns, so "done" is the second one. A one-column board has no done
-    // column at all — see the two-column rule in progressService.
+    // column at all - see the two-column rule in progressService.
     await createColumn(owner, second, "Done");
 
     await request(app)
@@ -520,7 +595,7 @@ describe("GET /orgs/:id/analytics", () => {
     expect(analytics.perBoard[0]).toMatchObject({ name: "Board One", tasks: 2 });
   });
 
-  it("403s a plain member — it spans boards they may not open", async () => {
+  it("403s a plain member - it spans boards they may not open", async () => {
     const owner = await registerAndLogin(app);
     const member = await registerAndLogin(app);
     const orgId = await createOrg(owner);

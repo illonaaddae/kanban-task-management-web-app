@@ -50,11 +50,13 @@ export interface FullBoard {
   id: string;
   name: string;
   myRole: EffectiveRole;
+  /** The team this board belongs to, or null when it is personal. */
+  organizationId: string | null;
   collaborators: FullBoardCollaborator[];
   columns: FullBoardColumn[];
 }
 
-/** A `collaborators.user` entry after populate — or a bare id if not populated. */
+/** A `collaborators.user` entry after populate - or a bare id if not populated. */
 type MaybePopulatedUser =
   | Types.ObjectId
   | { _id: Types.ObjectId; name?: string; email?: string };
@@ -141,7 +143,7 @@ export const boardService = {
    * Creates a board, optionally inside a team.
    *
    * A team board is reachable by every member of that team, so the caller has to
-   * actually be in the team they are naming — otherwise this would be a way to
+   * actually be in the team they are naming - otherwise this would be a way to
    * publish a board into somebody else's team.
    */
   async create(
@@ -180,19 +182,81 @@ export const boardService = {
     return withMyRole(board, "owner");
   },
 
-  /** Board with collaborator identities resolved, for the share modal. */
+  /**
+   * Board with collaborator identities resolved, for the share modal.
+   *
+   * On a team board the response also carries `teamMembers`: people who can reach
+   * this board through the team rather than through an invitation. They are a
+   * separate field, not extra `collaborators`, because a collaborator entry means
+   * an explicit per-board grant - merging them would make the share modal offer
+   * to "remove" somebody who was never added, and the removal would silently do
+   * nothing.
+   *
+   * The assignee picker needs them, though: the API accepts a teammate as an
+   * assignee on a team board, so a UI built only from `collaborators` could not
+   * offer what the server would allow.
+   */
   async getDetailed(boardId: string, myRole: EffectiveRole): Promise<BoardWithRole> {
     const board = await boardRepository.findByIdPopulated(boardId);
     if (!board) throw AppError.notFound("Board not found");
 
-    return withMyRole(board, myRole);
+    const base = withMyRole(board, myRole);
+    if (!board.organization) return base;
+
+    const org = await organizationRepository.findByIdPopulated(board.organization);
+    if (!org) return base;
+
+    // Anyone already listed reaches the board another way, and their real role is
+    // the one shown there - the owner is not "a team editor".
+    const alreadyListed = new Set<string>([
+      board.owner._id?.toString() ?? board.owner.toString(),
+      ...board.collaborators.map((c) => c.user._id?.toString() ?? c.user.toString()),
+    ]);
+
+    const people: Array<Types.ObjectId | Record<string, unknown>> = [
+      org.owner,
+      ...org.members.map((m) => m.user),
+    ];
+
+    const teamMembers = people.flatMap((candidate) => {
+      const populated = candidate as {
+        _id?: Types.ObjectId;
+        name?: string;
+        email?: string;
+        avatar?: string;
+      };
+      // Unpopulated, or the account was deleted.
+      if (!populated?._id || typeof populated.name !== "string") return [];
+
+      const id = populated._id.toString();
+      if (alreadyListed.has(id)) return [];
+      alreadyListed.add(id);
+
+      return [
+        {
+          id,
+          name: populated.name,
+          email: populated.email ?? "",
+          ...(populated.avatar ? { avatar: populated.avatar } : {}),
+          // Their effective role, matching what boardAccess grants.
+          role: "editor" as const,
+        },
+      ];
+    });
+
+    return {
+      ...base,
+      organizationId: board.organization.toString(),
+      organizationName: org.name,
+      teamMembers,
+    };
   },
 
   /**
    * The nested board the frontend renders in one request.
    *
    * Columns and tasks are fetched concurrently, then tasks are grouped by
-   * `columnId` — not by `status`. Grouping by status would misfile every task
+   * `columnId` - not by `status`. Grouping by status would misfile every task
    * on a board that has two columns sharing a name, and would drop tasks
    * whose status drifted from their column's title.
    */
@@ -218,6 +282,7 @@ export const boardService = {
       // `name` mirrors `title` so the existing frontend Board type still fits.
       name: board.title,
       myRole,
+      organizationId: board.organization ? board.organization.toString() : null,
       collaborators: board.collaborators.map((c) => ({
         user: toFullCollaboratorUser(c.user as unknown as MaybePopulatedUser),
         role: c.role,
@@ -242,7 +307,7 @@ export const boardService = {
    *
    * `organizationId: null` detaches it; omitting the key leaves the current team
    * alone. Moving a board into a team grants every member of that team access, so
-   * the caller has to be in it — same check as creation.
+   * the caller has to be in it - same check as creation.
    */
   async rename(
     boardId: string,
@@ -272,8 +337,36 @@ export const boardService = {
       }
     }
 
+    const previousTitle = (await boardRepository.findById(boardId))?.title;
+
     const board = await boardRepository.updateById(boardId, updates);
     if (!board) throw AppError.notFound("Board not found");
+
+    // Renaming a board left no trace at all before this. Only logged when the
+    // title actually changed, so moving a board between teams does not produce a
+    // "renamed" entry claiming otherwise.
+    if (previousTitle && previousTitle !== board.title) {
+      await activityService.log({
+        boardId: board._id,
+        user: user._id,
+        action: "board.renamed",
+        message: `${user.name} renamed the board to "${board.title}"`,
+        meta: { from: previousTitle, to: board.title },
+      });
+    }
+
+    if (updates.organization !== undefined) {
+      await activityService.log({
+        boardId: board._id,
+        user: user._id,
+        action: updates.organization === null ? "board.detached" : "board.attached",
+        message:
+          updates.organization === null
+            ? `${user.name} made this a personal board`
+            : `${user.name} moved this board into a team`,
+        meta: { organization: updates.organization },
+      });
+    }
 
     return withMyRole(board, myRole);
   },
@@ -319,7 +412,7 @@ export const boardService = {
       throw AppError.conflict("The board owner already has full access");
     }
 
-    // Returns null when the user is already on the board — the filter carries
+    // Returns null when the user is already on the board - the filter carries
     // the $ne, so this is one atomic check-and-insert rather than a race.
     const updated = await boardRepository.addCollaborator(
       board._id,
@@ -345,7 +438,12 @@ export const boardService = {
     board: BoardDocument,
     userId: string,
     role: CollaboratorRole,
+    actor: UserDocument,
   ): Promise<BoardWithRole> {
+    const previous = board.collaborators.find(
+      (c) => c.user.toString() === userId,
+    )?.role;
+
     const updated = await boardRepository.updateCollaboratorRole(
       board._id,
       userId,
@@ -353,6 +451,18 @@ export const boardService = {
     );
     if (!updated) {
       throw AppError.notFound("That user is not a collaborator on this board");
+    }
+
+    // A silent permission change is the one you most want a record of.
+    if (previous !== role) {
+      const target = await userRepository.findById(userId);
+      await activityService.log({
+        boardId: board._id,
+        user: actor._id,
+        action: "collaborator.role_changed",
+        message: `${actor.name} changed ${target?.name ?? "a collaborator"} to ${role}`,
+        meta: { userId, from: previous ?? null, to: role },
+      });
     }
 
     return this.getDetailed(board._id.toString(), "owner");
@@ -373,7 +483,7 @@ export const boardService = {
     await boardRepository.removeCollaborator(board._id, userId);
 
     // Someone who can no longer see the board must not stay assigned to its
-    // tasks — the frontend would render an unresolvable assignee.
+    // tasks - the frontend would render an unresolvable assignee.
     await taskRepository.unassignUserFromBoard(board._id, userId);
 
     const removed = await userRepository.findById(userId);

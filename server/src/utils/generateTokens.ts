@@ -3,7 +3,7 @@ import { env } from "../config/env";
 import type { UserRole } from "../models/User";
 
 /**
- * Everything we put in a JWT. Deliberately minimal — no email, no name.
+ * Everything we put in a JWT. Deliberately minimal - no email, no name.
  *
  * A JWT is signed, not encrypted: anything here is readable by whoever holds
  * the token. `tokenVersion` is what makes logout and password changes able to

@@ -1,5 +1,7 @@
 import { useTeamAnalytics } from '../../queries/orgs';
-import { Loader } from '../ui/Loader';
+import { StatsSkeleton } from '../ui/Skeletons';
+import { EmptyState, EMPTY_ICONS } from '../ui/EmptyState';
+import { BarList, Donut } from './Charts';
 import styles from './ProgressPanel.module.css';
 
 interface AnalyticsPanelProps {
@@ -13,7 +15,7 @@ interface AnalyticsPanelProps {
  *
  * Distinct from ProgressPanel, which covers one board and is readable by anyone
  * on it. This spans boards an individual member might not open, so it is admins
- * only — enforced server-side, mirrored here so a member is never shown an error
+ * only - enforced server-side, mirrored here so a member is never shown an error
  * for something they were not meant to see.
  */
 export function AnalyticsPanel({ orgId, canManage }: AnalyticsPanelProps) {
@@ -21,16 +23,19 @@ export function AnalyticsPanel({ orgId, canManage }: AnalyticsPanelProps) {
 
   if (!canManage) {
     return (
-      <p className={styles.empty}>
-        Team analytics are available to team admins and the owner.
-      </p>
+      <EmptyState
+        compact
+        icon={EMPTY_ICONS.chart}
+        title="Admins only"
+        body="Team analytics span every board the team owns, including ones you may not be on, so they are limited to admins and the owner."
+      />
     );
   }
 
   if (isPending) {
     return (
       <div className={styles.loading}>
-        <Loader />
+        <StatsSkeleton />
       </div>
     );
   }
@@ -45,10 +50,19 @@ export function AnalyticsPanel({ orgId, canManage }: AnalyticsPanelProps) {
 
   if (analytics.boards === 0) {
     return (
-      <p className={styles.empty}>
-        This team has no boards yet. Create a board and pick this team when you make
-        it — every member gets access without a separate invite.
-      </p>
+      <EmptyState
+        compact
+        icon={EMPTY_ICONS.board}
+        title="No boards in this team"
+        body={
+          <>
+            Boards you already have are <strong>personal</strong> until you move them
+            in, which is why they are not counted here. Use{' '}
+            <strong>Boards in this team</strong> above to create one here or move an
+            existing one across.
+          </>
+        }
+      />
     );
   }
 
@@ -79,105 +93,66 @@ export function AnalyticsPanel({ orgId, canManage }: AnalyticsPanelProps) {
         </div>
       </div>
 
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th scope="col">Board</th>
-              <th scope="col">Tasks</th>
-              <th scope="col">Done</th>
-              <th scope="col">Overdue</th>
-              <th scope="col" className={styles.barHead}>Completion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analytics.perBoard.map((board) => (
-              <tr key={board.boardId}>
-                <td>
-                  <span className={styles.name}>{board.name}</span>
-                </td>
-                <td className={styles.num}>{board.tasks}</td>
-                <td className={styles.num}>{board.completed}</td>
-                <td className={`${styles.num} ${board.overdue > 0 ? styles.overdue : ''}`}>
-                  {board.overdue}
-                </td>
-                <td>
-                  <div className={styles.barRow}>
-                    <div
-                      className={styles.bar}
-                      role="progressbar"
-                      aria-valuenow={board.completionRate}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`${board.name} completion`}
-                    >
-                      <div
-                        className={styles.barFill}
-                        style={{ width: `${board.completionRate}%` }}
-                      />
-                    </div>
-                    <span className={styles.barValue}>{board.completionRate}%</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <section className={styles.chartBlock}>
+        <h3 className={styles.chartTitle}>Where the work stands</h3>
+        <Donut
+          slices={[
+            { label: 'Done', value: analytics.totals.completed, color: 'var(--primary)' },
+            {
+              label: 'Overdue',
+              value: analytics.totals.overdue,
+              color: 'var(--red)',
+            },
+            {
+              label: 'In progress',
+              value: Math.max(
+                0,
+                analytics.totals.tasks -
+                  analytics.totals.completed -
+                  analytics.totals.overdue,
+              ),
+              color: 'var(--text-secondary)',
+            },
+          ]}
+          centerValue={`${analytics.totals.completionRate}%`}
+          centerLabel="complete"
+        />
+      </section>
+
+      <section className={styles.chartBlock}>
+        <h3 className={styles.chartTitle}>By board</h3>
+        <BarList
+          emptyLabel="No boards in this team yet."
+          data={analytics.perBoard.map((board) => ({
+            label: board.name,
+            value: board.completed,
+            alert: board.overdue,
+            // One scale across every board, so bar lengths are comparable rather
+            // than each row being its own 100%.
+            max: Math.max(1, ...analytics.perBoard.map((b) => b.tasks)),
+            caption: `${board.completed}/${board.tasks} · ${board.completionRate}%`,
+          }))}
+        />
+      </section>
+
+      <section className={styles.chartBlock}>
+        <h3 className={styles.chartTitle}>By person</h3>
+        <BarList
+          emptyLabel="Nothing assigned yet."
+          data={analytics.members.map((row) => ({
+            label: row.name,
+            value: row.completed,
+            alert: row.overdue,
+            max: Math.max(1, ...analytics.members.map((m) => m.assigned)),
+            caption: `${row.completed}/${row.assigned} · ${row.completionRate}%`,
+          }))}
+        />
+      </section>
 
       <p className={styles.footnote}>
-        Across every board belonging to this team. Someone shown as “Outside the team”
-        has tasks here but is no longer a member.
+        Across every board belonging to this team. Red is overdue. Anyone shown as
+        "Outside the team" has tasks here but is no longer a member.
       </p>
-
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th scope="col">Person</th>
-              <th scope="col">Assigned</th>
-              <th scope="col">Done</th>
-              <th scope="col">Overdue</th>
-              <th scope="col" className={styles.barHead}>Completion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analytics.members.map((row) => (
-              <tr key={row.userId ?? 'unassigned'}>
-                <td>
-                  <div className={styles.identity}>
-                    <div className={styles.name}>{row.name}</div>
-                    {row.email && <div className={styles.email}>{row.email}</div>}
-                  </div>
-                </td>
-                <td className={styles.num}>{row.assigned}</td>
-                <td className={styles.num}>{row.completed}</td>
-                <td className={`${styles.num} ${row.overdue > 0 ? styles.overdue : ''}`}>
-                  {row.overdue}
-                </td>
-                <td>
-                  <div className={styles.barRow}>
-                    <div
-                      className={styles.bar}
-                      role="progressbar"
-                      aria-valuenow={row.completionRate}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`${row.name} completion`}
-                    >
-                      <div
-                        className={styles.barFill}
-                        style={{ width: `${row.completionRate}%` }}
-                      />
-                    </div>
-                    <span className={styles.barValue}>{row.completionRate}%</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

@@ -29,7 +29,7 @@ router.use(protect);
  */
 router.get("/mine", listMyTasks);
 
-// The board comes from the validated body — boardAccess resolves it there.
+// The board comes from the validated body - boardAccess resolves it there.
 router.post("/", validate(createTaskSchema), boardAccess("editor"), createTask);
 
 // Drag-and-drop persistence. Registered before "/:id" for readability; the
@@ -58,7 +58,7 @@ router
     boardAccess("editor"),
     updateTask,
   )
-  // PUT and PATCH are both partial here [Lab 2 fix] — the frontend sends
+  // PUT and PATCH are both partial here [Lab 2 fix] - the frontend sends
   // whichever it has, and subtask toggling arrives through this route.
   .patch(
     validate(idParamSchema, "params"),

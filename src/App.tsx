@@ -1,17 +1,41 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Outlet } from "react-router-dom";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
+import { AppShortcuts } from "./components/layout/AppShortcuts";
 import { Dashboard } from "./pages/Dashboard";
-import { BoardView } from "./pages/BoardView";
 import { Login } from "./pages/Login";
-import { AcceptInvite } from "./pages/AcceptInvite";
-import { Admin } from "./pages/Admin";
-import { Teams } from "./pages/Teams";
-import { MyTasks } from "./pages/MyTasks";
-import { NotFound } from "./pages/NotFound";
+
+/**
+ * Login and Dashboard stay eager: one of them is the first paint on every visit,
+ * and deferring those would trade a smaller bundle for a slower start, which is
+ * the wrong way round.
+ *
+ * BoardView is split despite being central, because it is the only route that
+ * needs dnd-kit. Eager, that library sat in the initial bundle for every visitor
+ * including one who only ever looks at the dashboard.
+ *
+ * The rest are split out. Teams pulls in the charts, and most sessions never open
+ * it, /admin or /my-tasks at all. `.then` picks the named export because these
+ * modules do not default-export.
+ */
+const BoardView = lazy(() =>
+  import("./pages/BoardView").then((m) => ({ default: m.BoardView })),
+);
+const AcceptInvite = lazy(() =>
+  import("./pages/AcceptInvite").then((m) => ({ default: m.AcceptInvite })),
+);
+const Admin = lazy(() => import("./pages/Admin").then((m) => ({ default: m.Admin })));
+const Teams = lazy(() => import("./pages/Teams").then((m) => ({ default: m.Teams })));
+const MyTasks = lazy(() =>
+  import("./pages/MyTasks").then((m) => ({ default: m.MyTasks })),
+);
+const NotFound = lazy(() =>
+  import("./pages/NotFound").then((m) => ({ default: m.NotFound })),
+);
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Loader } from "./components/ui/Loader";
 import { useTheme } from "./context/ThemeContext";
 import { useKanbanStore } from "./store/kanbanStore";
 import { useStore } from "./store/store";
@@ -22,7 +46,7 @@ function App() {
     // Remove stale localStorage from previous storage versions
     localStorage.removeItem("kanban-storage");
     localStorage.removeItem("kanban_user");
-    // NOTE: Do NOT clear "cookieFallback" here — it's the Appwrite SDK's
+    // NOTE: Do NOT clear "cookieFallback" here - it's the Appwrite SDK's
     // session persistence key. Clearing it on every mount destroys active
     // sessions. It is only cleaned up in authService.logout().
     useStore.getState().checkSession();
@@ -42,7 +66,8 @@ function App() {
     <div className={`app ${theme}`}>
       <ToastProvider />
 
-      <Routes>
+      <Suspense fallback={<Loader fullScreen />}>
+        <Routes>
         {/* Public route - Login */}
         <Route path="/login" element={<Login />} />
 
@@ -60,10 +85,20 @@ function App() {
                   onToggle={() => setSidebarOpen(!isSidebarOpen)}
                 />
 
+                {/* First in the tab order: a keyboard user should not have to walk
+                    the whole board list to reach the board. */}
+                <a className="skip-link" href="#main-content">
+                  Skip to content
+                </a>
+
                 <main
+                  id="main-content"
                   className={`main-content ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
                 >
                   <Header />
+                  {/* Inside the protected layout, so shortcuts exist only where
+                      there is something to act on. */}
+                  <AppShortcuts />
                   <Outlet />
                 </main>
               </>
@@ -78,9 +113,10 @@ function App() {
           <Route path="/admin" element={<Admin />} />
         </Route>
 
-        {/* 404 - catches all unknown routes for both auth states */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* 404 - catches all unknown routes for both auth states */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }

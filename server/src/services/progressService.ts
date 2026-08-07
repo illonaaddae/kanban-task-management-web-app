@@ -12,7 +12,7 @@ export interface TeammateView {
   name: string;
   email: string;
   avatar?: string;
-  /** Which teams they are in with the caller — shown as context in the picker. */
+  /** Which teams they are in with the caller - shown as context in the picker. */
   teams: string[];
 }
 
@@ -28,13 +28,13 @@ export interface MemberProgress {
   /** Tasks whose due date has passed and that are not in the last column. */
   overdue: number;
   subtasks: { total: number; completed: number };
-  /** 0–100, by task count. Rounded for display; 0 when nothing is assigned. */
+  /** 0-100, by task count. Rounded for display; 0 when nothing is assigned. */
   completionRate: number;
 }
 
 export interface BoardProgress {
   boardId: string;
-  /** The column treated as "done" — the last one, by position. */
+  /** The column treated as "done" - the last one, by position. */
   doneColumn: string | null;
   totals: {
     tasks: number;
@@ -108,7 +108,7 @@ export const progressService = {
    * Everyone the caller shares a team with.
    *
    * Exists so board sharing can offer a pick-list instead of demanding a typed
-   * email address — which could only ever reach people who already had an
+   * email address - which could only ever reach people who already had an
    * account, and produced "user not found" for everyone else.
    *
    * Deliberately *not* an authorisation surface: being a teammate grants nothing
@@ -162,7 +162,7 @@ export const progressService = {
    *
    * Scoped to a single board on purpose. An organization-wide roll-up would have
    * to span boards the caller may not be able to see, and there is no board↔team
-   * link to bound it by — so it would either leak or lie.
+   * link to bound it by - so it would either leak or lie.
    */
   async forBoard(boardId: string): Promise<BoardProgress> {
     const [board, columns, tasks] = await Promise.all([
@@ -205,7 +205,7 @@ export const progressService = {
     const isOverdue = (task: TaskDocument) =>
       !isDone(task) && !!task.dueDate && task.dueDate.getTime() < now;
 
-    // Seed a row per person so somebody with nothing assigned still shows up —
+    // Seed a row per person so somebody with nothing assigned still shows up -
     // "no tasks" is a fact about them, not a reason to hide them.
     const rows = new Map<string | null, MemberProgress>();
     const blank = (
@@ -285,8 +285,8 @@ export const progressService = {
    * Every task assigned to the caller, across every board they can reach.
    *
    * This is what a team member logs in to do. Boards are resolved through the
-   * same union `GET /boards` uses — owned, shared, and belonging to a team they
-   * are in — so a task on a team board shows up without anyone having invited
+   * same union `GET /boards` uses - owned, shared, and belonging to a team they
+   * are in - so a task on a team board shows up without anyone having invited
    * them to that board individually.
    */
   async assignedTo(user: UserDocument): Promise<AssignedTask[]> {
@@ -309,7 +309,7 @@ export const progressService = {
     const boardById = new Map(boards.map((board) => [board._id.toString(), board]));
     const columnById = new Map(columns.map((column) => [column._id.toString(), column]));
 
-    // The last column per board is "done", same rule as the progress table —
+    // The last column per board is "done", same rule as the progress table -
     // including the two-column minimum, so a single-column board never reports
     // everything as finished.
     const columnCountByBoard = new Map<string, number>();
@@ -367,7 +367,7 @@ export const progressService = {
   /**
    * Team-wide roll-up across every board belonging to the team.
    *
-   * Safe to aggregate here — unlike a per-user view, the scope is exactly the
+   * Safe to aggregate here - unlike a per-user view, the scope is exactly the
    * team's own boards, and the route restricts it to team admins.
    */
   async forOrganization(orgId: string): Promise<TeamAnalytics> {

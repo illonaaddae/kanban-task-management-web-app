@@ -36,7 +36,7 @@ function readCookie(req: Request, name: string): string | undefined {
  * Browsers send `Accept: text/html` on a top-level navigation; fetch, curl,
  * Postman and Supertest do not. The distinction decides how a failure is
  * reported: a person gets bounced back into the app with the reason, while an
- * API client keeps the documented JSON envelope and status code — so the 503
+ * API client keeps the documented JSON envelope and status code - so the 503
  * and 403 contracts stay intact and testable.
  */
 function wantsHtml(req: Request): boolean {
@@ -54,7 +54,7 @@ function reportFailure(req: Request, res: Response, error: unknown): boolean {
 
   req.log?.warn(
     { err: error instanceof Error ? error.message : error },
-    "Google OAuth failed — redirecting to the frontend",
+    "Google OAuth failed - redirecting to the frontend",
   );
   res.redirect(302, googleAuthService.buildFrontendErrorRedirect(error));
   return true;
@@ -64,7 +64,7 @@ function stateCookieOptions(): CookieOptions {
   return {
     httpOnly: true,
     // `lax`, not `strict`: the callback arrives as a top-level navigation from
-    // accounts.google.com, and a strict cookie would not be sent with it — the
+    // accounts.google.com, and a strict cookie would not be sent with it - the
     // flow would fail every time with a state mismatch.
     sameSite: "lax",
     secure: env.isProduction,
@@ -74,7 +74,7 @@ function stateCookieOptions(): CookieOptions {
 }
 
 /**
- * `GET /auth/google` — start the flow.
+ * `GET /auth/google` - start the flow.
  *
  * Mints a random state, parks it in a short-lived httpOnly cookie, and redirects
  * to Google with the same value in the query. Only a browser that holds the
@@ -99,15 +99,15 @@ export const googleRedirect = catchAsync(async (req: Request, res: Response) => 
 });
 
 /**
- * `GET /auth/google/callback` — finish the flow.
+ * `GET /auth/google/callback` - finish the flow.
  *
  * Verifies state, exchanges the code server-side, upserts the account, then
  * hands our own tokens to the frontend in the URL fragment.
  */
 export const googleCallback = catchAsync(async (req: Request, res: Response) => {
-  // Everything here is wrapped so that *every* failure mode — unconfigured,
+  // Everything here is wrapped so that *every* failure mode - unconfigured,
   // cancelled consent, bad state, a rejected code exchange, even a duplicate-key
-  // collision on upsert — lands the person back on the login page rather than on
+  // collision on upsert - lands the person back on the login page rather than on
   // a JSON error document. API clients still get the envelope (see wantsHtml).
   try {
     googleAuthService.assertConfigured();

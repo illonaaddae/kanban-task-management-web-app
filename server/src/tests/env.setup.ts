@@ -3,7 +3,7 @@
  *
  * Loaded via jest `setupFiles`, i.e. before any test file imports
  * `config/env.ts`. Assigned with `??=` so a real .env or CI variable still
- * wins. DATABASE_URL is a placeholder — setup.ts swaps in the
+ * wins. DATABASE_URL is a placeholder - setup.ts swaps in the
  * mongodb-memory-server URI before connecting.
  */
 process.env.NODE_ENV = "test";
@@ -19,8 +19,8 @@ process.env.LOG_LEVEL ??= "silent";
 /**
  * Force Google OAuth *off* for the suite, whatever the developer's `.env` says.
  *
- * `config/env.ts` loads `server/.env` through dotenv when it is imported — which
- * happens after this file runs — so a developer who has real GOOGLE_* keys
+ * `config/env.ts` loads `server/.env` through dotenv when it is imported - which
+ * happens after this file runs - so a developer who has real GOOGLE_* keys
  * locally would otherwise see the "not configured" tests fail while CI passed.
  *
  * Empty string rather than `delete`, because that is what survives both layers:

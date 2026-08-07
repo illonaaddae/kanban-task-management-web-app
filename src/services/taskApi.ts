@@ -27,7 +27,7 @@ export async function getTasks(boardId: string): Promise<Task[]> {
  * Resolves a column name to its id.
  *
  * The frontend's `Task.status` is a column *name*; the API needs a `columnId`.
- * Callers that already know the id should pass it — this is the fallback for
+ * Callers that already know the id should pass it - this is the fallback for
  * the existing call sites that only have a status.
  */
 async function resolveColumnId(boardId: string, status: string): Promise<string> {
@@ -69,7 +69,7 @@ export async function createTask(
  * `status`, `columnId` and `position` are stripped: the API rejects them on this
  * route on purpose, because changing a column is a move. Callers that want to
  * move a task must use `moveTask`, which also keeps both columns' positions
- * contiguous — something this endpoint cannot do.
+ * contiguous - something this endpoint cannot do.
  */
 export async function updateTask(
   taskId: string,
@@ -84,7 +84,7 @@ export async function updateTask(
   if (updates.assignedTo !== undefined) payload.assignedTo = updates.assignedTo;
 
   if (Object.keys(payload).length === 0) {
-    // Nothing this route can change — a status-only update means "move", and
+    // Nothing this route can change - a status-only update means "move", and
     // sending an empty body would just earn a 400.
     const { task } = await api.get<{ task: ApiTaskDocument }>(`/tasks/${taskId}`);
     return toTask(task, task.columnId);

@@ -10,7 +10,7 @@ import { generateTokens, type TokenPair } from "../utils/generateTokens";
  * Hand-rolled Google authorization-code flow.
  *
  * No passport: the whole exchange is three HTTP calls and a database upsert, and
- * a strategy library would hide the one part worth being explicit about — that
+ * a strategy library would hide the one part worth being explicit about - that
  * we mint *our own* JWTs at the end rather than trusting Google's tokens for
  * anything beyond identifying the user once.
  */
@@ -94,7 +94,7 @@ async function exchangeCode(code: string): Promise<string> {
     body: new URLSearchParams({
       code,
       client_id: env.GOOGLE_CLIENT_ID as string,
-      // Only ever sent from here — the secret never reaches the browser.
+      // Only ever sent from here - the secret never reaches the browser.
       client_secret: env.GOOGLE_CLIENT_SECRET as string,
       redirect_uri: env.GOOGLE_REDIRECT_URI as string,
       grant_type: "authorization_code",
@@ -143,8 +143,8 @@ async function fetchProfile(accessToken: string): Promise<GoogleProfile> {
  * Finds or creates the account behind a Google profile.
  *
  * Order matters:
- *   1. `googleId` — the stable identifier. An email can change; `sub` cannot.
- *   2. verified email — links Google to an existing password account, so signing
+ *   1. `googleId` - the stable identifier. An email can change; `sub` cannot.
+ *   2. verified email - links Google to an existing password account, so signing
  *      in with Google does not silently create a second account for the same
  *      person.
  *   3. otherwise create, `role: editor`, no password.
@@ -238,7 +238,7 @@ function errorCodeFor(statusCode: number): string {
  * login page with the reason in the fragment keeps them inside the SPA, which
  * can then toast it.
  *
- * Only `AppError` messages are forwarded — they are the ones written to be read
+ * Only `AppError` messages are forwarded - they are the ones written to be read
  * by a user. Anything else is a bug, and its message could carry internals.
  */
 export function buildFrontendErrorRedirect(error: unknown): string {

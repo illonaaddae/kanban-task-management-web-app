@@ -38,7 +38,7 @@ interface SendArgs {
   text: string;
   /**
    * Makes a retry of the same logical send a no-op at Resend's end rather than a
-   * second email — invitations get re-requested when a page is refreshed.
+   * second email - invitations get re-requested when a page is refreshed.
    */
   idempotencyKey?: string;
 }
@@ -53,12 +53,12 @@ async function send({
   const resend = getClient();
 
   // No API key configured. The link is logged instead so local development and
-  // a key-less deployment both stay usable — the invite is still valid, it just
+  // a key-less deployment both stay usable - the invite is still valid, it just
   // has to be delivered by hand.
   if (!resend) {
     logger.warn(
       { to, subject },
-      "Email is not configured (RESEND_API_KEY unset) — message not sent",
+      "Email is not configured (RESEND_API_KEY unset) - message not sent",
     );
     return { delivered: false, reason: "Email delivery is not configured" };
   }
@@ -109,7 +109,7 @@ export interface InvitationEmailArgs {
 
 /**
  * Table-based layout with inline styles, which is what mail clients actually
- * support — Outlook ignores most of a stylesheet, and Gmail strips `<style>`
+ * support - Outlook ignores most of a stylesheet, and Gmail strips `<style>`
  * blocks on forwarded mail.
  */
 function invitationHtml(args: InvitationEmailArgs): string {

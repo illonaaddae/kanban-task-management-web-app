@@ -26,7 +26,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
     if (isDrawer) onToggle();
   };
   
-  // Extract board ID from current URL path — memoized so the regex only
+  // Extract board ID from current URL path - memoized so the regex only
   // re-runs when the pathname actually changes, not on every render
   const activeBoardId = useMemo(
     () => location.pathname.match(/\/board\/([^/]+)/)?.[1] ?? null,

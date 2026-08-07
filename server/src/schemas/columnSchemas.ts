@@ -8,7 +8,7 @@ const titleField = z
   .max(80, "Column title cannot exceed 80 characters");
 
 /**
- * Same `title`/`name` alias as boards — the frontend's `Column` type has
+ * Same `title`/`name` alias as boards - the frontend's `Column` type has
  * always used `name`, and the model exposes it back as a virtual.
  */
 const titleOrName = z

@@ -37,7 +37,7 @@ router.get(
   previewInvitation,
 );
 
-// Accepting needs a session — the invitation is redeemed *for* an account, and
+// Accepting needs a session - the invitation is redeemed *for* an account, and
 // the service checks that account's address matches the invited one.
 router.post(
   "/:token/accept",

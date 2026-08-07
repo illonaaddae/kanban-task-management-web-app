@@ -71,7 +71,7 @@
   color: #fff;
 }
 
-/* Only overdue earns colour when idle — everything else is neutral until picked. */
+/* Only overdue earns colour when idle - everything else is neutral until picked. */
 .filterAlert:not(.filterActive) {
   color: var(--red);
   border-color: var(--red);

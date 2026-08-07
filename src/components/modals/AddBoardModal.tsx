@@ -44,8 +44,8 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
       toast.success(`Board '${name.trim()}' created!`);
       setName(''); setColumns(['Todo', 'Doing']); setOrganizationId(''); onClose();
     } catch (error) {
-      // Show the API's own message — "requires owner access", a validation
-      // detail, or the request timeout — rather than a generic failure.
+      // Show the API's own message - "requires owner access", a validation
+      // detail, or the request timeout - rather than a generic failure.
       toast.error(error instanceof Error ? error.message : 'Failed to create board');
     } finally {
       setSaving(false);

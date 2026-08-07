@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useBoards } from "../queries/boards";
-import { Loader } from "../components/ui/Loader";
+import { BoardsSkeleton } from "../components/ui/Skeletons";
+import { EmptyState, EMPTY_ICONS } from "../components/ui/EmptyState";
+import { Button } from "../components/ui/Button";
+import { AddBoardModal } from "../components/modals/AddBoardModal";
 import { BoardCardMenu } from "../components/board/BoardCardMenu";
 import { EditBoardModal } from "../components/modals/EditBoardModal";
 import { DeleteBoardModal } from "../components/modals/DeleteBoardModal";
@@ -13,23 +16,23 @@ export function Dashboard() {
   // Own loading and error state, so a mutation elsewhere cannot blank this page.
   const { data: boards = [], isPending, error, refetch } = useBoards();
 
-  // One modal instance per action, told which board it is acting on — rather
+  // One modal instance per action, told which board it is acting on - rather
   // than rendering three modals per card.
   const [editing, setEditing] = useState<Board | null>(null);
   const [sharing, setSharing] = useState<Board | null>(null);
   const [deleting, setDeleting] = useState<Board | null>(null);
+  const [creating, setCreating] = useState(false);
 
-  // Only the first load takes over the page. A later mutation — creating a
-  // board, say — must not replace the dashboard with a spinner: the modal that
+  // Only the first load takes over the page. A later mutation - creating a
+  // board, say - must not replace the dashboard with a spinner: the modal that
   // triggered it is still open on top, and blanking the page behind it reads as
   // the app having broken.
   if (isPending) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.emptyState}>
-          <Loader />
-          <span>Loading your boards...</span>
-        </div>
+        {/* No caption: the skeleton already announces the wait once, via
+            SkeletonGroup's aria-live region. */}
+        <BoardsSkeleton />
       </div>
     );
   }
@@ -37,11 +40,12 @@ export function Dashboard() {
   if (error) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.emptyState}>
-          <p>Could not load boards</p>
-          <span>{error instanceof Error ? error.message : 'Something went wrong'}</span>
-          <button onClick={() => void refetch()}>Retry</button>
-        </div>
+        <EmptyState
+          icon={EMPTY_ICONS.search}
+          title="Could not load your boards"
+          body={error instanceof Error ? error.message : 'Something went wrong'}
+          action={<Button onClick={() => void refetch()}>Try again</Button>}
+        />
       </div>
     );
   }
@@ -54,10 +58,16 @@ export function Dashboard() {
       </div>
 
       {boards.length === 0 ? (
-        <div className={styles.emptyState}>
-          <p>No boards yet</p>
-          <span>Create a new board to get started</span>
-        </div>
+        <EmptyState
+          icon={EMPTY_ICONS.board}
+          title="No boards yet"
+          body="A board is a set of columns you move tasks through. Create one and it appears here and in the sidebar."
+          action={
+            <Button size="large" onClick={() => setCreating(true)}>
+              + Create your first board
+            </Button>
+          }
+        />
       ) : (
         <div className={styles.boardGrid}>
           {boards.map((board) => {
@@ -158,6 +168,7 @@ export function Dashboard() {
           onClose={() => setDeleting(null)}
         />
       )}
+      {creating && <AddBoardModal isOpen onClose={() => setCreating(false)} />}
     </div>
   );
 }

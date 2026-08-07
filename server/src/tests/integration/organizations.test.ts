@@ -164,7 +164,7 @@ describe("GET /orgs/:id", () => {
     });
   });
 
-  it("403s a non-member — an existing organization is never a 404 probe", async () => {
+  it("403s a non-member - an existing organization is never a 404 probe", async () => {
     const owner = await registerAndLogin(app);
     const stranger = await registerAndLogin(app);
     const org = await createOrg(owner);
@@ -205,7 +205,7 @@ describe("PATCH /orgs/:id", () => {
     expect(res.body.data.organization.name).toBe("Renamed");
   });
 
-  it("403s an org admin — renaming is owner-only", async () => {
+  it("403s an org admin - renaming is owner-only", async () => {
     const owner = await registerAndLogin(app);
     const admin = await registerAndLogin(app);
     const org = await createOrg(owner);
@@ -269,7 +269,7 @@ describe("POST /orgs/:id/invitations", () => {
     expect(res.body.data.emailSent).toBe(true);
     expect(res.body.data.acceptUrl).toContain("/invite/");
 
-    // The token itself is never persisted — only its hash.
+    // The token itself is never persisted - only its hash.
     const stored = await Invitation.findById(res.body.data.invitation.id);
     const token = res.body.data.acceptUrl.split("/invite/")[1];
     expect(stored?.tokenHash).not.toBe(token);
@@ -321,7 +321,7 @@ describe("POST /orgs/:id/invitations", () => {
       .expect(201);
 
     // Reported, not thrown: the link works, so failing the request would leave
-    // the admin unsure whether to retry — and a retry would 409.
+    // the admin unsure whether to retry - and a retry would 409.
     expect(res.body.data.emailSent).toBe(false);
     expect(res.body.data.emailError).toBe("Email delivery is not configured");
     expect(await Invitation.countDocuments({ organization: org.id })).toBe(1);
@@ -401,7 +401,7 @@ describe("POST /orgs/:id/invitations", () => {
       .expect(400);
   });
 
-  it("403s a plain member — inviting grants access to the team's work", async () => {
+  it("403s a plain member - inviting grants access to the team's work", async () => {
     const owner = await registerAndLogin(app);
     const member = await registerAndLogin(app);
     const org = await createOrg(owner);
@@ -772,7 +772,7 @@ describe("PATCH /orgs/:id/members/:userId", () => {
     expect(updated.role).toBe("admin");
   });
 
-  it("400s changing the owner's role — the model does not express it", async () => {
+  it("400s changing the owner's role - the model does not express it", async () => {
     const owner = await registerAndLogin(app);
     const org = await createOrg(owner);
 
@@ -855,7 +855,7 @@ describe("DELETE /orgs/:id/members/:userId", () => {
       .expect(403);
   });
 
-  it("400s removing the owner — delete the organization instead", async () => {
+  it("400s removing the owner - delete the organization instead", async () => {
     const owner = await registerAndLogin(app);
     const org = await createOrg(owner);
 

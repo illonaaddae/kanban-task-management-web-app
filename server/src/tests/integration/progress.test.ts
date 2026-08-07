@@ -175,7 +175,7 @@ describe("GET /boards/:id/progress", () => {
       .send({ email: mate.user.email, role: "editor" })
       .expect(201);
 
-    // Mate: one done, one overdue, one plain — plus subtasks.
+    // Mate: one done, one overdue, one plain - plus subtasks.
     await createTask(owner, boardId, done, {
       title: "Shipped",
       assignedTo: mate.user.id,
@@ -312,7 +312,7 @@ describe("GET /boards/:id/progress", () => {
     await createTask(owner, boardId, todo, { title: "Theirs", assignedTo: leaver.user.id });
 
     // Removing a collaborator clears them from tasks, so write the orphan
-    // directly — the state a manual database edit or an older record leaves.
+    // directly - the state a manual database edit or an older record leaves.
     await request(app)
       .delete(`/boards/${boardId}/collaborators/${leaver.user.id}`)
       .set(owner.authHeader)
@@ -332,7 +332,7 @@ describe("GET /boards/:id/progress", () => {
     ).toMatchObject({ assigned: 1 });
   });
 
-  it("lets a viewer read it — nothing here is hidden from them anyway", async () => {
+  it("lets a viewer read it - nothing here is hidden from them anyway", async () => {
     const owner = await registerAndLogin(app);
     const viewer = await registerAndLogin(app);
     const boardId = await createBoard(owner);

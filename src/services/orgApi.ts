@@ -67,7 +67,7 @@ export interface Teammate {
   name: string;
   email: string;
   avatar?: string;
-  /** Which shared teams they are in — shown as context in the picker. */
+  /** Which shared teams they are in - shown as context in the picker. */
   teams: string[];
 }
 
@@ -86,7 +86,7 @@ export interface MemberProgress {
 
 export interface BoardProgress {
   boardId: string;
-  /** The column treated as done — the last one by position. */
+  /** The column treated as done - the last one by position. */
   doneColumn: string | null;
   totals: {
     tasks: number;
@@ -153,7 +153,7 @@ export async function getTeamAnalytics(orgId: string): Promise<TeamAnalytics> {
 /**
  * Everyone across every team the caller belongs to.
  *
- * Populates the share picker. Being a teammate grants nothing on a board — this
+ * Populates the share picker. Being a teammate grants nothing on a board - this
  * only decides whose name is offered, so the board's own collaborator list stays
  * the authorisation model.
  */
@@ -224,7 +224,7 @@ export async function updateMemberRole(
   return organization;
 }
 
-/** Also the "leave" path — the server allows a member to remove themselves. */
+/** Also the "leave" path - the server allows a member to remove themselves. */
 export async function removeMember(orgId: string, userId: string): Promise<void> {
   await api.delete(`/orgs/${orgId}/members/${userId}`);
 }
@@ -272,7 +272,7 @@ export function acceptInvitation(token: string): Promise<{
 /**
  * Accepts an invitation found in the caller's own pending list.
  *
- * No token needed — the server matches the invitation's address against the
+ * No token needed - the server matches the invitation's address against the
  * session's, which is the check that actually authorises joining. This is the
  * path for someone who no longer has the email.
  */

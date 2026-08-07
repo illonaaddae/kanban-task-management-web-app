@@ -21,7 +21,7 @@ export const validate = (
     if (!result.success) {
       const details: ErrorDetail[] = result.error.issues.map((issue) => ({
         // path is empty when the whole payload is wrong (e.g. body is an
-        // array) — fall back to the source name so `field` is never "".
+        // array) - fall back to the source name so `field` is never "".
         field: issue.path.length ? issue.path.join(".") : source,
         message: issue.message,
       }));
@@ -30,7 +30,7 @@ export const validate = (
     }
 
     if (source === "query") {
-      // Express 5 defines req.query as a getter with no setter — a plain
+      // Express 5 defines req.query as a getter with no setter - a plain
       // assignment throws. Redefine the property instead.
       Object.defineProperty(req, "query", {
         value: result.data,

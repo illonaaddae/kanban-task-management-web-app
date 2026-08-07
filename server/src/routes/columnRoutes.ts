@@ -11,7 +11,7 @@ const router = Router();
 
 router.use(protect);
 
-// The board is not in the path — loadColumn resolves it from column.boardId
+// The board is not in the path - loadColumn resolves it from column.boardId
 // and boardAccess then applies the ordinary board-level check.
 router
   .route("/:id")

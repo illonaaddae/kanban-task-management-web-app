@@ -9,7 +9,7 @@ beforeAll(async () => {
   const uri = process.env.MONGO_URI;
   if (!uri) {
     throw new Error(
-      "MONGO_URI is not set — globalSetup did not run. Check jest.config.js.",
+      "MONGO_URI is not set - globalSetup did not run. Check jest.config.js.",
     );
   }
 

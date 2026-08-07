@@ -1,9 +1,11 @@
 import type { Types } from "mongoose";
 import type { BoardDocument } from "../models/Board";
 import type { ColumnDocument } from "../models/Column";
+import type { UserDocument } from "../models/User";
 import { columnRepository } from "../repositories/columnRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { AppError } from "../utils/AppError";
+import { activityService } from "./activityService";
 
 export interface RenameResult {
   column: ColumnDocument;
@@ -19,10 +21,28 @@ export interface RemoveColumnResult {
 
 export const columnService = {
   /** Appends the column after the current last one. */
-  async create(board: BoardDocument, title: string): Promise<ColumnDocument> {
+  async create(
+    board: BoardDocument,
+    title: string,
+    actor: UserDocument,
+  ): Promise<ColumnDocument> {
     const position = (await columnRepository.maxPosition(board._id)) + 1;
 
-    return columnRepository.create({ title, boardId: board._id, position });
+    const column = await columnRepository.create({
+      title,
+      boardId: board._id,
+      position,
+    });
+
+    await activityService.log({
+      boardId: board._id,
+      user: actor._id,
+      action: "column.created",
+      message: `${actor.name} added the column "${title}"`,
+      meta: { columnId: column._id.toString(), title },
+    });
+
+    return column;
   },
 
   /**
@@ -32,7 +52,12 @@ export const columnService = {
    * frontend groups by `status`. Skipping this half of the rename would leave
    * those tasks pointing at a column name that no longer exists.
    */
-  async rename(column: ColumnDocument, title: string): Promise<RenameResult> {
+  async rename(
+    column: ColumnDocument,
+    title: string,
+    actor: UserDocument,
+  ): Promise<RenameResult> {
+    const previous = column.title;
     const updated = await columnRepository.updateById(column._id, { title });
     if (!updated) throw AppError.notFound("Column not found");
 
@@ -41,6 +66,15 @@ export const columnService = {
       title,
     );
 
+    await activityService.log({
+      boardId: column.boardId,
+      user: actor._id,
+      action: "column.renamed",
+      // Both names, because "renamed a column" alone tells a reader nothing.
+      message: `${actor.name} renamed "${previous}" to "${title}"`,
+      meta: { columnId: column._id.toString(), from: previous, to: title },
+    });
+
     return { column: updated, tasksUpdated };
   },
 
@@ -48,7 +82,10 @@ export const columnService = {
    * Deletes the column, its tasks, and closes the positional gap so the
    * remaining columns stay contiguous from 0.
    */
-  async remove(column: ColumnDocument): Promise<RemoveColumnResult> {
+  async remove(
+    column: ColumnDocument,
+    actor: UserDocument,
+  ): Promise<RemoveColumnResult> {
     const tasks = await taskRepository.deleteByColumnId(column._id);
     await columnRepository.deleteById(column._id);
 
@@ -57,6 +94,19 @@ export const columnService = {
       column.position + 1,
       -1,
     );
+
+    await activityService.log({
+      boardId: column.boardId,
+      user: actor._id,
+      action: "column.deleted",
+      // The task count is the part worth recording: deleting a column takes its
+      // tasks with it, and that is not obvious after the fact.
+      message:
+        tasks === 0
+          ? `${actor.name} deleted the empty column "${column.title}"`
+          : `${actor.name} deleted "${column.title}" and its ${tasks} task${tasks === 1 ? "" : "s"}`,
+      meta: { title: column.title, tasksDeleted: tasks },
+    });
 
     return { tasks, columnsShifted };
   },
@@ -71,6 +121,7 @@ export const columnService = {
   async reorder(
     boardId: string | Types.ObjectId,
     orderedColumnIds: string[],
+    actor: UserDocument,
   ): Promise<ColumnDocument[]> {
     const existing = await columnRepository.findByBoardId(boardId);
     const existingIds = existing.map((c) => c._id.toString());
@@ -113,7 +164,17 @@ export const columnService = {
 
     await columnRepository.reorder(boardId, orderedColumnIds);
 
-    return columnRepository.findByBoardId(boardId);
+    const reordered = await columnRepository.findByBoardId(boardId);
+
+    await activityService.log({
+      boardId,
+      user: actor._id,
+      action: "columns.reordered",
+      message: `${actor.name} reordered the columns`,
+      meta: { order: reordered.map((column) => column.title) },
+    });
+
+    return reordered;
   },
 };
 

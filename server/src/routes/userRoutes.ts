@@ -11,7 +11,7 @@ router.use(protect);
 
 router.patch("/me", validate(updateMeSchema), updateMe);
 
-// Platform admins only — 403 for any other authenticated role.
+// Platform admins only - 403 for any other authenticated role.
 router.get("/", restrictTo("admin"), listUsers);
 
 export default router;

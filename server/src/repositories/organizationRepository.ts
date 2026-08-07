@@ -31,7 +31,7 @@ export const organizationRepository = {
   },
 
   /**
-   * Every organization the user belongs to — owned plus joined. The $or is
+   * Every organization the user belongs to - owned plus joined. The $or is
    * served by the `owner` and `members.user` indexes.
    */
   findForUser(userId: UserId): Promise<OrganizationDocument[]> {
@@ -73,7 +73,7 @@ export const organizationRepository = {
   /**
    * Adds a member only if that user is not already one. Returns null when the
    * organization is missing *or* the user is already a member, so the caller can
-   * answer 404 vs 409 without a second read — and two simultaneous accepts of
+   * answer 404 vs 409 without a second read - and two simultaneous accepts of
    * the same invitation cannot produce a duplicate entry.
    */
   addMember(

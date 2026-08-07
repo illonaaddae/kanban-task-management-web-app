@@ -6,7 +6,7 @@ import { Task } from "../../models/Task";
 import { User } from "../../models/User";
 
 beforeAll(async () => {
-  // Build the unique/sparse indexes before asserting on them — autoIndex is
+  // Build the unique/sparse indexes before asserting on them - autoIndex is
   // asynchronous and the DB is dropped between test files.
   await Promise.all([User.init(), Board.init(), Column.init(), Task.init(), ActivityLog.init()]);
 });

@@ -21,16 +21,16 @@ declare global {
        */
       boardId?: string;
 
-      /** Set by `boardAccess` — the board the request was authorised against. */
+      /** Set by `boardAccess` - the board the request was authorised against. */
       board?: BoardDocument;
 
-      /** Set by `boardAccess` — the caller's effective role on that board. */
+      /** Set by `boardAccess` - the caller's effective role on that board. */
       myRole?: EffectiveRole;
 
-      /** Set by `orgAccess` — the organization the request was authorised against. */
+      /** Set by `orgAccess` - the organization the request was authorised against. */
       organization?: OrganizationDocument;
 
-      /** Set by `orgAccess` — the caller's effective role in that organization. */
+      /** Set by `orgAccess` - the caller's effective role in that organization. */
       myOrgRole?: EffectiveOrgRole;
 
       /** Set by `loadColumn`. */

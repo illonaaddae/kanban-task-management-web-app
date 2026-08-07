@@ -5,7 +5,7 @@ import { AppError } from "../utils/AppError";
 import { catchAsync } from "../utils/catchAsync";
 import type { AuthResult } from "../services/authService";
 
-/** `{ user, accessToken, refreshToken }` — the shape the frontend unwraps. */
+/** `{ user, accessToken, refreshToken }` - the shape the frontend unwraps. */
 function authPayload({ user, tokens }: AuthResult) {
   return { user, ...tokens };
 }

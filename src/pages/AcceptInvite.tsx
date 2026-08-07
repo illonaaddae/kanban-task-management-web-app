@@ -12,7 +12,7 @@ import styles from './AcceptInvite.module.css';
  *
  * Deliberately readable while signed out: the invitee may have no account, and
  * the whole point of the screen is telling them which address to register with.
- * The token stays in the URL and is posted back on accept — it never goes into
+ * The token stays in the URL and is posted back on accept - it never goes into
  * storage, so closing the tab loses nothing that the email does not still hold.
  */
 export function AcceptInvite() {

@@ -112,7 +112,7 @@ describe("POST /boards/:id/columns", () => {
     expect(fresh.position).toBe(0);
   });
 
-  describe("RBAC — editor and above", () => {
+  describe("RBAC - editor and above", () => {
     it.each(["owner", "editor", "admin"] as const)("%s can create", async (role) => {
       const scenario = await seedBoard();
 
@@ -565,7 +565,7 @@ describe("GET /boards/:id/full", () => {
     const doing = await addColumn(owner, boardId, "Doing");
     const done = await addColumn(owner, boardId, "Done");
 
-    // Inserted out of order on purpose — the endpoint must sort by position.
+    // Inserted out of order on purpose - the endpoint must sort by position.
     await Task.create([
       {
         title: "Second in Todo",
@@ -616,6 +616,8 @@ describe("GET /boards/:id/full", () => {
       "id",
       "myRole",
       "name",
+      // null on a personal board; a team id makes it reachable by that team.
+      "organizationId",
     ]);
     expect(res.body.data.id).toBe(boardId);
     expect(res.body.data.name).toBe("Platform Launch");
@@ -764,7 +766,7 @@ describe("GET /boards/:id/full", () => {
     expect(res.body.data.columns).toEqual([]);
   });
 
-  describe("RBAC — viewer and above", () => {
+  describe("RBAC - viewer and above", () => {
     it.each(["owner", "editor", "viewer", "admin"] as const)("%s can read", async (role) => {
       const scenario = await seedPopulatedBoard();
 

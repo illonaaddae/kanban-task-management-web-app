@@ -2,7 +2,7 @@
  * Query keys, in one place.
  *
  * Every key is a function so call sites cannot drift into slightly different
- * array shapes — the commonest way a cache invalidation silently misses.
+ * array shapes - the commonest way a cache invalidation silently misses.
  * Hierarchical on purpose: invalidating `boards.all()` also invalidates every
  * `boards.detail(id)`, because React Query matches keys by prefix.
  */

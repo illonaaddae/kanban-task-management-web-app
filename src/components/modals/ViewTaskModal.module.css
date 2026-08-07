@@ -127,7 +127,7 @@
   }
 }
 
-/* Read-only value display — used for viewer mode, due date and assignee. */
+/* Read-only value display - used for viewer mode, due date and assignee. */
 .readOnlyValue {
   display: flex;
   align-items: center;

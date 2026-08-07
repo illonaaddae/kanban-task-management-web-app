@@ -2,7 +2,7 @@ import { Schema, model, type HydratedDocument, type Model, type Types } from "mo
 import { toJSONOptions } from "./transforms";
 
 /**
- * Roles a *member* can hold. The owner is the `owner` field, not an entry here —
+ * Roles a *member* can hold. The owner is the `owner` field, not an entry here -
  * same shape as Board/collaborators, so there is one way to express "this person
  * created it" across the codebase.
  */

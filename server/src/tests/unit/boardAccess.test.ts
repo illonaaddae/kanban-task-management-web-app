@@ -6,7 +6,7 @@ import { boardAccess, type MinBoardRole } from "../../middlewares/boardAccess";
 import { boardRepository } from "../../repositories/boardRepository";
 import { AppError } from "../../utils/AppError";
 
-// Role resolution is pure logic over a board document — the database is mocked
+// Role resolution is pure logic over a board document - the database is mocked
 // out so these stay fast and can construct relationships the integration
 // suites would need several requests to set up.
 jest.mock("../../repositories/boardRepository");
@@ -54,7 +54,7 @@ interface RunResult {
 
 /**
  * Invokes the middleware against a hand-built request and resolves once it has
- * called `next` — with or without an error.
+ * called `next` - with or without an error.
  */
 async function run(minRole: MinBoardRole, options: RunOptions = {}): Promise<RunResult> {
   const { board = fakeBoard() } = options;
@@ -81,7 +81,7 @@ async function run(minRole: MinBoardRole, options: RunOptions = {}): Promise<Run
   return { error, req, nextCalledClean };
 }
 
-describe("boardAccess — role resolution", () => {
+describe("boardAccess - role resolution", () => {
   it("resolves the owner as owner", async () => {
     const { req, nextCalledClean } = await run("viewer", { user: fakeUser(OWNER) });
 
@@ -125,7 +125,7 @@ describe("boardAccess — role resolution", () => {
   });
 });
 
-describe("boardAccess — rank ordering (viewer < editor < owner)", () => {
+describe("boardAccess - rank ordering (viewer < editor < owner)", () => {
   const cases: Array<{
     who: string;
     id: Types.ObjectId;
@@ -157,7 +157,7 @@ describe("boardAccess — rank ordering (viewer < editor < owner)", () => {
   }
 });
 
-describe("boardAccess — global admin", () => {
+describe("boardAccess - global admin", () => {
   it("bypasses the board check with no relationship at all", async () => {
     const { req, nextCalledClean } = await run("owner", {
       user: fakeUser(OUTSIDER, "admin"),
@@ -189,7 +189,7 @@ describe("boardAccess — global admin", () => {
   });
 });
 
-describe("boardAccess — failure precedence", () => {
+describe("boardAccess - failure precedence", () => {
   it("401s before any lookup when there is no authenticated user", async () => {
     const { error } = await run("viewer", { user: undefined });
 
@@ -210,14 +210,14 @@ describe("boardAccess — failure precedence", () => {
       board: null,
     });
 
-    // An outsider on a nonexistent board must see 404, not 403 — existence is
+    // An outsider on a nonexistent board must see 404, not 403 - existence is
     // resolved first.
     expect(error?.statusCode).toBe(404);
     expect(error?.message).toBe("Board not found");
   });
 });
 
-describe("boardAccess — board id resolution order", () => {
+describe("boardAccess - board id resolution order", () => {
   const LOADER_ID = new Types.ObjectId().toString();
   const PARAM_ID = new Types.ObjectId().toString();
   const BODY_ID = new Types.ObjectId().toString();

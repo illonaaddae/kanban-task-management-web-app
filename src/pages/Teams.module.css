@@ -54,7 +54,7 @@
   margin-bottom: 1rem;
 }
 
-/* Invitations addressed to this account — the one thing worth interrupting for. */
+/* Invitations addressed to this account - the one thing worth interrupting for. */
 .callout {
   margin-bottom: 1.5rem;
   padding: 1.25rem 1.5rem;
@@ -288,5 +288,62 @@
 
   .roleSelect {
     width: 100%;
+  }
+}
+
+/* ── Boards in this team ─────────────────────────────────────────────────── */
+
+.boardRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.75rem 0.5rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.boardRow:hover {
+  background: var(--bg-secondary);
+}
+
+.boardName {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.boardMeta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.boardForms {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Field and button on one line, the button sized to its label. */
+.inlineForm {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.inlineForm > *:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .inlineForm {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

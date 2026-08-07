@@ -18,7 +18,7 @@ interface AddColumnModalProps {
  * Names a new column before creating it.
  *
  * "+ New Column" previously created a column literally called "New Column" and
- * left the user to rename it through the Edit Board flow — which meant nobody
+ * left the user to rename it through the Edit Board flow - which meant nobody
  * ever got the name they wanted on the first try.
  */
 export function AddColumnModal({ isOpen, onClose, boardId, existingNames }: AddColumnModalProps) {

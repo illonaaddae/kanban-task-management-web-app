@@ -42,7 +42,7 @@ async function requireColumnOnBoard(
  *
  * "Can see it" has to mean the same thing here as in `boardAccess`, which counts
  * team membership as access. Checking only owner-or-collaborator made a teammate
- * unassignable on their own team's board — the exact thing team boards exist for.
+ * unassignable on their own team's board - the exact thing team boards exist for.
  */
 async function requireAssignable(
   board: BoardDocument,
@@ -214,7 +214,7 @@ export const taskService = {
    *   4. set columnId, position and status
    *   5. shifts run as one bulkWrite; log task.moved
    *
-   * A same-column reorder is the same call with the same columnId — steps 2
+   * A same-column reorder is the same call with the same columnId - steps 2
    * and 3 then apply to one column and still land on contiguous positions.
    */
   async move(

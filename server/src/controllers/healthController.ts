@@ -3,7 +3,7 @@ import { dbName, dbState, isDbConnected } from "../config/db";
 import { env } from "../config/env";
 
 /**
- * GET /health — liveness probe for Render.
+ * GET /health - liveness probe for Render.
  *
  * Returns 200 while the process is up and Mongo is reachable, 503 otherwise,
  * so a half-dead instance (process alive, DB gone) fails the health check

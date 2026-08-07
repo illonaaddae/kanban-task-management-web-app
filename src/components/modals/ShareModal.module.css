@@ -179,3 +179,62 @@
   justify-content: center;
   padding: 1.5rem 0;
 }
+
+/* ── Teammate picker ─────────────────────────────────────────────────────── */
+
+.suggestions {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.chip:hover:not(:disabled) {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(99, 95, 199, 0.1));
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chipPlus {
+  color: var(--primary);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.suggestionsHint {
+  margin: 0.625rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .chip {
+    min-height: 2.75rem;
+  }
+}

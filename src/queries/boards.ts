@@ -35,7 +35,7 @@ export function useBoard(boardId: string | undefined) {
 
 /**
  * Owner + collaborators. Also the source for the assignee select, so it is
- * requested by the task modals as well as the share modal — one cache entry
+ * requested by the task modals as well as the share modal - one cache entry
  * serves both instead of each fetching its own copy.
  */
 export function useBoardMembers(boardId: string | undefined) {

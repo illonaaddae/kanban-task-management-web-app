@@ -12,7 +12,7 @@ export function Button({
   className = '',
   // HTML defaults a button inside a form to `type="submit"`, which made
   // "+ Add New Column" and "+ Add New Subtask" submit the form they were meant
-  // to add a row to — the board or task was created on the first click, with
+  // to add a row to - the board or task was created on the first click, with
   // whatever was filled in so far. Every form here passes `type="submit"`
   // explicitly, so the safe default is the inert one.
   type = 'button',

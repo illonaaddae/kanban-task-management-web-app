@@ -36,7 +36,7 @@ export const orgInvitationParamsSchema = z.object({
 });
 
 /**
- * The token is 32 random bytes as base64url — 43 characters, no padding. Bounded
+ * The token is 32 random bytes as base64url - 43 characters, no padding. Bounded
  * here so a garbage path segment is a 400 instead of reaching the hash lookup.
  */
 export const invitationTokenParamsSchema = z.object({

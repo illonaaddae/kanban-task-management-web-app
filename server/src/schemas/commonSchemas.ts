@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** 24-character hex — a Mongo ObjectId. */
+/** 24-character hex - a Mongo ObjectId. */
 export const objectIdSchema = z
   .string()
   .regex(/^[a-f\d]{24}$/i, "Must be a valid id");

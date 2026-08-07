@@ -109,6 +109,44 @@ body {
   }
 }
 
+/* ── Focus ─────────────────────────────────────────────────────────────────
+   One visible ring for everything, so a keyboard user can always tell where they
+   are. `:focus-visible` rather than `:focus`, so a mouse click does not leave a
+   ring behind on the button it just pressed. */
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Inputs draw their own border colour on focus; a ring on top of that is noise. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+}
+
+/* Skip link: the first thing in the tab order, hidden until it has focus. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 2000;
+  padding: 0.625rem 1rem;
+  border-radius: 0 0 0.375rem 0.375rem;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;

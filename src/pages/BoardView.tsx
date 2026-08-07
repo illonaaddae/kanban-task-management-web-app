@@ -13,7 +13,9 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Loader } from "../components/ui/Loader";
+import { BoardSkeleton } from "../components/ui/Skeletons";
+import { EmptyState, EMPTY_ICONS } from "../components/ui/EmptyState";
+import { Button } from "../components/ui/Button";
 import styles from "./BoardView.module.css";
 
 export function BoardView() {
@@ -34,7 +36,7 @@ export function BoardView() {
 
   // The API answers 404 for a board that does not exist and 403 for one that
   // exists but is not shared with this user. Neither is worth a page of error
-  // text — send them back to their own boards.
+  // text - send them back to their own boards.
   if (error instanceof ApiError && (error.status === 404 || error.status === 403)) {
     return <Navigate to="/" replace />;
   }
@@ -43,7 +45,7 @@ export function BoardView() {
     return (
       <div className={styles.container}>
         <div className={styles.loadingState}>
-          <Loader />
+          <BoardSkeleton />
           <span>Loading board...</span>
         </div>
       </div>
@@ -53,11 +55,12 @@ export function BoardView() {
   if (error) {
     return (
       <div className={styles.container}>
-        <div className={styles.empty}>
-          <p>Could not load board data.</p>
-          <span>{error instanceof Error ? error.message : "Something went wrong"}</span>
-          <button onClick={() => void refetch()}>Retry</button>
-        </div>
+        <EmptyState
+          icon={EMPTY_ICONS.search}
+          title="Could not load this board"
+          body={error instanceof Error ? error.message : "Something went wrong"}
+          action={<Button onClick={() => void refetch()}>Try again</Button>}
+        />
       </div>
     );
   }
@@ -65,11 +68,11 @@ export function BoardView() {
   if (!currentBoard) {
     return (
       <div className={styles.container}>
-        <div className={styles.empty}>
-          <p>
-            No board selected. Choose a board from the sidebar to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon={EMPTY_ICONS.board}
+          title="No board selected"
+          body="Pick a board from the sidebar, or create one to get started."
+        />
       </div>
     );
   }
@@ -80,10 +83,11 @@ export function BoardView() {
         {canEdit ? (
           <EmptyBoard onAddColumn={handleAddColumn} />
         ) : (
-          <div className={styles.empty}>
-            <p>This board has no columns yet.</p>
-            <span>You have view-only access, so you cannot add one.</span>
-          </div>
+          <EmptyState
+            icon={EMPTY_ICONS.columns}
+            title="This board has no columns yet"
+            body="You have view-only access here, so someone with edit access needs to add the first one."
+          />
         )}
       </div>
     );

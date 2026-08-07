@@ -36,7 +36,7 @@ const activityLogSchema = new Schema<IActivityLog, ActivityLogModel>(
   },
 );
 
-// The feed is always "this board, newest first" — paginated.
+// The feed is always "this board, newest first" - paginated.
 activityLogSchema.index({ boardId: 1, createdAt: -1 });
 
 export const ActivityLog = model<IActivityLog, ActivityLogModel>(

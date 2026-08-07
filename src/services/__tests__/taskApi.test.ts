@@ -301,7 +301,7 @@ describe('taskApi', () => {
       expect(calls[0].body).toEqual({ dueDate: null, assignedTo: null });
     });
 
-    it('strips status, columnId and position — those belong to the move route', async () => {
+    it('strips status, columnId and position - those belong to the move route', async () => {
       // Sending them would earn a 400 that names the move endpoint.
       on('GET', /^\/tasks\/task-1$/, () => ({ body: success({ task: taskDocument() }) }));
 

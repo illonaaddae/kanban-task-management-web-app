@@ -58,10 +58,69 @@
   padding: 1rem 1.5rem;
 }
 
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0 1.5rem 0.875rem;
+  border-bottom: 1px solid var(--border-color, rgba(130, 143, 163, 0.25));
+}
+
+.filter {
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.filter:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.filterActive {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ── Grouping ────────────────────────────────────────────────────────────── */
+
+.group {
+  margin-bottom: 1.5rem;
+}
+
+.group:last-child {
+  margin-bottom: 0;
+}
+
+/* Sticks while its day's entries scroll past, so the date stays in view. */
+.dayHeading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 0.75rem;
+  padding: 0.375rem 0;
+  background: var(--bg-primary);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
 .list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.875rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -72,13 +131,44 @@
   gap: 0.75rem;
 }
 
-.dot {
+/* ── Per-action icon ─────────────────────────────────────────────────────── */
+
+/* Shape and colour carry the action, so fifteen rows no longer look identical.
+   The message still says it in words. */
+.icon {
   flex-shrink: 0;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-top: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.0625rem;
   border-radius: 50%;
-  background: var(--purple, #635fc7);
+}
+
+.create {
+  background: rgba(99, 95, 199, 0.14);
+  color: var(--primary);
+}
+
+.move {
+  background: rgba(45, 156, 219, 0.16);
+  color: #2d9cdb;
+}
+
+.update {
+  background: rgba(130, 143, 163, 0.18);
+  color: var(--text-secondary);
+}
+
+.destroy {
+  background: rgba(234, 85, 85, 0.14);
+  color: var(--red);
+}
+
+.people {
+  background: rgba(103, 178, 111, 0.16);
+  color: #4caf50;
 }
 
 .entryBody {
@@ -94,10 +184,38 @@
 }
 
 .meta {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
   font-size: 0.6875rem;
   color: var(--text-secondary);
-  margin-top: 0.125rem;
+}
+
+.actor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  font-weight: 700;
+}
+
+.actorAvatar,
+.actorInitials {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.actorInitials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 700;
 }
 
 .footer {

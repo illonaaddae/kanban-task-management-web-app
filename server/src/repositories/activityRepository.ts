@@ -59,7 +59,7 @@ export const activityRepository = {
     };
   },
 
-  /** Cascade helper — called when a board is deleted. */
+  /** Cascade helper - called when a board is deleted. */
   async deleteByBoardId(boardId: BoardId): Promise<number> {
     const { deletedCount } = await ActivityLog.deleteMany({ boardId }).exec();
     return deletedCount ?? 0;

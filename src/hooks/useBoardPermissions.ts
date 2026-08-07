@@ -22,7 +22,7 @@ export function useRouteBoardId(): string | undefined {
  * The single source of truth for what the UI offers.
  *
  * Mirrors the server's RBAC table so affordances match what the API will
- * actually allow. Presentation only — the API enforces the same rules
+ * actually allow. Presentation only - the API enforces the same rules
  * independently, so a hidden button is convenience, never the control.
  *
  * Reads the board from the route rather than taking an argument, so every call

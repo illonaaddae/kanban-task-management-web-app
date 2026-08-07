@@ -6,7 +6,9 @@ import { Loader } from '../components/ui/Loader';
 import { ProgressPanel } from '../components/team/ProgressPanel';
 import { AnalyticsPanel } from '../components/team/AnalyticsPanel';
 import { useStore } from '../store/store';
+import { Link } from 'react-router-dom';
 import { useBoards } from '../queries/boards';
+import { useCreateBoard, useUpdateBoard } from '../queries/mutations';
 import {
   useAcceptMyInvitation,
   useCreateOrganization,
@@ -107,6 +109,8 @@ export function Teams() {
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const acceptMine = useAcceptMyInvitation();
+  const createBoard = useCreateBoard();
+  const updateBoard = useUpdateBoard();
 
   const [newOrgName, setNewOrgName] = useState('');
   const [email, setEmail] = useState('');
@@ -120,6 +124,26 @@ export function Teams() {
    * is then the only way in, so it gets room on the page rather than a toast.
    */
   const [undeliveredLink, setUndeliveredLink] = useState<string | null>(null);
+  const [newBoardName, setNewBoardName] = useState('');
+  const [boardToMove, setBoardToMove] = useState('');
+
+  /** Boards already in the selected team. */
+  const teamBoards = useMemo(
+    () => boards.filter((board) => board.organizationId === activeOrgId),
+    [boards, activeOrgId],
+  );
+
+  /**
+   * Boards that could be moved in: ones the caller owns that are not already in
+   * this team. Only an owner can move a board, so anything else would 403.
+   */
+  const movableBoards = useMemo(
+    () =>
+      boards.filter(
+        (board) => board.myRole === 'owner' && board.organizationId !== activeOrgId,
+      ),
+    [boards, activeOrgId],
+  );
 
   const boardOptions = useMemo(
     () =>
@@ -144,6 +168,46 @@ export function Teams() {
       toast.success(`Created ${created.name}`);
     } catch (error) {
       fail(error, 'Could not create the team');
+    }
+  };
+
+  const handleCreateBoardInTeam = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = newBoardName.trim();
+    if (!trimmed || !activeOrgId) return;
+
+    try {
+      await createBoard.mutateAsync({
+        name: trimmed,
+        // The default columns a board is useless without. Two of them, so
+        // "done" means something: see the two-column rule in progress.
+        columns: [
+          { name: 'Todo', tasks: [] },
+          { name: 'Done', tasks: [] },
+        ],
+        organizationId: activeOrgId,
+      });
+      setNewBoardName('');
+      toast.success(`Created ${trimmed} in ${org?.name ?? 'this team'}`);
+    } catch (error) {
+      fail(error, 'Could not create the board');
+    }
+  };
+
+  const handleMoveBoardIn = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!boardToMove || !activeOrgId) return;
+
+    const moving = boards.find((board) => board.id === boardToMove);
+    try {
+      await updateBoard.mutateAsync({
+        boardId: boardToMove,
+        updates: { name: moving?.name ?? '', organizationId: activeOrgId },
+      });
+      setBoardToMove('');
+      toast.success(`${moving?.name ?? 'Board'} is now a team board`);
+    } catch (error) {
+      fail(error, 'Could not move the board');
     }
   };
 
@@ -201,7 +265,7 @@ export function Teams() {
       }
     } catch (error) {
       // The API distinguishes an existing member (409), a duplicate pending
-      // invitation (409) and inviting yourself (400) — its wording beats
+      // invitation (409) and inviting yourself (400) - its wording beats
       // anything generic here.
       fail(error, 'Could not send the invitation');
     }
@@ -257,7 +321,7 @@ export function Teams() {
       toast.success('Invitation link copied');
     } catch {
       // Clipboard access needs a secure context and can be refused outright.
-      toast.error('Could not copy — select the link and copy it manually');
+      toast.error('Could not copy - select the link and copy it manually');
     }
   };
 
@@ -265,9 +329,12 @@ export function Teams() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Teams</h1>
+        {/* Role-aware: a plain member cannot invite anyone, and telling them to
+            was just noise on a page that is otherwise about their own team. */}
         <p className={styles.subtitle}>
-          Invite people by email — they do not need an account yet. Share a board with
-          a teammate to assign them tasks on it.
+          {canManage
+            ? 'Invite people by email. They do not need an account yet, and a board put in this team is reachable by everyone in it.'
+            : 'The teams you belong to, and how the work on their boards is going.'}
         </p>
       </header>
 
@@ -369,7 +436,7 @@ export function Teams() {
 
                         {isTeamOwner ? (
                           // The owner is the team's `owner` field, not a member
-                          // entry — there is nothing to change here.
+                          // entry - there is nothing to change here.
                           <span className={`${styles.badge} ${styles.badgeOwner}`}>Owner</span>
                         ) : (
                           <>
@@ -387,7 +454,7 @@ export function Teams() {
                               </span>
                             )}
 
-                            {/* Anyone may remove themselves — that is "leave". */}
+                            {/* Anyone may remove themselves - that is "leave". */}
                             {(canManage || isSelf) && (
                               <button
                                 type="button"
@@ -404,6 +471,84 @@ export function Teams() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </section>
+
+            {/* Boards before analytics: a team with no boards has nothing to
+                analyse, and this is the section that fixes that. */}
+            <section className={styles.card}>
+              <div className={styles.cardHead}>
+                <h2 className={styles.sectionTitle}>
+                  Boards in this team{' '}
+                  <span className={styles.count}>· {teamBoards.length}</span>
+                </h2>
+              </div>
+              <p className={styles.hint}>
+                Everyone in {org?.name ?? 'the team'} can open these and move cards on
+                them, with no separate invitation per board.
+              </p>
+
+              {teamBoards.length > 0 ? (
+                <div className={styles.list}>
+                  {teamBoards.map((board) => (
+                    <Link key={board.id} to={`/board/${board.id}`} className={styles.boardRow}>
+                      <span className={styles.boardName}>{board.name}</span>
+                      <span className={styles.boardMeta}>
+                        {board.columns.length} column
+                        {board.columns.length === 1 ? '' : 's'} ·{' '}
+                        {board.columns.reduce((sum, column) => sum + column.tasks.length, 0)}{' '}
+                        tasks
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.hint}>No boards yet. Create one below.</p>
+              )}
+
+              {canManage && (
+                <div className={styles.boardForms}>
+                  <form className={styles.inlineForm} onSubmit={handleCreateBoardInTeam}>
+                    <Input
+                      label="Create a board in this team"
+                      placeholder="e.g. Sprint 12"
+                      value={newBoardName}
+                      maxLength={120}
+                      onChange={(event) => setNewBoardName(event.target.value)}
+                    />
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={createBoard.isPending || !newBoardName.trim()}
+                    >
+                      {createBoard.isPending ? 'Creating…' : 'Create board'}
+                    </Button>
+                  </form>
+
+                  {movableBoards.length > 0 && (
+                    <form className={styles.inlineForm} onSubmit={handleMoveBoardIn}>
+                      <Dropdown
+                        label="Or move one of your boards in"
+                        value={boardToMove}
+                        onChange={setBoardToMove}
+                        options={[
+                          { value: '', label: 'Pick a board' },
+                          ...movableBoards.map((board) => ({
+                            value: board.id as string,
+                            label: board.name,
+                          })),
+                        ]}
+                      />
+                      <Button
+                        type="submit"
+                        variant="secondary"
+                        disabled={updateBoard.isPending || !boardToMove}
+                      >
+                        {updateBoard.isPending ? 'Moving…' : 'Move in'}
+                      </Button>
+                    </form>
+                  )}
                 </div>
               )}
             </section>
@@ -435,8 +580,9 @@ export function Teams() {
                 )}
               </div>
               <p className={styles.hint}>
-                Per board, because access is per board — a teammate only appears here
-                once the board is shared with them.
+                {canManage
+                  ? 'One board at a time. Everyone in this team appears on a board that belongs to the team; anyone else has to be shared onto it.'
+                  : 'One board at a time, for the boards you can reach.'}
               </p>
               <ProgressPanel boardId={progressBoardId} />
             </section>
@@ -473,7 +619,7 @@ export function Teams() {
                   <div className={styles.linkFallback}>
                     <p className={styles.hint}>
                       The invitation is valid but the email did not go out. Send this
-                      link instead — it works once.
+                      link instead - it works once.
                     </p>
                     <code className={styles.link}>{undeliveredLink}</code>
                     <Button size="small" onClick={() => void copyLink(undeliveredLink)}>

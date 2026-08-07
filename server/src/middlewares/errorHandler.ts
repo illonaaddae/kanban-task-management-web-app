@@ -90,7 +90,7 @@ function normalize(err: unknown): Normalized {
     return { statusCode: 401, message: "Token has expired", isOperational: true };
   }
 
-  // Malformed JSON body — express.json() raises a SyntaxError with .status 400.
+  // Malformed JSON body - express.json() raises a SyntaxError with .status 400.
   if (err instanceof SyntaxError && (err as { status?: number }).status === 400) {
     return { statusCode: 400, message: "Malformed JSON in request body", isOperational: true };
   }
@@ -104,7 +104,7 @@ function normalize(err: unknown): Normalized {
 
 /**
  * Central error handler. Must be mounted last and must keep all four
- * parameters — Express identifies error middleware by arity.
+ * parameters - Express identifies error middleware by arity.
  */
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Headers already flushed: no way to change the response, hand back to

@@ -197,7 +197,7 @@
    hamburger opens it; the backdrop or a board tap closes it. */
 @media (max-width: 1024px) {
   .sidebar {
-    /* Never the full width — the strip of dimmed board behind it is what says
+    /* Never the full width - the strip of dimmed board behind it is what says
        "tap here to dismiss". */
     width: min(85vw, 300px);
     transform: translateX(-100%);
