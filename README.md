@@ -348,7 +348,7 @@ could be probed for existence by watching the status code.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| GET | `/health` | — | Status, uptime, timestamp, DB state. Render's health-check path |
+| GET | `/health` | — | Status, uptime, timestamp, DB state. The platform's health-check path |
 
 #### Move semantics
 
@@ -381,7 +381,7 @@ with a per-field explanation rather than booting half-configured):
 | Variable | Required | Notes |
 |---|---|---|
 | `NODE_ENV` | no | `development` \| `test` \| `production` |
-| `PORT` | no | Default **5050**. Avoid 5000 on macOS — Control Center's AirPlay Receiver answers it with a bodyless 403 that reads like a CORS error |
+| `PORT` | no | Default **5050**; the host injects its own. Avoid 5000 on macOS — Control Center's AirPlay Receiver answers it with a bodyless 403 that reads like a CORS error |
 | `DATABASE_URL` | **yes** | `mongodb://127.0.0.1:27017/kanban` locally, or an Atlas SRV string |
 | `JWT_SECRET` | **yes** | ≥ 32 chars |
 | `JWT_REFRESH_SECRET` | **yes** | ≥ 32 chars, and **must differ** from `JWT_SECRET` in production |
@@ -451,7 +451,7 @@ The **RBAC — viewer is refused** folder is the enforcement demo: a second
 account is refused (403) before being invited, reads the board once invited,
 is refused on task create / task move / column create / board rename /
 self-promotion, is then promoted to editor and can move a task, but still
-cannot delete the board. Set `BASE_URL` in the Prod environment to the Render
+cannot delete the board. Set `BASE_URL` in the Prod environment to the Railway
 URL to run the same checks against production.
 
 ### Google OAuth
@@ -506,22 +506,35 @@ Setting it up in Google Cloud Console is a manual step; see below.
 
 ## Deployment
 
-### Backend → Render
+### Backend → Railway
 
-Web Service, root directory `server/`:
+New Project → Deploy from GitHub repo, then in the service settings:
 
 | Setting | Value |
 |---|---|
-| Build command | `npm ci && npm run build` |
-| Start command | `node dist/server.js` |
-| Health check path | `/health` |
+| Root Directory | `server` |
+| Build Command | `npm ci --include=dev && npm run build` |
+| Start Command | `node dist/server.js` |
+| Health Check Path | `/health` |
+| Branch | `main` |
 
-Set every environment variable from the table above in the Render dashboard,
+`--include=dev` matters: the build script uses `rimraf` and `typescript`, both
+devDependencies, and npm skips devDependencies when `NODE_ENV=production` — which
+is one of the variables set below. Without it the build fails with
+`tsc: not found`.
+
+Set every environment variable from the table above in the **Variables** tab,
 with `DATABASE_URL` pointing at Atlas and `FRONTEND_URL` at the deployed
-frontend (this is the CORS origin). The free tier spins down when idle, so the
-first request after a quiet period is slow.
+frontend (this is the CORS origin). Leave `PORT` unset — Railway injects it, and
+`env.ts` coerces it.
 
-**Live API:** `<!-- TODO: https://your-service.onrender.com -->`
+Then **Settings → Networking → Generate Domain** to get a public URL.
+
+Railway keeps the service warm, so there is no cold-start delay. Note that its
+perpetual free tier ended in 2023: a new project runs on trial credit, after
+which the Hobby plan (\$5/month) is required to stay up.
+
+**Live API:** `<!-- TODO: https://your-service.up.railway.app -->`
 
 ### Frontend → Netlify
 
@@ -535,7 +548,7 @@ Vite project at the repo root.
 In **Site configuration → Environment variables** set:
 
 ```
-VITE_API_URL=https://<your-service>.onrender.com
+VITE_API_URL=https://<your-service>.up.railway.app
 VITE_AUTH_PROVIDER=api
 ```
 
@@ -545,7 +558,7 @@ you must trigger a fresh deploy — saving alone does not alter the built bundle
 SPA routing is already handled by `public/_redirects` (`/* /index.html 200`),
 which Vite copies into `dist/`. Without it, refreshing `/board/<id>` would 404.
 
-Then set the Netlify URL as `FRONTEND_URL` on Render — it is both the CORS origin
+Then set the Netlify URL as `FRONTEND_URL` on Railway — it is both the CORS origin
 and where the OAuth flow lands.
 
 **Live app:** `<!-- TODO: https://your-app.netlify.app -->`
@@ -565,7 +578,7 @@ and where the OAuth flow lands.
 4. **Authorized redirect URIs** — these must match `GOOGLE_REDIRECT_URI`
    character for character, including the scheme and any trailing slash:
    - `http://localhost:5050/auth/google/callback`
-   - `https://<your-service>.onrender.com/auth/google/callback`
+   - `https://<your-service>.up.railway.app/auth/google/callback`
 
    These point at the **backend**, not the frontend. Authorized JavaScript
    origins can be left empty — the browser never talks to Google directly here.
@@ -578,9 +591,9 @@ and where the OAuth flow lands.
    ```
 
    All three or none — a partial config fails at startup on purpose.
-6. On Render, set the same three variables with the Render callback URL, and make
-   sure `FRONTEND_URL` is the Netlify URL (it is where the flow redirects at the
-   end, and the CORS origin).
+6. On Railway, set the same three variables with the Railway callback URL, and
+   make sure `FRONTEND_URL` is the Netlify URL (it is where the flow redirects at
+   the end, and the CORS origin).
 
 `redirect_uri_mismatch` is the usual failure and always means step 4 does not
 match `GOOGLE_REDIRECT_URI` exactly.
