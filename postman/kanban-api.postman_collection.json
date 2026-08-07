@@ -2,7 +2,7 @@
   "info": {
     "name": "Kanban API",
     "_postman_id": "8f2c1d40-6b1e-4a3f-9d5c-3e1a7b4c9d20",
-    "description": "Express + MongoDB backend for the Kanban task management app.\n\n## How to use\n\n1. Select an environment (`Kanban API - Dev` or `Kanban API - Prod`).\n2. Run **Auth → Register (owner)** once, or **Auth → Login (owner)** if the account already exists. Either request saves `{{TOKEN}}`, `{{REFRESH_TOKEN}}` and `{{USER_ID}}` to the environment.\n3. Run **Boards → Create board** — it saves `{{BOARD_ID}}`.\n4. Run **Columns → Create column** twice — the first saves `{{COLUMN_ID}}`, the second `{{COLUMN_ID_2}}`.\n5. Run **Tasks → Create task** — it saves `{{TASK_ID}}`.\n6. **Tasks → Move task across columns** then works end to end.\n\nThe **RBAC → viewer is refused** folder is self-contained: it registers a second account, invites it as a viewer, and demonstrates a 403 on every mutation. Run its requests top to bottom.\n\nAll requests use `{{BASE_URL}}`. Every authenticated request sends `Authorization: Bearer {{TOKEN}}`.",
+    "description": "Express + MongoDB backend for the Kanban task management app.\n\n## How to use\n\n1. Select an environment (`Kanban API - Dev` or `Kanban API - Prod`).\n2. Run **Auth \u2192 Register (owner)** once, or **Auth \u2192 Login (owner)** if the account already exists. Either request saves `{{TOKEN}}`, `{{REFRESH_TOKEN}}` and `{{USER_ID}}` to the environment.\n3. Run **Boards \u2192 Create board** \u2014 it saves `{{BOARD_ID}}`.\n4. Run **Columns \u2192 Create column** twice \u2014 the first saves `{{COLUMN_ID}}`, the second `{{COLUMN_ID_2}}`.\n5. Run **Tasks \u2192 Create task** \u2014 it saves `{{TASK_ID}}`.\n6. **Tasks \u2192 Move task across columns** then works end to end.\n\nThe **RBAC \u2192 viewer is refused** folder is self-contained: it registers a second account, invites it as a viewer, and demonstrates a 403 on every mutation. Run its requests top to bottom.\n\nAll requests use `{{BASE_URL}}`. Every authenticated request sends `Authorization: Bearer {{TOKEN}}`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -140,7 +140,7 @@
           }
         },
         {
-          "name": "Register — duplicate email (409)",
+          "name": "Register \u2014 duplicate email (409)",
           "event": [
             {
               "listen": "test",
@@ -174,11 +174,11 @@
                 "register"
               ]
             },
-            "description": "Run straight after Register (owner) — the same address is now taken."
+            "description": "Run straight after Register (owner) \u2014 the same address is now taken."
           }
         },
         {
-          "name": "Register — validation (400 with details)",
+          "name": "Register \u2014 validation (400 with details)",
           "event": [
             {
               "listen": "test",
@@ -262,7 +262,7 @@
           }
         },
         {
-          "name": "Login — wrong password (generic 401)",
+          "name": "Login \u2014 wrong password (generic 401)",
           "event": [
             {
               "listen": "test",
@@ -302,7 +302,7 @@
           }
         },
         {
-          "name": "Login — unknown email (same 401)",
+          "name": "Login \u2014 unknown email (same 401)",
           "event": [
             {
               "listen": "test",
@@ -310,7 +310,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));",
-                  "pm.test(\"identical message — no account enumeration\", () => {",
+                  "pm.test(\"identical message \u2014 no account enumeration\", () => {",
                   "  pm.expect(pm.response.json().message).to.eql(\"Invalid credentials\");",
                   "});"
                 ]
@@ -375,7 +375,7 @@
           }
         },
         {
-          "name": "Get me — no token (401)",
+          "name": "Get me \u2014 no token (401)",
           "event": [
             {
               "listen": "test",
@@ -403,7 +403,7 @@
           }
         },
         {
-          "name": "Get me — garbled token (401, not 500)",
+          "name": "Get me \u2014 garbled token (401, not 500)",
           "event": [
             {
               "listen": "test",
@@ -535,7 +535,7 @@
           }
         },
         {
-          "name": "Update me — bad theme enum (400)",
+          "name": "Update me \u2014 bad theme enum (400)",
           "event": [
             {
               "listen": "test",
@@ -579,7 +579,7 @@
           }
         },
         {
-          "name": "List users — admin only (403 as editor)",
+          "name": "List users \u2014 admin only (403 as editor)",
           "event": [
             {
               "listen": "test",
@@ -864,7 +864,7 @@
           }
         },
         {
-          "name": "Get board — nonexistent (404 before 403)",
+          "name": "Get board \u2014 nonexistent (404 before 403)",
           "event": [
             {
               "listen": "test",
@@ -898,7 +898,7 @@
           }
         },
         {
-          "name": "Get board — malformed id (400)",
+          "name": "Get board \u2014 malformed id (400)",
           "event": [
             {
               "listen": "test",
@@ -1024,7 +1024,7 @@
                 "columns"
               ]
             },
-            "description": "Saves COLUMN_ID_2 — the move request needs a second column."
+            "description": "Saves COLUMN_ID_2 \u2014 the move request needs a second column."
           }
         },
         {
@@ -1069,7 +1069,7 @@
                 "{{COLUMN_ID}}"
               ]
             },
-            "description": "The board is resolved from column.boardId — there is no board in this path."
+            "description": "The board is resolved from column.boardId \u2014 there is no board in this path."
           }
         },
         {
@@ -1117,11 +1117,11 @@
                 "reorder"
               ]
             },
-            "description": "The payload must list exactly the board's columns — no partial lists."
+            "description": "The payload must list exactly the board's columns \u2014 no partial lists."
           }
         },
         {
-          "name": "Reorder — partial list (400)",
+          "name": "Reorder \u2014 partial list (400)",
           "event": [
             {
               "listen": "test",
@@ -1220,7 +1220,7 @@
           }
         },
         {
-          "name": "Create task — second, for the move demo",
+          "name": "Create task \u2014 second, for the move demo",
           "event": [
             {
               "listen": "test",
@@ -1261,7 +1261,7 @@
           }
         },
         {
-          "name": "Create task — validation (400 with details)",
+          "name": "Create task \u2014 validation (400 with details)",
           "event": [
             {
               "listen": "test",
@@ -1376,7 +1376,7 @@
                 "{{TASK_ID}}"
               ]
             },
-            "description": "PUT and PATCH are both partial here — unmentioned fields are left alone."
+            "description": "PUT and PATCH are both partial here \u2014 unmentioned fields are left alone."
           }
         },
         {
@@ -1422,11 +1422,11 @@
                 "{{TASK_ID}}"
               ]
             },
-            "description": "Subtask toggling goes through the ordinary update route — the whole array is replaced."
+            "description": "Subtask toggling goes through the ordinary update route \u2014 the whole array is replaced."
           }
         },
         {
-          "name": "Update task — columnId is rejected here (400)",
+          "name": "Update task \u2014 columnId is rejected here (400)",
           "event": [
             {
               "listen": "test",
@@ -1467,7 +1467,7 @@
                 "{{TASK_ID}}"
               ]
             },
-            "description": "Rejected rather than silently ignored — a client expecting a move would otherwise get a 200 and no move."
+            "description": "Rejected rather than silently ignored \u2014 a client expecting a move would otherwise get a 200 and no move."
           }
         },
         {
@@ -1489,7 +1489,7 @@
                   "  pm.expect(task.status).to.eql(\"Doing\");",
                   "});",
                   "",
-                  "// Follow with Boards → Get full board to see both columns'",
+                  "// Follow with Boards \u2192 Get full board to see both columns'",
                   "// positions contiguous from 0."
                 ]
               }
@@ -1526,7 +1526,7 @@
           }
         },
         {
-          "name": "Move task — same-column reorder",
+          "name": "Move task \u2014 same-column reorder",
           "event": [
             {
               "listen": "test",
@@ -1572,7 +1572,7 @@
           }
         },
         {
-          "name": "Move — negative position (400)",
+          "name": "Move \u2014 negative position (400)",
           "event": [
             {
               "listen": "test",
@@ -1712,11 +1712,11 @@
                 "collaborators"
               ]
             },
-            "description": "Owner only. Run RBAC → Register viewer first so VIEWER_EMAIL exists."
+            "description": "Owner only. Run RBAC \u2192 Register viewer first so VIEWER_EMAIL exists."
           }
         },
         {
-          "name": "Invite — already a collaborator (409)",
+          "name": "Invite \u2014 already a collaborator (409)",
           "event": [
             {
               "listen": "test",
@@ -1758,7 +1758,7 @@
           }
         },
         {
-          "name": "Invite — the owner (409)",
+          "name": "Invite \u2014 the owner (409)",
           "event": [
             {
               "listen": "test",
@@ -1803,7 +1803,7 @@
           }
         },
         {
-          "name": "Invite — no such account (404)",
+          "name": "Invite \u2014 no such account (404)",
           "event": [
             {
               "listen": "test",
@@ -1927,8 +1927,8 @@
       ]
     },
     {
-      "name": "RBAC — viewer is refused",
-      "description": "Self-contained demonstration that a viewer can read a board but cannot change anything, and that the API enforces this independently of the UI. Runs after Collaborators, which registers the second account and then removes it again — so step 1 legitimately starts with no access.",
+      "name": "RBAC \u2014 viewer is refused",
+      "description": "Self-contained demonstration that a viewer can read a board but cannot change anything, and that the API enforces this independently of the UI. Runs after Collaborators, which registers the second account and then removes it again \u2014 so step 1 legitimately starts with no access.",
       "item": [
         {
           "name": "1. Viewer cannot even read the board yet (403)",
@@ -1939,7 +1939,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
-                  "// 403, not 404 — otherwise a board id could be probed for existence."
+                  "// 403, not 404 \u2014 otherwise a board id could be probed for existence."
                 ]
               }
             }
@@ -2173,7 +2173,7 @@
           }
         },
         {
-          "name": "7. Viewer cannot rename the board (403 — owner only)",
+          "name": "7. Viewer cannot rename the board (403 \u2014 owner only)",
           "event": [
             {
               "listen": "test",
@@ -2311,7 +2311,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
-                  "// The promotion takes effect on the next request — no re-login,",
+                  "// The promotion takes effect on the next request \u2014 no re-login,",
                   "// because the board role is read from the board, not the JWT."
                 ]
               }
@@ -2383,6 +2383,569 @@
       ]
     },
     {
+      "name": "Teams & invitations",
+      "description": "Team invitations reach an email address rather than an existing account, which is what board sharing cannot do. Run in order: the invite needs the team, and the accept needs the token the invite returns.",
+      "item": [
+        {
+          "name": "Create team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Squad\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "const org = pm.response.json().data.organization;",
+                  "pm.test(\"owner of a team of one\", () => {",
+                  "  pm.expect(org.myRole).to.eql(\"owner\");",
+                  "  pm.expect(org.memberCount).to.eql(1);",
+                  "});",
+                  "pm.environment.set(\"ORG_ID\", org.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my teams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"includes the new team\", () => {",
+                  "  const ids = pm.response.json().data.organizations.map((o) => o.id);",
+                  "  pm.expect(ids).to.include(pm.environment.get(\"ORG_ID\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get team with members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"owner is listed first\", () => {",
+                  "  const members = pm.response.json().data.organization.members;",
+                  "  pm.expect(members[0].role).to.eql(\"owner\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invite by email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}/invitations",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}",
+                "invitations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-invitee@example.com\",\n  \"role\": \"member\"\n}"
+            },
+            "description": "The address does not need an account. `acceptUrl` is returned once so a key-less mailer can still be worked around; `emailSent` reports delivery separately from creation."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "const payload = pm.response.json().data;",
+                  "pm.test(\"returns a one-time accept link\", () => {",
+                  "  pm.expect(payload.acceptUrl).to.include(\"/invite/\");",
+                  "});",
+                  "pm.test(\"never leaks the stored hash\", () => {",
+                  "  pm.expect(payload.invitation).to.not.have.property(\"tokenHash\");",
+                  "});",
+                  "pm.test(\"delivery is reported, not assumed\", () => {",
+                  "  pm.expect(payload).to.have.property(\"emailSent\");",
+                  "});",
+                  "pm.environment.set(\"INVITE_TOKEN\", payload.acceptUrl.split(\"/invite/\")[1]);",
+                  "pm.environment.set(\"INVITATION_ID\", payload.invitation.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invite the same address again \u2192 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}/invitations",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}",
+                "invitations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman-invitee@example.com\"\n}"
+            },
+            "description": "Enforced by a unique partial index on pending invitations."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"names the real conflict\", () => {",
+                  "  pm.expect(pm.response.json().message).to.match(/pending invitation/i);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invite yourself \u2192 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}/invitations",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}",
+                "invitations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{OWNER_EMAIL}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List pending invitations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}/invitations",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}",
+                "invitations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"no token material in a read\", () => {",
+                  "  const invitations = pm.response.json().data.invitations;",
+                  "  invitations.forEach((i) => pm.expect(i).to.not.have.property(\"tokenHash\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Preview invitation (no auth)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/invitations/{{INVITE_TOKEN}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "invitations",
+                "{{INVITE_TOKEN}}"
+              ]
+            },
+            "description": "Deliberately unauthenticated: the invitee may have no account, and this is what tells them which address to register with."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK without a token\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"says which address was invited\", () => {",
+                  "  pm.expect(pm.response.json().data.invitation.email).to.eql(",
+                  "    \"postman-invitee@example.com\",",
+                  "  );",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Accept as the wrong account \u2192 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/invitations/{{INVITE_TOKEN}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "invitations",
+                "{{INVITE_TOKEN}}",
+                "accept"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "description": "The session's address must match the invited one, or the link is a bearer credential for anyone it is forwarded to."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"names the address to use\", () => {",
+                  "  pm.expect(pm.response.json().message).to.include(\"postman-invitee@example.com\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke the invitation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}/invitations/{{INVITATION_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}",
+                "invitations",
+                "{{INVITATION_ID}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoked link is dead \u2192 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/invitations/{{INVITE_TOKEN}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "invitations",
+                "{{INVITE_TOKEN}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invitations for me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/invitations/mine",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "invitations",
+                "mine"
+              ]
+            },
+            "description": "How someone who registered after being invited finds it again."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rename team",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Squad (renamed)\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"renamed\", () => {",
+                  "  pm.expect(pm.response.json().data.organization.name).to.eql(\"Postman Squad (renamed)\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove the owner \u2192 400",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}/members/{{USER_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}",
+                "members",
+                "{{USER_ID}}"
+              ]
+            },
+            "description": "The owner is the `owner` field, not a members entry \u2014 delete the team instead."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Cleanup",
       "description": "Destructive. Runs last so the rest of the collection can execute in order.",
       "item": [
@@ -2450,7 +3013,7 @@
                 "{{COLUMN_ID_2}}"
               ]
             },
-            "description": "Destructive — the remaining columns are re-compacted from 0."
+            "description": "Destructive \u2014 the remaining columns are re-compacted from 0."
           }
         },
         {
@@ -2487,7 +3050,7 @@
                 "{{BOARD_ID}}"
               ]
             },
-            "description": "Destructive — run last. Removes the board's columns, tasks and activity."
+            "description": "Destructive \u2014 run last. Removes the board's columns, tasks and activity."
           }
         },
         {
@@ -2523,8 +3086,44 @@
                 "logout"
               ]
             },
-            "description": "Run this last — it invalidates the tokens the rest of the collection uses."
+            "description": "Run this last \u2014 it invalidates the tokens the rest of the collection uses."
           }
+        },
+        {
+          "name": "Delete team (cascades invitations)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/orgs/{{ORG_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "orgs",
+                "{{ORG_ID}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"reports what it cascaded\", () => {",
+                  "  pm.expect(pm.response.json().data.deleted).to.have.property(\"invitations\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

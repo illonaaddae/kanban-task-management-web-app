@@ -52,10 +52,40 @@ export function useDeleteBoard() {
 
   return useMutation({
     mutationFn: (boardId: string) => boardApi.deleteBoard(boardId),
+
+    // Optimistic, because the caller closes the modal and navigates away
+    // immediately. Waiting for the refetch left the deleted board visible in the
+    // dashboard and sidebar for as long as the round trip took — on a
+    // spun-down free-tier API, several seconds of a board that is already gone.
+    onMutate: async (boardId) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.boards.list() });
+      const previous = queryClient.getQueryData<Board[]>(queryKeys.boards.list());
+
+      queryClient.setQueryData<Board[]>(
+        queryKeys.boards.list(),
+        (boards) => boards?.filter((board) => board.id !== boardId) ?? boards,
+      );
+
+      return { previous };
+    },
+
+    onError: (_error, _boardId, context) => {
+      // Put the board back rather than refetching: this is the exact list from
+      // before, so the failure leaves no window where it is missing.
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.boards.list(), context.previous);
+      }
+    },
+
     onSuccess: (_result, boardId) => {
       // Drop the detail entry outright: the board is gone, so a refetch would
       // only 404.
       queryClient.removeQueries({ queryKey: queryKeys.boards.detail(boardId) });
+    },
+
+    // Reconcile either way — the optimistic list is a guess, and a concurrent
+    // change by someone else should not be lost behind it.
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards.list() });
     },
   });
@@ -175,7 +205,37 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: ({ taskId }: { taskId: string; boardId: string }) => taskApi.deleteTask(taskId),
-    onSuccess: (_result, { boardId }) => {
+
+    // Optimistic for the same reason as deleting a board: the modal closes at
+    // once, so anything slower than the network leaves the deleted card sitting
+    // on the board.
+    onMutate: async ({ taskId, boardId }) => {
+      const key = queryKeys.boards.detail(boardId);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Board>(key);
+
+      if (previous) {
+        queryClient.setQueryData<Board>(key, {
+          ...previous,
+          columns: previous.columns.map((column) => {
+            const tasks = column.tasks.filter((task) => task.id !== taskId);
+            // Renumber, because the server re-compacts the source column and a
+            // stale gap would show up as soon as anything else read `position`.
+            return tasks.length === column.tasks.length
+              ? column
+              : { ...column, tasks: tasks.map((task, index) => ({ ...task, position: index })) };
+          }),
+        });
+      }
+
+      return { previous, key };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(context.key, context.previous);
+    },
+
+    onSettled: (_data, _error, { boardId }) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards.detail(boardId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards.list() });
     },

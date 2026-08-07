@@ -18,4 +18,16 @@ export const queryKeys = {
   tasks: {
     detail: (taskId: string) => ['tasks', 'detail', taskId] as const,
   },
+  orgs: {
+    all: () => ['orgs'] as const,
+    list: () => ['orgs', 'list'] as const,
+    detail: (orgId: string) => ['orgs', 'detail', orgId] as const,
+    invitations: (orgId: string) => ['orgs', 'invitations', orgId] as const,
+  },
+  invitations: {
+    /** Waiting for the signed-in user's own address. */
+    mine: () => ['invitations', 'mine'] as const,
+    /** Public preview, keyed by the token from the link. */
+    preview: (token: string) => ['invitations', 'preview', token] as const,
+  },
 } as const;

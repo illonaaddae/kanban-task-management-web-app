@@ -32,6 +32,16 @@ const envSchema = z
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     GOOGLE_REDIRECT_URI: z.url("GOOGLE_REDIRECT_URI must be a valid URL").optional(),
 
+    // Optional — without it invitations are still created, the link is just
+    // logged instead of emailed (see emailService).
+    RESEND_API_KEY: z.string().min(1).optional(),
+    // `onboarding@resend.dev` is Resend's shared sandbox sender: it works with no
+    // domain set up, but only delivers to the address that owns the API key.
+    // Point this at a verified domain to reach anyone else.
+    EMAIL_FROM: z.string().min(1).default("Kanban <onboarding@resend.dev>"),
+    /** How long an organization invitation link stays valid. */
+    INVITATION_EXPIRES_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+
     LOG_LEVEL: z
       .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
       .default("info"),
@@ -97,10 +107,13 @@ export const env = {
   GOOGLE_CLIENT_ID: data.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: data.GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI: data.GOOGLE_REDIRECT_URI,
+  RESEND_API_KEY: data.RESEND_API_KEY,
 
   isProduction: data.NODE_ENV === "production",
   isTest: data.NODE_ENV === "test",
   isDevelopment: data.NODE_ENV === "development",
+  /** True when outbound email can actually be delivered. */
+  emailEnabled: Boolean(data.RESEND_API_KEY),
   /** True only when the full Google OAuth triple is configured. */
   googleOAuthEnabled: Boolean(
     data.GOOGLE_CLIENT_ID && data.GOOGLE_CLIENT_SECRET && data.GOOGLE_REDIRECT_URI,

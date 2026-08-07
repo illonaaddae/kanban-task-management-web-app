@@ -71,6 +71,19 @@ describe('AddBoardModal', () => {
     expect(boardApi.createBoard).not.toHaveBeenCalled();
   });
 
+  it('adds a column row without submitting the form', async () => {
+    const user = userEvent.setup();
+    renderModal();
+    await user.type(screen.getByPlaceholderText(/e.g. Web Design/i), 'Sprint Board');
+
+    await user.click(screen.getByRole('button', { name: /add new column/i }));
+
+    // Regression: Button rendered a bare <button>, which inside a form defaults
+    // to type="submit" — so this click created the board instead of adding a row.
+    expect(boardApi.createBoard).not.toHaveBeenCalled();
+    expect(screen.getAllByPlaceholderText('e.g. Todo')).toHaveLength(3);
+  });
+
   it('renders default column inputs (Todo, Doing)', () => {
     renderModal();
     const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];

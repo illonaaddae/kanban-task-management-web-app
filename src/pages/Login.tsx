@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStore } from "../store/store";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "../components/ui/Button";
@@ -30,6 +30,21 @@ export function Login() {
       }))
     );
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  /**
+   * Where to go after signing in. Used by the invitation page, which sends people
+   * here and needs them back on the same invitation afterwards.
+   *
+   * Only same-site paths are honoured: an attacker-supplied `?redirect=` is the
+   * standard open-redirect hole, and `//evil.example` is a protocol-relative URL
+   * that a naive `startsWith("/")` check would wave through.
+   */
+  const redirectTo = (() => {
+    const raw = searchParams.get("redirect");
+    if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
+    return raw;
+  })();
   // Mock auth accepts any username; the real providers need an email address.
   const useAppwrite = authProvider !== "mock";
   // Google is offered by both real providers. Slack is not offered at all.
@@ -45,7 +60,7 @@ export function Login() {
         await login(email, password);
         toast.success("Welcome back!");
       }
-      navigate("/");
+      navigate(redirectTo);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Authentication failed",
@@ -95,7 +110,7 @@ export function Login() {
             <Button
               variant="primary"
               size="large"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(redirectTo)}
             >
               Continue to Dashboard
             </Button>

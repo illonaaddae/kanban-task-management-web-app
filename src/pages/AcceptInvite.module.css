@@ -1,0 +1,68 @@
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 28rem;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  background: var(--bg-primary);
+  box-shadow: 0 0.625rem 1.25rem rgba(54, 78, 126, 0.15);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* The one case the user has to act on: signed in as the wrong person. */
+.mismatch {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--red);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.link {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

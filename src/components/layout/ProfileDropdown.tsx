@@ -4,9 +4,10 @@ import styles from './ProfileButton.module.css';
 interface ProfileDropdownProps {
   onSettings: () => void;
   onEditProfile: () => void;
+  onTeams: () => void;
 }
 
-export function ProfileDropdown({ onSettings, onEditProfile }: ProfileDropdownProps) {
+export function ProfileDropdown({ onSettings, onEditProfile, onTeams }: ProfileDropdownProps) {
   const user = useStore((state) => state.user);
   const logout = useStore((state) => state.logout);
 
@@ -32,6 +33,19 @@ export function ProfileDropdown({ onSettings, onEditProfile }: ProfileDropdownPr
           <path d="M17.5 17.5C17.5 14.7386 14.1421 12.5 10 12.5C5.85786 12.5 2.5 14.7386 2.5 17.5" stroke="currentColor" strokeWidth="1.5"/>
         </svg>
         <span>Edit Profile</span>
+      </button>
+      {/* Teams live here because this is where users looked for them — sharing a
+          board was the only route to a teammate before, and it could not reach
+          anyone without an account. */}
+      <button className={styles.menuButton} onClick={onTeams}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        <span>Teams</span>
       </button>
       <div className={styles.divider} />
       <button onClick={() => logout()} className={styles.logoutButton}>Sign Out</button>
