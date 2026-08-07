@@ -6,6 +6,7 @@ import { Header } from "./components/layout/Header";
 import { Dashboard } from "./pages/Dashboard";
 import { BoardView } from "./pages/BoardView";
 import { Login } from "./pages/Login";
+import { AcceptInvite } from "./pages/AcceptInvite";
 import { Admin } from "./pages/Admin";
 import { NotFound } from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -42,6 +43,10 @@ function App() {
       <Routes>
         {/* Public route - Login */}
         <Route path="/login" element={<Login />} />
+
+        {/* Public on purpose: an invitee may not have an account yet, and this
+            page is what tells them which address to register with. */}
+        <Route path="/invite/:token" element={<AcceptInvite />} />
 
         {/* Protected routes with shared layout */}
         <Route

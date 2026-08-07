@@ -7,6 +7,8 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { notFound } from "./middlewares/notFound";
 import authRoutes from "./routes/authRoutes";
 import boardRoutes from "./routes/boardRoutes";
+import invitationRoutes from "./routes/invitationRoutes";
+import organizationRoutes from "./routes/organizationRoutes";
 import columnRoutes from "./routes/columnRoutes";
 import healthRoutes from "./routes/healthRoutes";
 import taskRoutes from "./routes/taskRoutes";
@@ -53,6 +55,8 @@ app.use("/health", healthRoutes);
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/boards", boardRoutes);
+app.use("/orgs", organizationRoutes);
+app.use("/invitations", invitationRoutes);
 app.use("/columns", columnRoutes);
 app.use("/tasks", taskRoutes);
 

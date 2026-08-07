@@ -342,6 +342,84 @@ could be probed for existence by watching the status code.
 | PATCH | `/boards/{id}/collaborators/{userId}` | **owner** | `{role}` |
 | DELETE | `/boards/{id}/collaborators/{userId}` | **owner** | Also clears them from tasks they were assigned |
 
+#### Teams (organizations)
+
+A team is a directory of people you work with. Board sharing can only reach an
+address that already has an account — "user not found" was the usual outcome of
+trying to share — so team invitations go to an **email address** instead, and the
+person can be brought in before they have signed up at all.
+
+Team roles are `owner` > `admin` > `member`. The owner is the `owner` field, not a
+members entry, which is why their role cannot be changed or removed. `admin`
+below means team admin; a platform admin bypasses these checks.
+
+| Method | Path | Role | Notes |
+|---|---|---|---|
+| GET | `/orgs` | — | Teams the caller owns or belongs to, with `myRole` in each |
+| POST | `/orgs` | — | `{name}` — any signed-in user may create one |
+| GET | `/orgs/{id}` | member | Members, owner first |
+| PATCH | `/orgs/{id}` | **owner** | `{name}` |
+| DELETE | `/orgs/{id}` | **owner** | Cascades its invitations |
+| GET | `/orgs/{id}/members` | member | |
+| PATCH | `/orgs/{id}/members/{userId}` | admin | `{role}`. `400` for the owner, `404` for a non-member |
+| DELETE | `/orgs/{id}/members/{userId}` | member* | *Removing **yourself** is "leave team"; removing anyone else needs admin. `400` for the owner |
+
+#### Invitations
+
+| Method | Path | Role | Notes |
+|---|---|---|---|
+| POST | `/orgs/{id}/invitations` | admin | `{email, role?}`, role defaults to `member`. `201` with `{invitation, emailSent, emailError?, acceptUrl}`. `400` inviting yourself, `409` already a member, `409` a second pending invite for the address |
+| GET | `/orgs/{id}/invitations` | admin | Pending only |
+| DELETE | `/orgs/{id}/invitations/{invitationId}` | admin | Revoke — kills the link. `404` if it belongs to another team, `409` if already revoked |
+| GET | `/invitations/{token}` | **none** | Preview: team name, inviter, invited address. Unauthenticated on purpose — see below |
+| POST | `/invitations/{token}/accept` | any user | `403` naming the invited address if the session's address differs |
+| GET | `/invitations/mine` | any user | Pending invitations for the caller's own address |
+| POST | `/invitations/mine/{invitationId}/accept` | any user | Accept without the token |
+
+**Token handling.** The token is 32 random bytes, base64url. Only its SHA-256 is
+stored, so a database dump yields no usable links; lookup hashes the incoming
+token and reads the unique index. It is returned to the inviting admin exactly
+once, in `acceptUrl`, so an unconfigured or bouncing mailer can still be worked
+around by hand — no read endpoint ever returns it, and `tokenHash` is stripped
+from every serialisation.
+
+**Why the preview is public.** The invitee may have no account, and the screen's
+job is telling them which address to register with. The token is the only
+credential and reveals nothing beyond its own invitation.
+
+**Why accepting checks the address.** `invitation.email` must equal the session
+user's email. Without that, the link is a bearer credential for anyone it is
+forwarded to. `/invitations/mine/{id}/accept` skips the token but keeps the same
+check — and additionally requires a session, so it is not the weaker path.
+
+**Single use.** `markAccepted` is conditional on `status: "pending"`, so a
+double-clicked link cannot add a member twice. A unique **partial** index on
+`{organization, email}` where `status: "pending"` is what actually prevents
+duplicate invitations — two admins inviting the same person at once would both
+pass a read-then-write check. Accepted and revoked rows stay as history and do
+not block a re-invite.
+
+**Expiry.** `INVITATION_EXPIRES_DAYS` (default 7). A TTL index drops lapsed rows
+an hour later, but Mongo's TTL monitor only sweeps about once a minute, so every
+read path checks the clock rather than trusting the row's existence.
+
+#### Email
+
+Invitations are delivered with [Resend](https://resend.com). `RESEND_API_KEY` is
+**optional**: without it the invitation is still created and its link is logged
+and returned, so local development and a key-less deployment both stay usable.
+
+Delivery failure is reported, never thrown — `emailSent: false` with
+`emailError`. Failing the request would leave the admin unsure whether to retry,
+and a retry would then `409` against their own first attempt. Resend also reports
+refusals in the response payload rather than throwing, so the send result is
+checked rather than assumed.
+
+`EMAIL_FROM` defaults to Resend's shared sandbox sender
+(`onboarding@resend.dev`), which needs no domain setup but **only delivers to the
+address that owns the API key**. Point it at a verified domain to reach anyone
+else.
+
 #### Columns
 
 | Method | Path | Role | Notes |
