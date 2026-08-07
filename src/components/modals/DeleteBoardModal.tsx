@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/store';
 import { Modal } from './Modal';
@@ -22,8 +23,11 @@ export function DeleteBoardModal({
 
   const resolvedBoardId = boardId || (typeof boardIndex === 'number' && boards[boardIndex] ? boards[boardIndex].id : null);
 
+  const [deleting, setDeleting] = useState(false);
+
   const handleDelete = async () => {
-    if (!resolvedBoardId) return;
+    if (!resolvedBoardId || deleting) return;
+    setDeleting(true);
 
     // Close the modal and navigate BEFORE store update to prevent hooks unmount crash
     onClose();
@@ -47,8 +51,9 @@ export function DeleteBoardModal({
         },
       });
     } catch (error) {
-      console.error('Failed to delete board', error);
-      toast.error('Failed to delete board');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete board');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -59,7 +64,9 @@ export function DeleteBoardModal({
         Are you sure you want to delete the '{boardName}' board? This action will remove all columns and tasks and cannot be reversed.
       </p>
       <div className={styles.actions}>
-        <Button variant="destructive" onClick={handleDelete} size="large">Delete</Button>
+        <Button variant="destructive" onClick={handleDelete} size="large" disabled={deleting}>
+          {deleting ? 'Deleting…' : 'Delete'}
+        </Button>
         <Button variant="secondary" onClick={onClose} size="large">Cancel</Button>
       </div>
     </Modal>

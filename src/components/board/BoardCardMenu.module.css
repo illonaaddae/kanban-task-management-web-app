@@ -1,0 +1,83 @@
+.container {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+.trigger {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  /* Hidden until the card is hovered or the menu has focus, so a grid of cards
+     does not read as a wall of dots. Always visible on touch, where there is no
+     hover to reveal it. */
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.container:focus-within .trigger,
+.trigger[aria-expanded="true"] {
+  opacity: 1;
+}
+
+/* Revealed by the parent card's hover — see Dashboard.module.css. */
+:global(.boardCardHovered) .trigger {
+  opacity: 1;
+}
+
+.trigger:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+@media (hover: none) {
+  .trigger {
+    opacity: 1;
+  }
+}
+
+.menu {
+  position: absolute;
+  top: 2.25rem;
+  right: 0;
+  z-index: 20;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color, rgba(130, 143, 163, 0.2));
+  box-shadow: 0 0.5rem 1.5rem rgba(54, 78, 126, 0.2);
+}
+
+.menu button {
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.menu button:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.menu button.delete {
+  color: var(--red, #ea5555);
+}
+
+.menu button.delete:hover {
+  background: color-mix(in srgb, var(--red, #ea5555) 12%, transparent);
+}

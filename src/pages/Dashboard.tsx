@@ -1,7 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../store/store";
 import { useShallow } from "zustand/react/shallow";
 import { Loader } from "../components/ui/Loader";
+import { BoardCardMenu } from "../components/board/BoardCardMenu";
+import { EditBoardModal } from "../components/modals/EditBoardModal";
+import { DeleteBoardModal } from "../components/modals/DeleteBoardModal";
+import { ShareModal } from "../components/modals/ShareModal";
+import type { Board } from "../types";
 import styles from "./Dashboard.module.css";
 
 export function Dashboard() {
@@ -15,6 +21,12 @@ export function Dashboard() {
       user: state.user,
     })),
   );
+
+  // One modal instance per action, told which board it is acting on — rather
+  // than rendering three modals per card.
+  const [editing, setEditing] = useState<Board | null>(null);
+  const [sharing, setSharing] = useState<Board | null>(null);
+  const [deleting, setDeleting] = useState<Board | null>(null);
 
   // Only the first load takes over the page. A later mutation — creating a
   // board, say — must not replace the dashboard with a spinner: the modal that
@@ -85,6 +97,12 @@ export function Dashboard() {
                     <rect x="3" y="16" width="7" height="5" rx="1" />
                   </svg>
                 </div>
+                <BoardCardMenu
+                  myRole={board.myRole}
+                  onEdit={() => setEditing(board)}
+                  onShare={() => setSharing(board)}
+                  onDelete={() => setDeleting(board)}
+                />
                 <h2>{board.name}</h2>
                 <div className={styles.stats}>
                   <span className={styles.stat}>
@@ -124,6 +142,30 @@ export function Dashboard() {
             );
           })}
         </div>
+      )}
+
+      {editing?.id && (
+        <EditBoardModal
+          isOpen
+          boardId={editing.id}
+          onClose={() => setEditing(null)}
+        />
+      )}
+      {sharing?.id && (
+        <ShareModal
+          isOpen
+          boardId={sharing.id}
+          boardName={sharing.name}
+          onClose={() => setSharing(null)}
+        />
+      )}
+      {deleting?.id && (
+        <DeleteBoardModal
+          isOpen
+          boardId={deleting.id}
+          boardName={deleting.name}
+          onClose={() => setDeleting(null)}
+        />
       )}
     </div>
   );
