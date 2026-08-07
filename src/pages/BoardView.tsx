@@ -17,6 +17,7 @@ import { BoardSkeleton } from "../components/ui/Skeletons";
 import { EmptyState, EMPTY_ICONS } from "../components/ui/EmptyState";
 import { Button } from "../components/ui/Button";
 import styles from "./BoardView.module.css";
+import { PATHS } from '../routes';
 
 export function BoardView() {
   const { boardId } = useParams<{ boardId: string }>();
@@ -38,7 +39,7 @@ export function BoardView() {
   // exists but is not shared with this user. Neither is worth a page of error
   // text - send them back to their own boards.
   if (error instanceof ApiError && (error.status === 404 || error.status === 403)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={PATHS.dashboard} replace />;
   }
 
   if (isPending) {

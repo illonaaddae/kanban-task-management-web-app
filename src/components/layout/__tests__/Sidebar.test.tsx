@@ -3,6 +3,7 @@ import { screen, fireEvent } from '@testing-library/react';
 import { Sidebar } from '../Sidebar';
 import { renderWithProviders } from '../../../test/utils';
 import * as boardQueries from '../../../queries/boards';
+import { PATHS } from '../../../routes';
 
 // `useBoards` is gated on `tokenStore.isAuthenticated`, so against the real hook
 // the list stays empty in tests. Stub the hook - the board list is the fixture
@@ -68,6 +69,7 @@ describe('Sidebar', () => {
     renderWithProviders(<Sidebar isOpen onToggle={vi.fn()} />);
 
     const heading = await screen.findByText(/ALL BOARDS \(1\)/);
-    expect(heading.closest('a')).toHaveAttribute('href', '/');
+    // "/" is the landing page now; the dashboard moved to /boards.
+    expect(heading.closest('a')).toHaveAttribute('href', PATHS.dashboard);
   });
 });

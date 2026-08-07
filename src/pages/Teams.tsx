@@ -5,6 +5,7 @@ import { Dropdown } from '../components/ui/Dropdown';
 import { Loader } from '../components/ui/Loader';
 import { ProgressPanel } from '../components/team/ProgressPanel';
 import { AnalyticsPanel } from '../components/team/AnalyticsPanel';
+import { AiTeamPlanner } from '../components/team/AiTeamPlanner';
 import { useStore } from '../store/store';
 import { Link } from 'react-router-dom';
 import { useBoards } from '../queries/boards';
@@ -18,6 +19,7 @@ import {
   useOrganizations,
   useOrgInvitations,
   useRemoveMember,
+  useDeleteOrganization,
   useRenameOrganization,
   useRevokeInvitation,
   useUpdateMemberRole,
@@ -104,6 +106,7 @@ export function Teams() {
 
   const createOrg = useCreateOrganization();
   const renameOrg = useRenameOrganization();
+  const deleteOrg = useDeleteOrganization();
   const invite = useInviteToOrganization();
   const revoke = useRevokeInvitation();
   const updateRole = useUpdateMemberRole();
@@ -126,6 +129,8 @@ export function Teams() {
   const [undeliveredLink, setUndeliveredLink] = useState<string | null>(null);
   const [newBoardName, setNewBoardName] = useState('');
   const [boardToMove, setBoardToMove] = useState('');
+  /** Typed team name, so deleting a team cannot happen on one stray click. */
+  const [deleteConfirm, setDeleteConfirm] = useState('');
 
   /** Boards already in the selected team. */
   const teamBoards = useMemo(
@@ -208,6 +213,20 @@ export function Teams() {
       toast.success(`${moving?.name ?? 'Board'} is now a team board`);
     } catch (error) {
       fail(error, 'Could not move the board');
+    }
+  };
+
+  const handleDelete = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!activeOrgId || !org || deleteConfirm.trim() !== org.name) return;
+
+    try {
+      await deleteOrg.mutateAsync(activeOrgId);
+      setDeleteConfirm('');
+      setActiveOrgId(undefined);
+      toast.success(`${org.name} deleted. Its boards are now personal.`);
+    } catch (error) {
+      fail(error, 'Could not delete the team');
     }
   };
 
@@ -370,6 +389,15 @@ export function Teams() {
           <Loader />
         </div>
       ) : organizations.length === 0 ? (
+        <>
+        {/* Also offered here, because describing a team is most useful when you
+            have none yet: the branch below only appears for somebody who already
+            has one. */}
+        <section className={styles.card}>
+          <h2 className={styles.sectionTitle}>Set up a team with AI</h2>
+          <AiTeamPlanner />
+        </section>
+
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Create your first team</h2>
           <p className={styles.hint}>
@@ -389,6 +417,7 @@ export function Teams() {
             </Button>
           </form>
         </section>
+        </>
       ) : (
         <div className={styles.columns}>
           <div className={styles.mainColumn}>
@@ -473,6 +502,13 @@ export function Teams() {
                   })}
                 </div>
               )}
+            </section>
+
+            {/* Renders nothing when the server has no key, so the section simply
+                is not there rather than offering something that 503s. */}
+            <section className={styles.card}>
+              <h2 className={styles.sectionTitle}>Set up a team with AI</h2>
+              <AiTeamPlanner />
             </section>
 
             {/* Boards before analytics: a team with no boards has nothing to
@@ -676,6 +712,37 @@ export function Teams() {
                     disabled={renameOrg.isPending || !renaming.trim()}
                   >
                     {renameOrg.isPending ? 'Saving…' : 'Rename'}
+                  </Button>
+                </form>
+              </section>
+            )}
+
+            {isOwner && (
+              <section className={`${styles.card} ${styles.danger}`}>
+                <h2 className={styles.sectionTitle}>Delete team</h2>
+                <p className={styles.hint}>
+                  Members lose access to this team&rsquo;s boards, and pending
+                  invitations stop working. The{' '}
+                  <strong>{teamBoards.length} board{teamBoards.length === 1 ? '' : 's'}</strong>{' '}
+                  in it are not deleted: each becomes personal again and stays with
+                  whoever owns it.
+                </p>
+                <form className={styles.stackForm} onSubmit={handleDelete}>
+                  <Input
+                    label={`Type "${org?.name ?? ''}" to confirm`}
+                    placeholder={org?.name}
+                    value={deleteConfirm}
+                    onChange={(event) => setDeleteConfirm(event.target.value)}
+                  />
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    size="large"
+                    // Typing the name is the guard: this is not undoable, and the
+                    // button sits a scroll away from the members list.
+                    disabled={deleteOrg.isPending || deleteConfirm.trim() !== org?.name}
+                  >
+                    {deleteOrg.isPending ? 'Deleting…' : 'Delete this team'}
                   </Button>
                 </form>
               </section>

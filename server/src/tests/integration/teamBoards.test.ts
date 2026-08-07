@@ -448,6 +448,78 @@ describe("PUT /boards/:id moving a board between teams", () => {
   });
 });
 
+describe("DELETE /orgs/:id with boards in it", () => {
+  it("keeps the boards but makes them personal again", async () => {
+    const owner = await registerAndLogin(app);
+    const member = await registerAndLogin(app);
+    const orgId = await createOrg(owner);
+    await joinTeam(owner, orgId, member);
+    const boardId = await createTeamBoard(owner, orgId);
+
+    await request(app)
+      .get(`/boards/${boardId}/full`)
+      .set(member.authHeader)
+      .expect(200);
+
+    const res = await request(app)
+      .delete(`/orgs/${orgId}`)
+      .set(owner.authHeader)
+      .expect(200);
+
+    expect(res.body.data.deleted).toMatchObject({ boardsDetached: 1 });
+
+    // The board survives: a team is a grouping of people, and the work outlives
+    // it. Leaving `organization` set would point it at a team that is gone.
+    const stored = await Board.findById(boardId);
+    expect(stored).not.toBeNull();
+    expect(stored?.organization).toBeUndefined();
+
+    // Its owner keeps it...
+    await request(app)
+      .get(`/boards/${boardId}/full`)
+      .set(owner.authHeader)
+      .expect(200);
+
+    // ...and whoever reached it only through the team no longer can, which is the
+    // point of deleting the team.
+    await request(app)
+      .get(`/boards/${boardId}/full`)
+      .set(member.authHeader)
+      .expect(403);
+  });
+
+  it("leaves an explicit collaborator's access alone", async () => {
+    const owner = await registerAndLogin(app);
+    const member = await registerAndLogin(app);
+    const orgId = await createOrg(owner);
+    await joinTeam(owner, orgId, member);
+    const boardId = await createTeamBoard(owner, orgId);
+
+    await request(app)
+      .post(`/boards/${boardId}/collaborators`)
+      .set(owner.authHeader)
+      .send({ email: member.user.email, role: "viewer" })
+      .expect(201);
+
+    await request(app).delete(`/orgs/${orgId}`).set(owner.authHeader).expect(200);
+
+    // Their access came from the board, not the team, so it survives.
+    await request(app)
+      .get(`/boards/${boardId}/full`)
+      .set(member.authHeader)
+      .expect(200);
+  });
+
+  it("403s a member trying to delete the team", async () => {
+    const owner = await registerAndLogin(app);
+    const member = await registerAndLogin(app);
+    const orgId = await createOrg(owner);
+    await joinTeam(owner, orgId, member);
+
+    await request(app).delete(`/orgs/${orgId}`).set(member.authHeader).expect(403);
+  });
+});
+
 describe("GET /tasks/mine", () => {
   it("returns tasks assigned on a team board without a per-board invite", async () => {
     const owner = await registerAndLogin(app);

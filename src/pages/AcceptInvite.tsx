@@ -6,6 +6,7 @@ import { useStore } from '../store/store';
 import { useAcceptInvitation, useInvitationPreview } from '../queries/orgs';
 import toast from 'react-hot-toast';
 import styles from './AcceptInvite.module.css';
+import { PATHS } from '../routes';
 
 /**
  * Where an invitation link lands.
@@ -73,7 +74,7 @@ export function AcceptInvite() {
             It may have expired, been revoked, or already been used. Ask whoever
             invited you to send a new one.
           </p>
-          <Link to="/" className={styles.link}>
+          <Link to={PATHS.dashboard} className={styles.link}>
             Go to your boards
           </Link>
         </div>
@@ -91,7 +92,7 @@ export function AcceptInvite() {
             {invitation.role}. Boards shared with the team will show up on your
             dashboard.
           </p>
-          <Button size="large" onClick={() => navigate('/')}>
+          <Button size="large" onClick={() => navigate(PATHS.dashboard)}>
             Go to your boards
           </Button>
         </div>

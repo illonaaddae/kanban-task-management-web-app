@@ -6,6 +6,7 @@ import { ThemeToggle } from '../ui/ThemeToggle';
 import { AddBoardModal } from '../modals/AddBoardModal';
 import { useMediaQuery, NARROW_VIEWPORT } from '../../hooks/useMediaQuery';
 import styles from './Sidebar.module.css';
+import { PATHS } from '../../routes';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
         <button
           className={styles.logoButton}
-          onClick={() => navigate("/")}
+          onClick={() => navigate(PATHS.dashboard)}
           aria-label="Go to dashboard"
           title="Go to dashboard"
         >
@@ -96,8 +97,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           {/* The logo also navigates here, but a logo you have to guess at is
               not an affordance. This reads as what it is. */}
           <Link
-            to="/"
-            className={`${styles.boardsHeading} ${styles.boardsHeadingLink} ${location.pathname === '/' ? styles.boardsHeadingActive : ''}`}
+            to={PATHS.dashboard}
+            className={`${styles.boardsHeading} ${styles.boardsHeadingLink} ${location.pathname === PATHS.dashboard ? styles.boardsHeadingActive : ''}`}
             onClick={closeIfDrawer}
           >
             ALL BOARDS ({boards.length})

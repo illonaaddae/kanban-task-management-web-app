@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 90;
+  z-index: var(--z-overlay);
 }
 
 .drawer {
@@ -10,7 +10,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  z-index: 91;
+  z-index: var(--z-dialog);
   width: min(24rem, 100vw);
   display: flex;
   flex-direction: column;

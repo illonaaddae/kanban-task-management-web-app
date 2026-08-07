@@ -23,6 +23,9 @@ import { Login } from "./pages/Login";
 const BoardView = lazy(() =>
   import("./pages/BoardView").then((m) => ({ default: m.BoardView })),
 );
+const Landing = lazy(() =>
+  import("./pages/Landing").then((m) => ({ default: m.Landing })),
+);
 const AcceptInvite = lazy(() =>
   import("./pages/AcceptInvite").then((m) => ({ default: m.AcceptInvite })),
 );
@@ -39,6 +42,7 @@ import { Loader } from "./components/ui/Loader";
 import { useTheme } from "./context/ThemeContext";
 import { useKanbanStore } from "./store/kanbanStore";
 import { useStore } from "./store/store";
+import { PATHS } from "./routes";
 import { useMediaQuery, NARROW_VIEWPORT } from "./hooks/useMediaQuery";
 
 function App() {
@@ -68,8 +72,12 @@ function App() {
 
       <Suspense fallback={<Loader fullScreen />}>
         <Routes>
+        {/* Public front door. Signed-in visitors are sent to their boards by the
+            page itself, so a bookmark of "/" still lands somewhere useful. */}
+        <Route path={PATHS.landing} element={<Landing />} />
+
         {/* Public route - Login */}
-        <Route path="/login" element={<Login />} />
+        <Route path={PATHS.login} element={<Login />} />
 
         {/* Public on purpose: an invitee may not have an account yet, and this
             page is what tells them which address to register with. */}
@@ -105,12 +113,13 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Nested protected routes */}
-          <Route path="/" element={<Dashboard />} />
+          {/* Nested protected routes. The dashboard moved off "/" when the
+              landing page took it. */}
+          <Route path={PATHS.dashboard} element={<Dashboard />} />
           <Route path="/board/:boardId" element={<BoardView />} />
-          <Route path="/my-tasks" element={<MyTasks />} />
-          <Route path="/teams" element={<Teams />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path={PATHS.myTasks} element={<MyTasks />} />
+          <Route path={PATHS.teams} element={<Teams />} />
+          <Route path={PATHS.admin} element={<Admin />} />
         </Route>
 
           {/* 404 - catches all unknown routes for both auth states */}

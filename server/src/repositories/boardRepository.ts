@@ -56,6 +56,20 @@ export const boardRepository = {
     return Board.find({ $or: clauses }).sort({ createdAt: 1 }).exec();
   },
 
+  /**
+   * Makes every board of a team personal again.
+   *
+   * Run when the team is deleted. Boards are deliberately *not* deleted with it: a
+   * team is a grouping of people, and the work outlives it. Leaving the reference
+   * behind instead would point every one of those boards at an organization that
+   * no longer exists.
+   */
+  detachFromOrganization(orgId: BoardId): Promise<number> {
+    return Board.updateMany({ organization: orgId }, { $unset: { organization: "" } })
+      .exec()
+      .then((result) => result.modifiedCount ?? 0);
+  },
+
   /** Boards belonging to one team. Backs the team's analytics roll-up. */
   findForOrganization(orgId: BoardId): Promise<BoardDocument[]> {
     return Board.find({ organization: orgId }).sort({ createdAt: 1 }).exec();

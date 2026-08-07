@@ -10,6 +10,7 @@ import styles from "./Login.module.css";
 import { Loader } from "../components/ui/Loader";
 import { Logo } from "../components/ui/Logo";
 import { authProvider } from "../services/authService";
+import { PATHS } from "../routes";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -42,7 +43,9 @@ export function Login() {
    */
   const redirectTo = (() => {
     const raw = searchParams.get("redirect");
-    if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
+    // The dashboard, not "/": that is the landing page now, and sending someone
+    // who just signed in there only to bounce them back is a wasted navigation.
+    if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return PATHS.dashboard;
     return raw;
   })();
   // Mock auth accepts any username; the real providers need an email address.

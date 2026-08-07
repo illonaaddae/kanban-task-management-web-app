@@ -29,6 +29,24 @@
   --text-secondary: #828FA3;
   --border: #E4EBFA;
 
+  /* ── Stacking order ──────────────────────────────────────────────────────
+     One scale, in one place. These were ad hoc before, and it showed: the
+     activity drawer sat at 90 while the sidebar sat at 1000, so opening the
+     drawer dimmed the middle of the page and left the sidebar bright and still
+     clickable. The modal and the sidebar were both 1000, and won or lost by DOM
+     order rather than intent.
+
+     Anything new picks the layer it belongs to instead of a number that happens
+     to work today. */
+  --z-sticky: 40;      /* board header */
+  --z-dropdown: 100;   /* menus and selects */
+  --z-popover: 120;    /* above a select, because the date picker sits beside one */
+  --z-drawer-backdrop: 900;
+  --z-drawer: 1000;    /* the sidebar */
+  --z-overlay: 1100;   /* dims everything above, including the sidebar */
+  --z-dialog: 1101;
+  --z-toast: 2000;
+
   /* The header is shorter on phones and tablets. Anything sizing itself against
      it reads this instead of hard-coding 96px, which left mobile pages 32px
      taller than the viewport and permanently scrollable. */
@@ -132,7 +150,7 @@ select:focus-visible {
   position: absolute;
   left: 0.5rem;
   top: -3rem;
-  z-index: 2000;
+  z-index: var(--z-toast);
   padding: 0.625rem 1rem;
   border-radius: 0 0 0.375rem 0.375rem;
   background: var(--primary);

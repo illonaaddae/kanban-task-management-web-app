@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { SubtaskInputs } from '../task/SubtaskInputs';
+import { AiTaskAssist } from '../task/AiTaskAssist';
 import { TaskMetaFields } from '../task/TaskMetaFields';
 import { fromDateInputValue } from '../task/taskMeta';
 import toast from 'react-hot-toast';
@@ -97,6 +98,19 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
           maxLength={100} error={titleError}
           onChange={(e) => { setTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }} />
         <Dropdown label="Status" value={status} onChange={setStatus} options={statusOptions} />
+        <AiTaskAssist
+          title={title}
+          context={`${board?.name ?? ''} (${(board?.columns ?? []).map((c) => c.name).join(', ')})`}
+          wouldOverwrite={description.trim().length > 0 || subtasks.some((st) => st.trim())}
+          onSuggestion={(suggestion) => {
+            setDescription(suggestion.description);
+            // Two empty rows is the default; replacing them wholesale is what the
+            // user asked for by pressing the button.
+            setSubtasks(suggestion.subtasks.length > 0 ? suggestion.subtasks : ['', '']);
+            setSubtaskErrors(suggestion.subtasks.map(() => false));
+          }}
+        />
+
         <div className={styles.field}>
           <div className={styles.labelRow}>
              <label className={styles.label}>Description</label>

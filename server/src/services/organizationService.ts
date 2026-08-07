@@ -2,6 +2,7 @@ import type { Types } from "mongoose";
 import type { OrganizationDocument, OrgMemberRole } from "../models/Organization";
 import type { UserDocument } from "../models/User";
 import type { EffectiveOrgRole } from "../middlewares/orgAccess";
+import { boardRepository } from "../repositories/boardRepository";
 import { invitationRepository } from "../repositories/invitationRepository";
 import { organizationRepository } from "../repositories/organizationRepository";
 import { AppError } from "../utils/AppError";
@@ -145,19 +146,32 @@ export const organizationService = {
     };
   },
 
-  /** Deletes an organization and the invitations that pointed at it. */
-  async remove(orgId: string): Promise<{ invitations: number }> {
+  /**
+   * Deletes a team, detaching its boards and dropping its invitations.
+   *
+   * Boards survive. A team is a grouping of people, and the work outlives it, so
+   * each board becomes personal again and stays with whoever owns it. Team members
+   * who reached a board only through the team lose access at that moment, which is
+   * the point of deleting the team.
+   */
+  async remove(orgId: string): Promise<{ invitations: number; boardsDetached: number }> {
     const org = await organizationRepository.findById(orgId);
     if (!org) {
       throw AppError.notFound("Organization not found");
     }
 
-    // Invitations are meaningless without their organization, and leaving them
-    // behind would let a token resolve to a dangling ref.
-    const invitations = await invitationRepository.deleteForOrg(orgId);
+    // Both before the delete, so a failure leaves the team in place and the whole
+    // thing retryable rather than half-applied.
+    const [invitations, boardsDetached] = await Promise.all([
+      // Invitations are meaningless without their team, and leaving them behind
+      // would let a token resolve to a dangling ref.
+      invitationRepository.deleteForOrg(orgId),
+      boardRepository.detachFromOrganization(orgId),
+    ]);
+
     await organizationRepository.deleteById(orgId);
 
-    return { invitations };
+    return { invitations, boardsDetached };
   },
 
   /**

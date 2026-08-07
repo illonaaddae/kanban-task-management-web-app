@@ -1,0 +1,654 @@
+/* The landing page carries its own light-on-dark-agnostic palette through the
+   existing variables, so it themes with the app rather than fighting it. */
+
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* The border appears only once the page has moved, so it does not draw a line
+   under a hero that is already flush with the top. */
+.navScrolled {
+  border-bottom-color: var(--border);
+}
+
+.navInner {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.75rem;
+  margin-left: 1rem;
+  margin-right: auto;
+}
+
+.navLinks a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.navLinks a:hover {
+  color: var(--text-primary);
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navSignIn {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.navSignIn:hover {
+  color: var(--text-primary);
+}
+
+.navCta,
+.primaryCta,
+.secondaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+}
+
+.navCta {
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.navCta:hover,
+.primaryCta:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: center;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 5rem;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.heroTitle {
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.gradient {
+  background: linear-gradient(100deg, var(--primary), #a78bfa 55%, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroBody {
+  margin: 0 0 2rem;
+  max-width: 34rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primaryCta {
+  padding: 0.875rem 1.75rem;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9375rem;
+}
+
+.secondaryCta {
+  padding: 0.875rem 1.75rem;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.secondaryCta:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.heroNote {
+  margin: 1.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* ── Hero artwork ────────────────────────────────────────────────────────── */
+
+.heroArt {
+  position: relative;
+}
+
+.mockWindow {
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--bg-secondary);
+  box-shadow: 0 1.5rem 3rem rgba(54, 78, 126, 0.18);
+  overflow: hidden;
+  /* A slight tilt reads as a product shot rather than a diagram. */
+  transform: perspective(1400px) rotateY(-6deg) rotateX(2deg);
+}
+
+.mockBar {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.mockBar span {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.mockBoard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.mockColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mockColumnHead {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.mockDot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+}
+
+.toneTodo { background: #49c4e5; }
+.toneDoing { background: #8471f2; }
+.toneDone { background: #67e2ae; }
+
+.mockCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  padding: 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--bg-primary);
+  box-shadow: 0 0.25rem 0.5rem rgba(54, 78, 126, 0.08);
+}
+
+.mockLine,
+.mockLineSmall {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.mockLineSmall {
+  width: 35%;
+  height: 0.25rem;
+  opacity: 0.7;
+}
+
+/* ── Built with ──────────────────────────────────────────────────────────── */
+
+.stackStrip {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  text-align: center;
+}
+
+.stackLabel {
+  margin: 0 0 1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.stackList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stackList li {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.section {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem;
+}
+
+.sectionAlt {
+  max-width: none;
+  background: var(--bg-secondary);
+}
+
+.sectionAlt > * {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sectionHead {
+  max-width: 40rem;
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.625rem, 3vw, 2.25rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+}
+
+.sectionBody {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* ── Features ────────────────────────────────────────────────────────────── */
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1.25rem;
+}
+
+.feature {
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--bg-primary);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.feature:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.featureNumber {
+  display: block;
+  margin-bottom: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+}
+
+.featureTitle {
+  margin: 0 0 0.625rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.featureBody {
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.featurePoints {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.featurePoints li {
+  position: relative;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.featurePoints li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4375rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* ── Steps ───────────────────────────────────────────────────────────────── */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  gap: 0.875rem;
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.stepTitle {
+  margin: 0.25rem 0 0.375rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stepBody {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── Docs ────────────────────────────────────────────────────────────────── */
+
+.docs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.doc {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+}
+
+.docTitle {
+  margin: 0 0 0.625rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.docBody {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.docList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.docList code {
+  display: block;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--bg-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.docsLink {
+  display: inline-block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.docsLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Closing ─────────────────────────────────────────────────────────────── */
+
+.closing {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 6rem;
+  text-align: center;
+}
+
+.closing .heroActions {
+  justify-content: center;
+}
+
+.closingTitle {
+  margin: 0 0 0.875rem;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+}
+
+.closingBody {
+  margin: 0 0 2rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.footerInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 2fr);
+  gap: 2.5rem;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+}
+
+.footerBrand p {
+  margin: 1rem 0 0;
+  max-width: 20rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.footerCols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1.5rem;
+}
+
+.footerCols > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.footerCols h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.footerCols a {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.footerCols a:hover {
+  color: var(--primary);
+}
+
+.footerNote {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 2.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  /* Artwork below the copy: side by side, neither gets enough width to read. */
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    padding-top: 3rem;
+  }
+
+  .mockWindow {
+    transform: none;
+  }
+
+  .footerInner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 700px) {
+  /* The section anchors live in the footer too, so dropping them here costs
+     nothing and stops the nav from wrapping onto two lines. */
+  .navLinks {
+    display: none;
+  }
+
+  .section,
+  .closing {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryCta,
+  .secondaryCta {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature:hover,
+  .navCta:hover,
+  .primaryCta:hover {
+    transform: none;
+  }
+}

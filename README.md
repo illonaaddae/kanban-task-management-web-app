@@ -489,6 +489,42 @@ There is deliberately no per-user cross-team roll-up. It would have to span boar
 the caller may not be able to see, and nothing bounds it, so the number would
 either leak or be wrong.
 
+#### AI assistant
+
+Optional, and off unless `OPENAI_API_KEY` is set. Without it these answer `503` and
+the frontend renders no AI buttons at all, so nothing else changes.
+
+| Method | Path | Role | Notes |
+|---|---|---|---|
+| GET | `/ai/status` | authenticated | `{enabled, model}`. Answers without a key, so the UI can hide the affordances |
+| POST | `/ai/task-suggestion` | authenticated | `{title, context?}` -> a description and 3-5 subtasks |
+| POST | `/ai/team-plan` | authenticated | `{prompt}` -> a proposed team name, description, first board, columns and invitee list |
+
+**The model never writes.** Every endpoint returns a *proposal*. Creating the team,
+the board or the invitations is done afterwards by the same endpoints the manual
+forms use, with their own validation and permission checks. A wrong or hostile
+response can put bad text on a screen and nothing else.
+
+**Invented email addresses are stripped.** The prompt tells the model not to guess
+an address from a person's name, and the service then discards any address that did
+not appear literally in the request. Without that second check a hallucinated
+address would receive a real invitation.
+
+**Cost controls**, because this runs on a small prepaid balance:
+
+- Model `gpt-5.6-luna`, the cost-optimised tier. Observed usage is 80-145 output
+  tokens per call.
+- `OPENAI_MAX_OUTPUT_TOKENS` caps every call. A response stopped at the ceiling is
+  *truncated JSON*, not an error, so `status: "incomplete"` is checked explicitly
+  rather than left to fail as an unexplained parse error.
+- Input is length-bounded by the Zod schema and clamped again in the service, so a
+  pasted document cannot become the prompt.
+- Eight requests per user per minute, in process memory. It guards spend rather
+  than enforcing a quota, so it resets on restart and does not span instances.
+- Requests fire on a button press, never on typing.
+- Upstream errors are logged and replaced: the raw text can name the account, the
+  model or a quota, which no signed-in user needs.
+
 #### Columns
 
 | Method | Path | Role | Notes |
