@@ -1,5 +1,5 @@
 .container {
-  min-height: calc(100vh - 96px);
+  min-height: calc(100dvh - var(--header-height));
   padding: 24px;
   overflow-x: auto;
 }
@@ -33,7 +33,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  min-height: calc(100vh - 160px);
+  min-height: calc(100dvh - var(--header-height) - 64px);
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
@@ -74,21 +74,25 @@
 @media (max-width: 767px) {
   .container {
     padding: 16px;
+    /* One column at a time, but "proximity" not "mandatory": mandatory fights
+       dnd-kit's auto-scroll while dragging a card between columns. */
+    scroll-snap-type: x proximity;
+    /* Keep a sideways swipe inside the board instead of triggering the
+       browser's back gesture. */
+    overscroll-behavior-x: contain;
   }
-  
+
   .board {
     gap: 1rem;
-    padding: 1rem;
+    /* The scroller already pads the edges — doubling it wasted 32px of a
+       375px-wide screen. */
+    padding: 0;
   }
-  
-  /* Columns are slightly narrower on mobile */
-  .board > * {
-    min-width: 240px;
-  }
-  
+
   .newColumn {
     min-width: 240px;
     font-size: 20px;
+    scroll-snap-align: start;
   }
 }
 

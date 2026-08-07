@@ -64,3 +64,16 @@
 .menu button.delete:hover {
   background: color-mix(in srgb, var(--red, #ea5555) 12%, transparent);
 }
+
+/* Touch: grow the trigger and the menu rows to a thumb-sized target. Left alone
+   on pointer devices, where the compact size looks right. */
+@media (hover: none) and (pointer: coarse) {
+  .trigger {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .menu button {
+    min-height: 2.75rem;
+  }
+}

@@ -4,6 +4,17 @@
   transition: opacity 0.2s ease;
 }
 
+/* On a phone a column takes most of the width but deliberately not all of it:
+   the sliver of the next column is what tells the user the board scrolls
+   sideways. Set here rather than as `.board > *` in BoardView, which had the
+   same specificity as `.column` and so depended on stylesheet order. */
+@media (max-width: 767px) {
+  .column {
+    min-width: min(78vw, 280px);
+    scroll-snap-align: start;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;

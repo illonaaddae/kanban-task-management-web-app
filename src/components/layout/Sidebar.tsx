@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from '../ui/Logo';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { AddBoardModal } from '../modals/AddBoardModal';
+import { useMediaQuery, NARROW_VIEWPORT } from '../../hooks/useMediaQuery';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -16,6 +17,14 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const isDrawer = useMediaQuery(NARROW_VIEWPORT);
+
+  // Navigating dismisses the drawer, because it covers the board being opened.
+  // On a desktop the sidebar is part of the layout, so a board click used to
+  // collapse it for no reason.
+  const closeIfDrawer = () => {
+    if (isDrawer) onToggle();
+  };
   
   // Extract board ID from current URL path — memoized so the regex only
   // re-runs when the pathname actually changes, not on every render
@@ -58,6 +67,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           <Link
             to="/"
             className={`${styles.boardsHeading} ${styles.boardsHeadingLink} ${location.pathname === '/' ? styles.boardsHeadingActive : ''}`}
+            onClick={closeIfDrawer}
           >
             ALL BOARDS ({boards.length})
           </Link>
@@ -68,7 +78,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 key={board.id}
                 to={`/board/${board.id}`}
                 className={`${styles.boardItem} ${activeBoardId === board.id ? styles.active : ""}`}
-                onClick={onToggle}
+                onClick={closeIfDrawer}
               >
                 <svg
                   width="16"

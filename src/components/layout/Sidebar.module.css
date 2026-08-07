@@ -1,6 +1,7 @@
 .sidebar {
   width: 300px;
   height: 100vh;
+  height: 100dvh;
   background: var(--bg-primary);
   border-right: 1px solid var(--border);
   display: flex;
@@ -152,39 +153,50 @@
   pointer-events: auto;
 }
 
-/* Mobile: Hidden (BoardSelectorModal handles navigation) */
-@media (max-width: 767px) {
+/* Phones and tablets: the sidebar is a drawer over the content.
+   Mobile used to be `display: none` outright, which left the board list, the
+   create-board action and the theme toggle unreachable on a phone. The header's
+   hamburger opens it; the backdrop or a board tap closes it. */
+@media (max-width: 1024px) {
   .sidebar {
-    display: none !important;
-  }
-  
-  .showButton {
-    display: none !important;
-  }
-  
-  .backdrop {
-    display: none !important;
-  }
-}
-
-/* Tablet: Overlay mode */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .sidebar {
-    width: 264px;
+    /* Never the full width — the strip of dimmed board behind it is what says
+       "tap here to dismiss". */
+    width: min(85vw, 300px);
     transform: translateX(-100%);
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   }
-  
+
   .sidebar.open {
     transform: translateX(0);
+    /* The element mounts already-open, so a transform transition has nothing to
+       animate from. Animate on mount instead. */
+    animation: slideInFromLeft 0.25s ease;
   }
-  
+
   .backdrop {
     display: block;
   }
-  
-  .hideButton {
-    display: none; /* Hide the "Hide Sidebar" button on tablet */
+
+  /* The backdrop and the hamburger both close it; a third control in the
+     bottom corner is noise. */
+  .hideButton,
+  .showButton {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sidebar {
+    width: 264px;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
   }
 }
 
