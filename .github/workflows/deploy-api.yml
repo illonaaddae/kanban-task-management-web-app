@@ -1,0 +1,99 @@
+name: Deploy API to Azure
+
+# The API lives in server/, and Azure App Service deploys whatever it is handed
+# rather than offering a "root directory" setting. Building here and shipping
+# only server/ is what makes the monorepo layout work, and it means the running
+# instance never has to compile TypeScript or hold dev dependencies.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy-api.yml"
+  # Manual runs, for redeploying without a code change.
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: kanban-api-illona
+  NODE_VERSION: "22.x"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # mongodb-memory-server downloads a mongod binary on first use, so this
+      # needs network access but no service container.
+      - name: Test
+        run: npm test
+
+  deploy:
+    name: Build and deploy
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      # --include=dev is required: typescript and the @types/* packages are
+      # devDependencies, and npm skips those whenever NODE_ENV=production.
+      - name: Install (with dev deps, needed to compile)
+        run: npm ci --include=dev
+
+      - name: Build
+        run: npm run build
+
+      # Drop the dev dependencies now that dist/ exists, so the uploaded
+      # artifact carries only what the server actually runs.
+      - name: Prune to production dependencies
+        run: npm prune --omit=dev
+
+      - name: Deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: server
+
+      # Fail the run if the deployed instance cannot serve traffic, rather than
+      # reporting success on a broken release.
+      - name: Verify /health
+        run: |
+          URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"
+          for attempt in $(seq 1 20); do
+            code=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 20 "$URL" || true)
+            if [ "$code" = "200" ]; then
+              echo "healthy after ${attempt} attempt(s):"
+              cat /tmp/health.json
+              exit 0
+            fi
+            echo "attempt ${attempt}: HTTP ${code} — waiting"
+            sleep 15
+          done
+          echo "::error::/health did not return 200 within ~5 minutes"
+          cat /tmp/health.json || true
+          exit 1
