@@ -26,7 +26,8 @@ const GROUPS = [
   {
     title: 'Everywhere',
     items: [
-      { keys: ['/'], label: 'Switch board' },
+      { keys: ['/'], label: 'Ask for a change on this board' },
+      { keys: ['K'], label: 'Switch board' },
       { keys: ['?'], label: 'This list' },
       { keys: ['Esc'], label: 'Close a dialog' },
     ],

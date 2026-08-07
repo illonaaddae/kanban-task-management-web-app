@@ -1,6 +1,7 @@
 {
   "name": "kanban-server",
   "version": "1.0.0",
+  "license": "MIT",
   "private": true,
   "description": "Express + MongoDB API for the Kanban task management app",
   "main": "dist/server.js",

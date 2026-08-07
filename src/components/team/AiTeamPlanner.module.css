@@ -16,6 +16,12 @@
   min-width: 0;
 }
 
+/* Same reason: "Draft a plan" was wrapping onto two lines. */
+.form > *:last-child {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 /* Bordered in the accent colour: it is a draft awaiting approval, not content. */
 .proposal {
   margin-top: 1.25rem;

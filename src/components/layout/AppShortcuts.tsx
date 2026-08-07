@@ -6,6 +6,7 @@ import { AddBoardModal } from '../modals/AddBoardModal';
 import { AddTaskModal } from '../modals/AddTaskModal';
 import { AddColumnModal } from '../modals/AddColumnModal';
 import { BoardSelectorModal } from '../modals/BoardSelectorModal';
+import { CommandBar } from '../board/CommandBar';
 import { useBoards } from '../../queries/boards';
 import { useBoardPermissions, useRouteBoardId } from '../../hooks/useBoardPermissions';
 import toast from 'react-hot-toast';
@@ -29,7 +30,7 @@ export function AppShortcuts() {
   const { data: boards = [] } = useBoards();
 
   const [dialog, setDialog] = useState<
-    'none' | 'board' | 'task' | 'column' | 'switcher' | 'help'
+    'none' | 'board' | 'task' | 'column' | 'switcher' | 'help' | 'command'
   >('none');
   const close = () => setDialog('none');
 
@@ -78,7 +79,12 @@ export function AppShortcuts() {
       { key: 'd', description: 'Dashboard', run: () => navigate(PATHS.dashboard) },
       { key: 't', description: 'Teams', run: () => navigate(PATHS.teams) },
       { key: 'm', description: 'My tasks', run: () => navigate(PATHS.myTasks) },
-      { key: '/', description: 'Switch board', run: () => setDialog('switcher') },
+      {
+        key: '/',
+        description: boardId ? 'Ask for a change' : 'Switch board',
+        run: () => setDialog(boardId ? 'command' : 'switcher'),
+      },
+      { key: 'k', description: 'Switch board', run: () => setDialog('switcher') },
       { key: '?', description: 'Shortcuts', run: () => setDialog('help') },
     ],
     [boardId, canEdit, navigate],
@@ -104,6 +110,9 @@ export function AppShortcuts() {
       )}
       {dialog === 'switcher' && (
         <BoardSelectorModal isOpen onClose={close} activeBoardId={boardId} />
+      )}
+      {dialog === 'command' && boardId && (
+        <CommandBar isOpen boardId={boardId} onClose={close} />
       )}
       {dialog === 'help' && <ShortcutsModal isOpen onClose={close} />}
 

@@ -28,6 +28,15 @@ import type { OrgGrantableRole, OrgMember, PendingInvitation } from '../services
 import toast from 'react-hot-toast';
 import styles from './Teams.module.css';
 
+const TABS = [
+  { id: 'members', label: 'Members' },
+  { id: 'boards', label: 'Boards' },
+  { id: 'progress', label: 'Progress' },
+  { id: 'settings', label: 'Settings' },
+] as const;
+
+type TabId = (typeof TABS)[number]['id'];
+
 const ROLE_OPTIONS = [
   { value: 'member', label: 'Member' },
   { value: 'admin', label: 'Admin' },
@@ -76,6 +85,7 @@ export function Teams() {
   const { data: boards = [] } = useBoards();
 
   const [activeOrgId, setActiveOrgId] = useState<string | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<TabId>('members');
   const [progressBoardId, setProgressBoardId] = useState<string | undefined>(undefined);
 
   // Follow the list rather than mirror it: a team that was just created or just
@@ -419,27 +429,64 @@ export function Teams() {
         </section>
         </>
       ) : (
-        <div className={styles.columns}>
-          <div className={styles.mainColumn}>
-            <section className={styles.card}>
-              <div className={styles.cardHead}>
-                <h2 className={styles.sectionTitle}>
-                  {org?.name ?? 'Team'}{' '}
-                  <span className={styles.count}>
-                    · {org?.members.length ?? 0} member
-                    {(org?.members.length ?? 0) === 1 ? '' : 's'}
-                  </span>
-                </h2>
-                {organizations.length > 1 && (
-                  <div className={styles.picker}>
-                    <Dropdown
-                      value={activeOrgId ?? ''}
-                      onChange={setActiveOrgId}
-                      options={organizations.map((o) => ({ value: o.id, label: o.name }))}
-                    />
-                  </div>
-                )}
+        <>
+          {/* Above the tabs, because switching team applies to every one of them.
+              It used to live inside the members card, so you could not change team
+              from any other tab. */}
+          <div className={styles.teamHead}>
+            <h2 className={styles.teamName}>{org?.name ?? 'Team'}</h2>
+            {organizations.length > 1 && (
+              <div className={styles.picker}>
+                <Dropdown
+                  value={activeOrgId ?? ''}
+                  onChange={setActiveOrgId}
+                  options={organizations.map((o) => ({ value: o.id, label: o.name }))}
+                />
               </div>
+            )}
+          </div>
+
+          {/* Nine cards competed on one page: the danger zone sat beside Rename and
+              analytics fell below the fold. Tabs group by what you came to do. */}
+          <div className={styles.tabBar} role="tablist" aria-label="Team sections">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`tab-${tab.id}`}
+                aria-selected={activeTab === tab.id}
+                aria-controls={`panel-${tab.id}`}
+                className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+                {tab.id === 'members' && org && (
+                  <span className={styles.tabCount}>{org.members.length}</span>
+                )}
+                {tab.id === 'boards' && (
+                  <span className={styles.tabCount}>{teamBoards.length}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className={styles.panel}
+            role="tabpanel"
+            id={`panel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+          >
+            {activeTab === 'members' && (
+              <div className={styles.stack}>
+            <section className={styles.card}>
+              <h2 className={styles.sectionTitle}>
+                People{' '}
+                <span className={styles.count}>
+                  · {org?.members.length ?? 0} member
+                  {(org?.members.length ?? 0) === 1 ? '' : 's'}
+                </span>
+              </h2>
 
               {orgLoading && !org ? (
                 <div className={styles.loading}>
@@ -503,16 +550,78 @@ export function Teams() {
                 </div>
               )}
             </section>
+            {canManage && (
+              <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Invite someone</h2>
+                <form className={styles.stackForm} onSubmit={handleInvite}>
+                  <Input
+                    label="Email address"
+                    type="email"
+                    placeholder="teammate@example.com"
+                    value={email}
+                    error={emailError}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (event.target.value.trim()) setEmailError('');
+                    }}
+                  />
+                  <Dropdown
+                    label="Role"
+                    value={role}
+                    onChange={(value) => setRole(value as OrgGrantableRole)}
+                    options={ROLE_OPTIONS}
+                  />
+                  <Button type="submit" variant="primary" size="large" disabled={invite.isPending}>
+                    {invite.isPending ? 'Sending…' : 'Send invitation'}
+                  </Button>
+                </form>
 
-            {/* Renders nothing when the server has no key, so the section simply
-                is not there rather than offering something that 503s. */}
-            <section className={styles.card}>
-              <h2 className={styles.sectionTitle}>Set up a team with AI</h2>
-              <AiTeamPlanner />
-            </section>
+                {undeliveredLink && (
+                  <div className={styles.linkFallback}>
+                    <p className={styles.hint}>
+                      The invitation is valid but the email did not go out. Send this
+                      link instead - it works once.
+                    </p>
+                    <code className={styles.link}>{undeliveredLink}</code>
+                    <Button size="small" onClick={() => void copyLink(undeliveredLink)}>
+                      Copy link
+                    </Button>
+                  </div>
+                )}
+              </section>
+            )}
+            {canManage && invitations.length > 0 && (
+              <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Pending ({invitations.length})</h2>
+                <div className={styles.list}>
+                  {invitations.map((invitation) => (
+                    <div key={invitation.id} className={styles.row}>
+                      <div className={styles.initials} aria-hidden="true">@</div>
+                      <div className={styles.identity}>
+                        <div className={styles.name}>{invitation.email}</div>
+                        <div className={styles.email}>
+                          {invitation.role === 'admin' ? 'Admin' : 'Member'} · expires{' '}
+                          {expiryLabel(invitation.expiresAt)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => void handleRevoke(invitation)}
+                        disabled={busyId === invitation.id}
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+              </div>
+            )}
 
-            {/* Boards before analytics: a team with no boards has nothing to
-                analyse, and this is the section that fixes that. */}
+            {activeTab === 'boards' && (
+              <div className={styles.stack}>
             <section className={styles.card}>
               <div className={styles.cardHead}>
                 <h2 className={styles.sectionTitle}>
@@ -588,9 +697,15 @@ export function Teams() {
                 </div>
               )}
             </section>
+            <section className={styles.card}>
+              <h2 className={styles.sectionTitle}>Set up a team with AI</h2>
+              <AiTeamPlanner />
+            </section>
+              </div>
+            )}
 
-            {/* Team-wide first for an admin: it answers "how is the team doing"
-                before "how is this one board doing". */}
+            {activeTab === 'progress' && (
+              <div className={styles.stack}>
             {canManage && (
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>Team analytics</h2>
@@ -601,7 +716,6 @@ export function Teams() {
                 <AnalyticsPanel orgId={activeOrgId} canManage={canManage} />
               </section>
             )}
-
             <section className={styles.card}>
               <div className={styles.cardHead}>
                 <h2 className={styles.sectionTitle}>Progress by board</h2>
@@ -622,78 +736,11 @@ export function Teams() {
               </p>
               <ProgressPanel boardId={progressBoardId} />
             </section>
-          </div>
-
-          <aside className={styles.sideColumn}>
-            {canManage && (
-              <section className={styles.card}>
-                <h2 className={styles.sectionTitle}>Invite someone</h2>
-                <form className={styles.stackForm} onSubmit={handleInvite}>
-                  <Input
-                    label="Email address"
-                    type="email"
-                    placeholder="teammate@example.com"
-                    value={email}
-                    error={emailError}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                      if (event.target.value.trim()) setEmailError('');
-                    }}
-                  />
-                  <Dropdown
-                    label="Role"
-                    value={role}
-                    onChange={(value) => setRole(value as OrgGrantableRole)}
-                    options={ROLE_OPTIONS}
-                  />
-                  <Button type="submit" variant="primary" size="large" disabled={invite.isPending}>
-                    {invite.isPending ? 'Sending…' : 'Send invitation'}
-                  </Button>
-                </form>
-
-                {undeliveredLink && (
-                  <div className={styles.linkFallback}>
-                    <p className={styles.hint}>
-                      The invitation is valid but the email did not go out. Send this
-                      link instead - it works once.
-                    </p>
-                    <code className={styles.link}>{undeliveredLink}</code>
-                    <Button size="small" onClick={() => void copyLink(undeliveredLink)}>
-                      Copy link
-                    </Button>
-                  </div>
-                )}
-              </section>
+              </div>
             )}
 
-            {canManage && invitations.length > 0 && (
-              <section className={styles.card}>
-                <h2 className={styles.sectionTitle}>Pending ({invitations.length})</h2>
-                <div className={styles.list}>
-                  {invitations.map((invitation) => (
-                    <div key={invitation.id} className={styles.row}>
-                      <div className={styles.initials} aria-hidden="true">@</div>
-                      <div className={styles.identity}>
-                        <div className={styles.name}>{invitation.email}</div>
-                        <div className={styles.email}>
-                          {invitation.role === 'admin' ? 'Admin' : 'Member'} · expires{' '}
-                          {expiryLabel(invitation.expiresAt)}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className={styles.removeButton}
-                        onClick={() => void handleRevoke(invitation)}
-                        disabled={busyId === invitation.id}
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
+            {activeTab === 'settings' && (
+              <div className={styles.stack}>
             {isOwner && (
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>Rename team</h2>
@@ -716,7 +763,26 @@ export function Teams() {
                 </form>
               </section>
             )}
-
+            <section className={styles.card}>
+              <h2 className={styles.sectionTitle}>New team</h2>
+              <form className={styles.stackForm} onSubmit={handleCreate}>
+                <Input
+                  label="Team name"
+                  placeholder="e.g. Marketing"
+                  value={newOrgName}
+                  maxLength={120}
+                  onChange={(event) => setNewOrgName(event.target.value)}
+                />
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="large"
+                  disabled={createOrg.isPending || !newOrgName.trim()}
+                >
+                  {createOrg.isPending ? 'Creating…' : 'Create team'}
+                </Button>
+              </form>
+            </section>
             {isOwner && (
               <section className={`${styles.card} ${styles.danger}`}>
                 <h2 className={styles.sectionTitle}>Delete team</h2>
@@ -747,29 +813,10 @@ export function Teams() {
                 </form>
               </section>
             )}
-
-            <section className={styles.card}>
-              <h2 className={styles.sectionTitle}>New team</h2>
-              <form className={styles.stackForm} onSubmit={handleCreate}>
-                <Input
-                  label="Team name"
-                  placeholder="e.g. Marketing"
-                  value={newOrgName}
-                  maxLength={120}
-                  onChange={(event) => setNewOrgName(event.target.value)}
-                />
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  size="large"
-                  disabled={createOrg.isPending || !newOrgName.trim()}
-                >
-                  {createOrg.isPending ? 'Creating…' : 'Create team'}
-                </Button>
-              </form>
-            </section>
-          </aside>
-        </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </main>
   );

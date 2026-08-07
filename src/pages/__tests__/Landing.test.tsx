@@ -62,12 +62,19 @@ describe('Landing', () => {
     }
   });
 
-  it('links to docs and the source', () => {
+  it('links to the docs page and to the source', () => {
     renderLanding();
 
-    expect(screen.getByRole('link', { name: /full documentation/i })).toHaveAttribute(
+    // Docs are a real page now, not an anchor on this one.
+    expect(screen.getByRole('link', { name: /^read the docs$/i })).toHaveAttribute(
       'href',
-      expect.stringContaining('github.com'),
+      PATHS.docs,
+    );
+    // Two of them: the docs section and the footer. Both must point at the repo.
+    const apiLinks = screen.getAllByRole('link', { name: /api reference/i });
+    expect(apiLinks.length).toBeGreaterThan(0);
+    apiLinks.forEach((link) =>
+      expect(link).toHaveAttribute('href', expect.stringContaining('github.com')),
     );
   });
 });

@@ -185,6 +185,223 @@ describe("POST /ai/task-suggestion", () => {
   });
 });
 
+/**
+ * The two board-scoped endpoints.
+ *
+ * Both are gated at editor rather than viewer, because a response can carry a
+ * proposed change and drafting one for somebody who could never apply it is only a
+ * way to waste their time and the balance. The access checks are the point of these
+ * tests: the model output is stubbed.
+ */
+async function boardWithColumns(user: Awaited<ReturnType<typeof registerAndLogin>>) {
+  const board = await request(app)
+    .post("/boards")
+    .set(user.authHeader)
+    .send({ title: "Platform Launch" })
+    .expect(201);
+
+  const boardId = board.body.data.board.id;
+
+  for (const title of ["Todo", "Done"]) {
+    await request(app)
+      .post(`/boards/${boardId}/columns`)
+      .set(user.authHeader)
+      .send({ title })
+      .expect(201);
+  }
+
+  return boardId as string;
+}
+
+const PLAN = {
+  action: "move_task",
+  taskTitle: "Fix the login redirect",
+  columnName: "Done",
+  assigneeName: "",
+  dueDate: "",
+  newTaskTitle: "",
+  summary: "Move it to Done.",
+};
+
+describe("POST /ai/command", () => {
+  it("returns a plan for an editor", async () => {
+    enableAi();
+    create.mockResolvedValue(ok(PLAN));
+    const owner = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    const res = await request(app)
+      .post("/ai/command")
+      .set(owner.authHeader)
+      .send({ boardId, instruction: "move the login fix to done" })
+      .expect(200);
+
+    expect(res.body.data.plan).toMatchObject({ action: "move_task", columnName: "Done" });
+  });
+
+  it("403s a viewer, who could not apply the plan anyway", async () => {
+    enableAi();
+    create.mockResolvedValue(ok(PLAN));
+    const owner = await registerAndLogin(app);
+    const viewer = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    await request(app)
+      .post(`/boards/${boardId}/collaborators`)
+      .set(owner.authHeader)
+      .send({ email: viewer.user.email, role: "viewer" })
+      .expect(201);
+
+    await request(app)
+      .post("/ai/command")
+      .set(viewer.authHeader)
+      .send({ boardId, instruction: "move the login fix to done" })
+      .expect(403);
+
+    // Refused before the call, not after: a rejected request costs nothing.
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("403s somebody with no access to the board", async () => {
+    enableAi();
+    const owner = await registerAndLogin(app);
+    const stranger = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    await request(app)
+      .post("/ai/command")
+      .set(stranger.authHeader)
+      .send({ boardId, instruction: "move the login fix to done" })
+      .expect(403);
+  });
+
+  it("400s a missing board id before spending anything", async () => {
+    enableAi();
+    const user = await registerAndLogin(app);
+
+    const res = await request(app)
+      .post("/ai/command")
+      .set(user.authHeader)
+      .send({ instruction: "move the login fix to done" })
+      .expect(400);
+
+    expect(res.body.details).toBeDefined();
+    expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /ai/chat", () => {
+  const reply = (action: unknown = null) => ok({ reply: "Two tasks are open.", action });
+
+  it("answers a question about the board", async () => {
+    enableAi();
+    create.mockResolvedValue(reply());
+    const owner = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    const res = await request(app)
+      .post("/ai/chat")
+      .set(owner.authHeader)
+      .send({ boardId, messages: [{ role: "user", content: "what is open?" }] })
+      .expect(200);
+
+    expect(res.body.data).toEqual({ reply: "Two tasks are open.", action: null });
+  });
+
+  it("can attach a proposed change without making it", async () => {
+    enableAi();
+    create.mockResolvedValue(reply(PLAN));
+    const owner = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    const res = await request(app)
+      .post("/ai/chat")
+      .set(owner.authHeader)
+      .send({ boardId, messages: [{ role: "user", content: "move the login fix" }] })
+      .expect(200);
+
+    expect(res.body.data.action).toMatchObject({ action: "move_task" });
+
+    // Answering is not doing. The board is untouched until the client calls the
+    // ordinary move endpoint.
+    const full = await request(app)
+      .get(`/boards/${boardId}/full`)
+      .set(owner.authHeader)
+      .expect(200);
+    expect(full.body.data.columns.flatMap((column: { tasks: unknown[] }) => column.tasks)).toEqual([]);
+  });
+
+  it("403s a viewer", async () => {
+    enableAi();
+    create.mockResolvedValue(reply());
+    const owner = await registerAndLogin(app);
+    const viewer = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    await request(app)
+      .post(`/boards/${boardId}/collaborators`)
+      .set(owner.authHeader)
+      .send({ email: viewer.user.email, role: "viewer" })
+      .expect(201);
+
+    await request(app)
+      .post("/ai/chat")
+      .set(viewer.authHeader)
+      .send({ boardId, messages: [{ role: "user", content: "what is open?" }] })
+      .expect(403);
+  });
+
+  it("400s an empty transcript", async () => {
+    enableAi();
+    const owner = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    await request(app)
+      .post("/ai/chat")
+      .set(owner.authHeader)
+      .send({ boardId, messages: [] })
+      .expect(400);
+  });
+
+  it("400s a transcript longer than the cap rather than truncating it silently", async () => {
+    enableAi();
+    const owner = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    const messages = Array.from({ length: 12 }, (_, i) => ({
+      role: i % 2 === 0 ? "user" : "assistant",
+      content: `message ${i}`,
+    }));
+
+    await request(app)
+      .post("/ai/chat")
+      .set(owner.authHeader)
+      .send({ boardId, messages })
+      .expect(400);
+  });
+
+  it("503s when no key is configured", async () => {
+    jest.replaceProperty(env, "aiEnabled", false);
+    resetAiClient();
+    const owner = await registerAndLogin(app);
+    const boardId = await boardWithColumns(owner);
+
+    await request(app)
+      .post("/ai/chat")
+      .set(owner.authHeader)
+      .send({ boardId, messages: [{ role: "user", content: "what is open?" }] })
+      .expect(503);
+  });
+
+  it("401s without a session", async () => {
+    enableAi();
+    await request(app)
+      .post("/ai/chat")
+      .send({ boardId: "000000000000000000000000", messages: [{ role: "user", content: "hi" }] })
+      .expect(401);
+  });
+});
+
 describe("POST /ai/team-plan", () => {
   const plan = {
     name: "Design Squad",

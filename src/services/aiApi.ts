@@ -20,6 +20,18 @@ export interface TeamPlan {
   columns: string[];
 }
 
+/** One recognised instruction about a board. A closed set, so `unknown` is valid. */
+export interface CommandPlan {
+  action: 'move_task' | 'assign_task' | 'set_due_date' | 'create_task' | 'unknown';
+  taskTitle: string;
+  columnName: string;
+  assigneeName: string;
+  /** `yyyy-mm-dd`, or empty. The server discards anything that is not a real date. */
+  dueDate: string;
+  newTaskTitle: string;
+  summary: string;
+}
+
 /**
  * The assistant.
  *
@@ -41,6 +53,42 @@ export async function suggestTask(
     { title, context },
   );
   return suggestion;
+}
+
+export async function interpretCommand(
+  boardId: string,
+  instruction: string,
+): Promise<CommandPlan> {
+  const { plan } = await api.post<{ plan: CommandPlan }>('/ai/command', {
+    boardId,
+    instruction,
+  });
+  return plan;
+}
+
+/** One turn of a board conversation. */
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * An answer, and at most one change it is offering to make.
+ *
+ * `action` is the same closed set the command bar resolves, so a reply that wants
+ * to change something goes through exactly the same confirmation and the same
+ * mutations. A reply is never itself a write.
+ */
+export interface ChatReply {
+  reply: string;
+  action: CommandPlan | null;
+}
+
+export async function chat(
+  boardId: string,
+  messages: ChatMessage[],
+): Promise<ChatReply> {
+  return api.post<ChatReply>('/ai/chat', { boardId, messages });
 }
 
 export async function planTeam(prompt: string): Promise<TeamPlan> {

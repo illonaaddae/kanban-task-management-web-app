@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useStore } from '../store/store';
 import { PATHS } from '../routes';
 import { Logo } from '../components/ui/Logo';
+import { InviteArt, PermissionsArt, TeamBoardArt } from './landingArt';
 import styles from './Landing.module.css';
 
 /**
@@ -42,11 +43,40 @@ const FEATURES = [
   },
 ];
 
+/**
+ * The real order of operations.
+ *
+ * An earlier draft went straight from "make a board" to "invite your team", which
+ * skipped the step that makes inviting possible: there is nobody to invite until a
+ * team exists. Steps that leave out a prerequisite are worse than no steps, because
+ * the reader follows them and gets stuck.
+ */
 const STEPS = [
-  { title: 'Create an account', body: 'Email and password, or sign in with Google. Nothing to configure.' },
-  { title: 'Make a board', body: 'Name it, name its columns. Two columns is enough to start; the last one counts as done.' },
-  { title: 'Invite your team', body: 'By email address. They do not need an account first, and the invitation link works once.' },
-  { title: 'Assign and track', body: 'Give tasks owners and due dates. Progress and overdue counts follow automatically.' },
+  {
+    title: 'Create an account',
+    body: 'Email and password, or Google. Nothing to configure and no card.',
+    aside: 'About a minute',
+  },
+  {
+    title: 'Make a board',
+    body: 'Name it and name its columns. Two is the minimum that means anything, because the last column counts as done.',
+    aside: 'Todo, Doing, Done',
+  },
+  {
+    title: 'Create a team',
+    body: 'From Teams in the sidebar. A team is the people you work with, and it is what invitations belong to.',
+    aside: 'Or describe it and let the assistant draft it',
+  },
+  {
+    title: 'Add the board and invite people',
+    body: 'Put the board in the team, then invite by email address. Every member reaches it without a separate invitation each time.',
+    aside: 'They do not need an account yet',
+  },
+  {
+    title: 'Assign and track',
+    body: 'Give tasks owners and due dates. Progress, overdue counts and team analytics follow on their own.',
+    aside: 'Nothing to maintain',
+  },
 ];
 
 const STACK = [
@@ -98,7 +128,7 @@ export function Landing() {
           <nav className={styles.navLinks} aria-label="Sections">
             <a href="#features">Features</a>
             <a href="#how">How it works</a>
-            <a href="#docs">Docs</a>
+            <Link to={PATHS.docs}>Docs</Link>
           </nav>
           <div className={styles.navActions}>
             <Link to={PATHS.login} className={styles.navSignIn}>
@@ -202,22 +232,64 @@ export function Landing() {
           </div>
         </section>
 
+        <section className={styles.section}>
+          <div className={styles.illustrated}>
+            <article className={styles.featureWide}>
+              <div>
+                <h3 className={styles.featureTitle}>Work belongs to somebody</h3>
+                <p className={styles.featureBody}>
+                  Every card can carry an assignee and a due date, and dragging one
+                  between columns persists immediately. The board is the same for
+                  everyone looking at it.
+                </p>
+              </div>
+              <TeamBoardArt />
+            </article>
+
+            <article className={styles.featureWide}>
+              <div>
+                <h3 className={styles.featureTitle}>Access resolves in one order</h3>
+                <p className={styles.featureBody}>
+                  Owner first, then anyone invited to that board specifically, then
+                  membership of the board&rsquo;s team. The explicit grant wins, which
+                  is how one person stays read-only on a board their team edits.
+                </p>
+              </div>
+              <PermissionsArt />
+            </article>
+
+            <article className={styles.featureWide}>
+              <div>
+                <h3 className={styles.featureTitle}>Invite an address, not an account</h3>
+                <p className={styles.featureBody}>
+                  Send an invitation to anyone, whether or not they have signed up.
+                  The link works once, expires, and can be revoked before it is used.
+                </p>
+              </div>
+              <InviteArt />
+            </article>
+          </div>
+        </section>
+
         <section id="how" className={`${styles.section} ${styles.sectionAlt}`}>
           <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>Four steps to a working board</h2>
+            <h2 className={styles.sectionTitle}>From nothing to a team tracking work</h2>
             <p className={styles.sectionBody}>
-              From nothing to a team tracking real work, without reading a manual.
+              Five steps, in the order they actually happen. No manual required.
             </p>
           </div>
 
           <ol className={styles.steps}>
             {STEPS.map((step, index) => (
               <li key={step.title} className={styles.step}>
-                <span className={styles.stepNumber}>{index + 1}</span>
-                <div>
-                  <h3 className={styles.stepTitle}>{step.title}</h3>
-                  <p className={styles.stepBody}>{step.body}</p>
-                </div>
+                {/* The numeral is the visual anchor, so the sequence reads as a
+                    sequence rather than as four similar paragraphs. */}
+                <span className={styles.stepNumber} aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <h3 className={styles.stepTitle}>{step.title}</h3>
+                <p className={styles.stepBody}>{step.body}</p>
+                <p className={styles.stepAside}>{step.aside}</p>
               </li>
             ))}
           </ol>
@@ -248,14 +320,19 @@ export function Landing() {
             ))}
           </div>
 
-          <a
-            className={styles.docsLink}
-            href="https://github.com/illonaaddae/kanban-task-management-web-app"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Read the full documentation on GitHub
-          </a>
+          <div className={styles.docsActions}>
+            <Link className={styles.primaryCta} to={PATHS.docs}>
+              Read the docs
+            </Link>
+            <a
+              className={styles.docsLink}
+              href="https://github.com/illonaaddae/kanban-task-management-web-app#readme"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              API reference on GitHub
+            </a>
+          </div>
         </section>
 
         <section className={styles.closing}>
@@ -291,7 +368,9 @@ export function Landing() {
             </div>
             <div>
               <h4>Docs</h4>
-              <a href="#docs">Getting started</a>
+              <Link to={`${PATHS.docs}#getting-started`}>Getting started</Link>
+              <Link to={`${PATHS.docs}#permissions`}>Permissions</Link>
+              <Link to={`${PATHS.docs}#self-hosting`}>Running it yourself</Link>
               <a
                 href="https://github.com/illonaaddae/kanban-task-management-web-app#readme"
                 target="_blank"
@@ -307,6 +386,20 @@ export function Landing() {
                 Postman collection
               </a>
             </div>
+            <div>
+              {/* A portfolio project should say who built it. Only links that are
+                  verified are here: a placeholder URL in a footer is worse than an
+                  absent one, because it looks like a broken site. */}
+              <h4>Built by</h4>
+              <a
+                href="https://github.com/illonaaddae"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                GitHub profile
+              </a>
+            </div>
+
             <div>
               <h4>Project</h4>
               <a

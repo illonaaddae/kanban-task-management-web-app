@@ -131,6 +131,33 @@ export function useTaskSuggestion() {
   });
 }
 
+/** Reads one instruction about a board. Returns a plan, never a change. */
+export function useCommandPlan() {
+  return useMutation({
+    mutationFn: ({ boardId, instruction }: { boardId: string; instruction: string }) =>
+      aiApi.interpretCommand(boardId, instruction),
+  });
+}
+
+/**
+ * One turn of a board conversation.
+ *
+ * A mutation rather than a query even though most turns only read: the transcript
+ * is the input, every send is a distinct billed call, and none of it should be
+ * cached or refetched on focus.
+ */
+export function useBoardChat() {
+  return useMutation({
+    mutationFn: ({
+      boardId,
+      messages,
+    }: {
+      boardId: string;
+      messages: aiApi.ChatMessage[];
+    }) => aiApi.chat(boardId, messages),
+  });
+}
+
 /** Proposes a team, a first board and an invitee list, for confirmation. */
 export function useTeamPlan() {
   return useMutation({

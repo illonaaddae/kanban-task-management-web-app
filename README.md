@@ -499,6 +499,26 @@ the frontend renders no AI buttons at all, so nothing else changes.
 | GET | `/ai/status` | authenticated | `{enabled, model}`. Answers without a key, so the UI can hide the affordances |
 | POST | `/ai/task-suggestion` | authenticated | `{title, context?}` -> a description and 3-5 subtasks |
 | POST | `/ai/team-plan` | authenticated | `{prompt}` -> a proposed team name, description, first board, columns and invitee list |
+| POST | `/ai/command` | **editor** | `{boardId, instruction}` -> one named action to confirm. Editor and above, because the instruction describes a change |
+| POST | `/ai/chat` | **editor** | `{boardId, messages[]}` -> `{reply, action}`. A conversation about one board; `action` is the same named set or `null` |
+
+**Two surfaces on one closed action set.** The command bar (`/` on a board) is one
+instruction, one round trip, one confirmation: what you want when you already know
+what you are asking for. The Ask panel keeps a conversation, which is what the useful
+questions need, since they are follow-ups: what is overdue, who is carrying it, now
+move that one.
+
+Both return actions from the same closed set, and both resolve them through one
+client-side function (`src/components/board/resolvePlan.ts`), so a named action
+cannot mean two different things depending on where it was typed. `unknown` is a
+valid answer rather than a failure. Matching happens against the board the client
+already holds, by exact case-insensitive comparison rather than fuzzy matching, since
+acting on a near-match is how the wrong card gets moved.
+
+The honest cost difference: the command bar is one call per instruction, while chat is
+one call per turn and each carries the transcript. That is why the transcript is
+capped server-side at the last eight messages, why both endpoints share one rate
+limit, and why the command bar was kept rather than replaced.
 
 **The model never writes.** Every endpoint returns a *proposal*. Creating the team,
 the board or the invitations is done afterwards by the same endpoints the manual
@@ -517,6 +537,8 @@ address would receive a real invitation.
 - `OPENAI_MAX_OUTPUT_TOKENS` caps every call. A response stopped at the ceiling is
   *truncated JSON*, not an error, so `status: "incomplete"` is checked explicitly
   rather than left to fail as an unexplained parse error.
+- Chat sends at most the last eight messages, each clamped, so a long conversation
+  cannot make each turn progressively more expensive.
 - Input is length-bounded by the Zod schema and clamped again in the service, so a
   pasted document cannot become the prompt.
 - Eight requests per user per minute, in process memory. It guards spend rather
@@ -870,4 +892,10 @@ netlify deploy --prod --dir=dist
 
 ## License
 
-This project is open-source and available under the **MIT License**.
+[MIT](LICENSE). Use it, change it, ship it; keep the copyright notice.
+
+The README claimed MIT for a while before anything backed it: there was no `LICENSE`
+file and neither `package.json` declared one. That gap matters more than it looks.
+Public visibility is not a licence, and without one default copyright applies, so the
+legal answer to "may I reuse this?" is no regardless of what a readme says. The file
+is what makes the claim true.

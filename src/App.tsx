@@ -26,6 +26,7 @@ const BoardView = lazy(() =>
 const Landing = lazy(() =>
   import("./pages/Landing").then((m) => ({ default: m.Landing })),
 );
+const Docs = lazy(() => import("./pages/Docs").then((m) => ({ default: m.Docs })));
 const AcceptInvite = lazy(() =>
   import("./pages/AcceptInvite").then((m) => ({ default: m.AcceptInvite })),
 );
@@ -75,6 +76,9 @@ function App() {
         {/* Public front door. Signed-in visitors are sent to their boards by the
             page itself, so a bookmark of "/" still lands somewhere useful. */}
         <Route path={PATHS.landing} element={<Landing />} />
+
+        {/* Public: somebody deciding whether to run this reads it before signing up. */}
+        <Route path={PATHS.docs} element={<Docs />} />
 
         {/* Public route - Login */}
         <Route path={PATHS.login} element={<Login />} />
