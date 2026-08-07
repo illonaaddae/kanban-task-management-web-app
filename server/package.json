@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand --forceExit",
@@ -31,6 +31,7 @@
     "mongoose": "^8.20.0",
     "pino": "^9.13.1",
     "pino-http": "^10.5.0",
+    "typescript": "^5.9.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
@@ -45,10 +46,8 @@
     "mongodb-memory-server": "^10.2.4",
     "nodemon": "^3.1.10",
     "pino-pretty": "^13.1.2",
-    "rimraf": "^6.0.1",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.6",
-    "tsx": "^4.20.7",
-    "typescript": "^5.9.3"
+    "tsx": "^4.20.7"
   }
 }
