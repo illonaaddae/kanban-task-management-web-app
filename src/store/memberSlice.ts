@@ -1,4 +1,6 @@
 import * as collaboratorApi from '../services/collaboratorApi';
+import { queryClient } from '../queries/queryClient';
+import { queryKeys } from '../queries/keys';
 import type { StoreSet, StoreGet } from './store';
 import type { BoardState } from './boardTypes';
 
@@ -44,16 +46,22 @@ export const createMemberSlice = (set: StoreSet, get: StoreGet): MemberSlice => 
   inviteCollaborator: async (boardId, email, role) => {
     const members = await collaboratorApi.inviteCollaborator(boardId, email, role);
     set({ members });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.boards.members(boardId) });
   },
 
   updateCollaboratorRole: async (boardId, userId, role) => {
     const members = await collaboratorApi.updateCollaboratorRole(boardId, userId, role);
     set({ members });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.boards.members(boardId) });
   },
 
   removeCollaborator: async (boardId, userId) => {
     const members = await collaboratorApi.removeCollaborator(boardId, userId);
     set({ members });
+    // Removal also clears their task assignments server-side, so the board
+    // itself is stale too.
+    void queryClient.invalidateQueries({ queryKey: queryKeys.boards.members(boardId) });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.boards.all() });
 
     // A removed collaborator loses their assignments server-side, so re-read the
     // board rather than leaving stale assignee chips on the cards.

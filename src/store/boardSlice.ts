@@ -1,5 +1,7 @@
 import type { Board } from "../types";
 import { boardService } from "../services/boardService";
+import { queryClient } from "../queries/queryClient";
+import { queryKeys } from "../queries/keys";
 import type { StoreSet, StoreGet } from "./store";
 import type { BoardState } from "./boardTypes";
 
@@ -137,6 +139,8 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
         currentBoard: fresh,
         boards: boards.map((b) => (b.id === fresh.id ? fresh : b)),
       });
+      // Keep the query cache honest while both layers coexist.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.boards.all() });
     } catch (error: any) {
       set({ boardError: error.message });
       throw error;

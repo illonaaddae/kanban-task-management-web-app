@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
-import { useStore } from '../../store/store';
-import { useShallow } from 'zustand/react/shallow';
+import { useBoardMembers } from '../../queries/boards';
 import { Input } from '../ui/Input';
 import { Dropdown } from '../ui/Dropdown';
 
@@ -30,16 +28,9 @@ export function TaskMetaFields({
   assignedTo,
   onAssignedToChange,
 }: TaskMetaFieldsProps) {
-  const { members, fetchMembers } = useStore(
-    useShallow((state) => ({
-      members: state.members,
-      fetchMembers: state.fetchMembers,
-    })),
-  );
-
-  useEffect(() => {
-    if (boardId) void fetchMembers(boardId);
-  }, [boardId, fetchMembers]);
+  // Shared cache entry: the share modal asks for the same list, and both get
+  // one request instead of a fetch each.
+  const { data: members = [] } = useBoardMembers(boardId);
 
   const assigneeOptions = [
     { value: UNASSIGNED, label: 'Unassigned' },

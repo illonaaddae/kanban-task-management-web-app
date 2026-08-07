@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { getActivity } from '../../services/activityApi';
+import { useBoardActivity } from '../../queries/boards';
 import { Loader } from '../ui/Loader';
-import type { ActivityEntry, Pagination } from '../../types';
 import styles from './ActivityPanel.module.css';
 
 interface ActivityPanelProps {
@@ -46,36 +45,22 @@ function formatWhen(iso: string): string {
  * so a long-lived board cannot grow the panel without bound.
  */
 export function ActivityPanel({ isOpen, onClose, boardId }: ActivityPanelProps) {
-  const [entries, setEntries] = useState<ActivityEntry[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(
-    async (targetPage: number) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await getActivity(boardId, targetPage, PAGE_SIZE);
-        setEntries(result.entries);
-        setPagination(result.pagination);
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : 'Could not load activity');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [boardId],
+  // Reopening always starts at page 1: resuming deep in the feed after a
+  // mutation shows a page whose contents have shifted underneath.
+  useEffect(() => {
+    if (isOpen) setPage(1);
+  }, [isOpen]);
+
+  const { data, isPending, isFetching, error } = useBoardActivity(
+    isOpen ? boardId : undefined,
+    page,
+    PAGE_SIZE,
   );
 
-  // Always reopen on page 1 — resuming deep in the feed after a mutation would
-  // show a page whose contents have shifted.
-  useEffect(() => {
-    if (!isOpen) return;
-    setPage(1);
-    void load(1);
-  }, [isOpen, load]);
+  const entries = data?.entries ?? [];
+  const pagination = data?.pagination;
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -86,11 +71,6 @@ export function ActivityPanel({ isOpen, onClose, boardId }: ActivityPanelProps) 
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const goTo = (targetPage: number) => {
-    setPage(targetPage);
-    void load(targetPage);
-  };
 
   const totalPages = pagination?.totalPages ?? 1;
 
@@ -123,15 +103,19 @@ export function ActivityPanel({ isOpen, onClose, boardId }: ActivityPanelProps) 
         </div>
 
         <div className={styles.body}>
-          {loading && entries.length === 0 && (
+          {isPending && (
             <div className={styles.loading}>
               <Loader />
             </div>
           )}
 
-          {error && <p className={styles.state}>{error}</p>}
+          {error && (
+            <p className={styles.state}>
+              {error instanceof Error ? error.message : 'Could not load activity'}
+            </p>
+          )}
 
-          {!loading && !error && entries.length === 0 && (
+          {!isPending && !error && entries.length === 0 && (
             <p className={styles.state}>
               Nothing has happened on this board yet.
             </p>
@@ -164,16 +148,16 @@ export function ActivityPanel({ isOpen, onClose, boardId }: ActivityPanelProps) 
               <button
                 type="button"
                 className={styles.pageButton}
-                onClick={() => goTo(page - 1)}
-                disabled={page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || isFetching}
               >
                 Newer
               </button>
               <button
                 type="button"
                 className={styles.pageButton}
-                onClick={() => goTo(page + 1)}
-                disabled={page >= totalPages || loading}
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= totalPages || isFetching}
               >
                 Older
               </button>
