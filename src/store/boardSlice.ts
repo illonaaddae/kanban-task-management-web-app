@@ -8,6 +8,7 @@ type BoardSlice = Pick<
   | "boards"
   | "currentBoard"
   | "boardLoading"
+  | "boardsLoaded"
   | "boardError"
   | "fetchBoards"
   | "setCurrentBoard"
@@ -21,6 +22,7 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
   boards: [],
   currentBoard: null,
   boardLoading: false,
+  boardsLoaded: false,
   boardError: null,
 
   fetchBoards: async (userId) => {
@@ -39,7 +41,7 @@ export const createBoardSlice = (set: StoreSet, get: StoreGet): BoardSlice => ({
       const currentBoard =
         (prev && boards.find((b) => b.id === prev.id)) ||
         (boards.length > 0 ? boards[0] : null);
-      set({ boards, currentBoard, boardLoading: false });
+      set({ boards, currentBoard, boardLoading: false, boardsLoaded: true });
     } catch (error: any) {
       set({ boardError: error.message, boardLoading: false });
     }

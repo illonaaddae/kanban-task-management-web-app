@@ -4,6 +4,9 @@ export interface BoardState {
   boards: Board[];
   currentBoard: Board | null;
   boardLoading: boolean;
+  /** True once boards have loaded at least once. Distinguishes a first load
+   *  from a later mutation, which must not blank the page. */
+  boardsLoaded: boolean;
   boardError: string | null;
 
   /** Owner + collaborators of the current board. Feeds sharing and assignment. */

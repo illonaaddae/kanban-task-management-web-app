@@ -62,7 +62,7 @@
 /* Drag and drop styles */
 .dragOverlay {
   padding: 1rem;
-  background: var(--color-main-purple);
+  background: var(--primary);
   color: white;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);

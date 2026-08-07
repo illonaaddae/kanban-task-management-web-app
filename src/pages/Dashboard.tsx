@@ -5,17 +5,22 @@ import { Loader } from "../components/ui/Loader";
 import styles from "./Dashboard.module.css";
 
 export function Dashboard() {
-  const { boards, boardLoading, boardError, fetchBoards, user } = useStore(
+  const { boards, boardLoading, boardsLoaded, boardError, fetchBoards, user } = useStore(
     useShallow((state) => ({
       boards: state.boards,
       boardLoading: state.boardLoading,
+      boardsLoaded: state.boardsLoaded,
       boardError: state.boardError,
       fetchBoards: state.fetchBoards,
       user: state.user,
     })),
   );
 
-  if (boardLoading) {
+  // Only the first load takes over the page. A later mutation — creating a
+  // board, say — must not replace the dashboard with a spinner: the modal that
+  // triggered it is still open on top, and blanking the page behind it reads as
+  // the app having broken.
+  if (boardLoading && !boardsLoaded) {
     return (
       <div className={styles.dashboard}>
         <div className={styles.emptyState}>
