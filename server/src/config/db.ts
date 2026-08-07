@@ -35,6 +35,23 @@ export async function connectDB(uri: string = env.DATABASE_URL): Promise<void> {
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 10_000,
     socketTimeoutMS: 45_000,
+
+    /**
+     * Cap connections *per instance*, because the cluster's limit is shared.
+     *
+     * Mongoose defaults to 100. On a platform that runs several instances —
+     * Cloud Run scaling out, or two revisions overlapping during a deploy —
+     * that multiplies: 5 instances would reserve 500 connections, which is the
+     * entire budget of an Atlas M0. The symptom is not a clear error but random
+     * timeouts once the pool is exhausted, which is miserable to diagnose.
+     *
+     * 10 is ample for this workload: requests are short and the heaviest one
+     * (`/boards/:id/full`) issues two queries concurrently.
+     */
+    maxPoolSize: 10,
+    // Keep a couple warm so a cold instance's first request does not pay the
+    // full handshake.
+    minPoolSize: 2,
   });
 
   logger.info(

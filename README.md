@@ -348,7 +348,7 @@ could be probed for existence by watching the status code.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| GET | `/health` | — | Status, uptime, timestamp, DB state. Render's health-check path |
+| GET | `/health` | — | Status, uptime, timestamp, DB state. The platform's health-check path |
 
 #### Move semantics
 
@@ -381,7 +381,7 @@ with a per-field explanation rather than booting half-configured):
 | Variable | Required | Notes |
 |---|---|---|
 | `NODE_ENV` | no | `development` \| `test` \| `production` |
-| `PORT` | no | Default **5050**. Avoid 5000 on macOS — Control Center's AirPlay Receiver answers it with a bodyless 403 that reads like a CORS error |
+| `PORT` | no | Default **5050**; the host injects its own. Avoid 5000 on macOS — Control Center's AirPlay Receiver answers it with a bodyless 403 that reads like a CORS error |
 | `DATABASE_URL` | **yes** | `mongodb://127.0.0.1:27017/kanban` locally, or an Atlas SRV string |
 | `JWT_SECRET` | **yes** | ≥ 32 chars |
 | `JWT_REFRESH_SECRET` | **yes** | ≥ 32 chars, and **must differ** from `JWT_SECRET` in production |
@@ -451,7 +451,7 @@ The **RBAC — viewer is refused** folder is the enforcement demo: a second
 account is refused (403) before being invited, reads the board once invited,
 is refused on task create / task move / column create / board rename /
 self-promotion, is then promoted to editor and can move a task, but still
-cannot delete the board. Set `BASE_URL` in the Prod environment to the Render
+cannot delete the board. Set `BASE_URL` in the Prod environment to the Cloud Run
 URL to run the same checks against production.
 
 ### Google OAuth
@@ -506,22 +506,58 @@ Setting it up in Google Cloud Console is a manual step; see below.
 
 ## Deployment
 
-### Backend → Render
+### Backend → Google Cloud Run
 
-Web Service, root directory `server/`:
+Deployed straight from source — Google's Node buildpack detects the project, so
+there is no Dockerfile to maintain. Run from inside `server/`:
 
-| Setting | Value |
-|---|---|
-| Build command | `npm ci && npm run build` |
-| Start command | `node dist/server.js` |
-| Health check path | `/health` |
+```bash
+gcloud config set project <your-project-id>
 
-Set every environment variable from the table above in the Render dashboard,
-with `DATABASE_URL` pointing at Atlas and `FRONTEND_URL` at the deployed
-frontend (this is the CORS origin). The free tier spins down when idle, so the
-first request after a quiet period is slow.
+gcloud run deploy kanban-api \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --min-instances 1 \
+  --max-instances 3 \
+  --set-env-vars NODE_ENV=production,LOG_LEVEL=info,JWT_EXPIRES_IN=1h,JWT_REFRESH_EXPIRES_IN=7d
+```
 
-**Live API:** `<!-- TODO: https://your-service.onrender.com -->`
+Then the secrets, kept out of the deploy command so they stay out of shell
+history:
+
+```bash
+gcloud run services update kanban-api --region us-central1 \
+  --update-env-vars DATABASE_URL='<atlas string>',JWT_SECRET='<64 hex>',JWT_REFRESH_SECRET='<a different 64 hex>',FRONTEND_URL='https://<your-site>.netlify.app'
+```
+
+Use the **same GCP project as the OAuth client** — one project, one console, and
+the callback URL lives on the same domain family.
+
+Notes on the flags:
+
+- **`PORT` is never set.** Cloud Run injects it and `env.ts` coerces it; the
+  server binds all interfaces, so it is picked up automatically.
+- **`--min-instances 1`** keeps one container warm, so there is no cold start.
+  Drop it to `0` to stay inside the always-free tier and accept ~1–2s on the
+  first request after idle — still far quicker than a sleeping VM, because the
+  image stays cached.
+- **`--max-instances 3`** bounds fan-out against the database. `db.ts` caps the
+  pool at 10 connections per instance, so the worst case is 30 against an Atlas
+  M0's budget of 500. Raising max-instances a lot without raising the cluster
+  tier is how you get random timeouts that look like nothing in particular.
+- `typescript` is a **runtime** dependency rather than a dev one, because
+  buildpacks install with `NODE_ENV=production` and would otherwise skip it,
+  failing the build with `tsc: not found`. For the same reason the build script
+  clears `dist/` with Node's own `fs.rmSync` instead of `rimraf`, so nothing
+  extra has to ship.
+- Graceful shutdown is already wired: Cloud Run sends `SIGTERM` on scale-down and
+  `server.ts` drains connections before exiting.
+
+`gcloud run deploy` prints the service URL — that is what goes into Netlify's
+`VITE_API_URL` and Google's authorized redirect URIs.
+
+**Live API:** `<!-- TODO: https://kanban-api-xxxxx-uc.a.run.app -->`
 
 ### Frontend → Netlify
 
@@ -535,7 +571,7 @@ Vite project at the repo root.
 In **Site configuration → Environment variables** set:
 
 ```
-VITE_API_URL=https://<your-service>.onrender.com
+VITE_API_URL=https://kanban-api-xxxxx-uc.a.run.app
 VITE_AUTH_PROVIDER=api
 ```
 
@@ -545,7 +581,7 @@ you must trigger a fresh deploy — saving alone does not alter the built bundle
 SPA routing is already handled by `public/_redirects` (`/* /index.html 200`),
 which Vite copies into `dist/`. Without it, refreshing `/board/<id>` would 404.
 
-Then set the Netlify URL as `FRONTEND_URL` on Render — it is both the CORS origin
+Then set the Netlify URL as `FRONTEND_URL` on Cloud Run — it is both the CORS origin
 and where the OAuth flow lands.
 
 **Live app:** `<!-- TODO: https://your-app.netlify.app -->`
@@ -565,7 +601,7 @@ and where the OAuth flow lands.
 4. **Authorized redirect URIs** — these must match `GOOGLE_REDIRECT_URI`
    character for character, including the scheme and any trailing slash:
    - `http://localhost:5050/auth/google/callback`
-   - `https://<your-service>.onrender.com/auth/google/callback`
+   - `https://kanban-api-xxxxx-uc.a.run.app/auth/google/callback`
 
    These point at the **backend**, not the frontend. Authorized JavaScript
    origins can be left empty — the browser never talks to Google directly here.
@@ -578,9 +614,9 @@ and where the OAuth flow lands.
    ```
 
    All three or none — a partial config fails at startup on purpose.
-6. On Render, set the same three variables with the Render callback URL, and make
-   sure `FRONTEND_URL` is the Netlify URL (it is where the flow redirects at the
-   end, and the CORS origin).
+6. On Cloud Run, set the same three variables with the Cloud Run callback URL,
+   and make sure `FRONTEND_URL` is the Netlify URL (it is where the flow redirects
+   at the end, and the CORS origin).
 
 `redirect_uri_mismatch` is the usual failure and always means step 4 does not
 match `GOOGLE_REDIRECT_URI` exactly.
