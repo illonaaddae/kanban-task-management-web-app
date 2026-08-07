@@ -52,7 +52,7 @@ export function Header() {
       <header className={styles.header}>
         {/* Shown only below 1025px (see HamburgerButton.module.css), where the
             sidebar is a drawer. It was the only way to reach the board list,
-            create-board and theme toggle on a phone — and the component existed
+            create-board and theme toggle on a phone - and the component existed
             unused until now. */}
         <HamburgerButton
           isOpen={isSidebarOpen}
@@ -117,8 +117,10 @@ export function Header() {
       {isOnBoardView && canManageBoard && showShare && (
         <ShareModal isOpen={showShare} boardId={boardId!} boardName={currentBoard.name} onClose={() => setShowShare(false)} />
       )}
+      {/* Mounted only while open, so page and filter reset on every open without an
+          effect setting state for a panel nobody can see yet. */}
       {isOnBoardView && showActivity && (
-        <ActivityPanel isOpen={showActivity} boardId={boardId!} onClose={() => setShowActivity(false)} />
+        <ActivityPanel isOpen boardId={boardId!} onClose={() => setShowActivity(false)} />
       )}
     </>
   );

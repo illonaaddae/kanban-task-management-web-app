@@ -11,7 +11,7 @@ import { ACCESS_TOKEN_KEY } from '../api';
 
 /**
  * These exercise the API client, so `fetch` is mocked rather than Appwrite.
- * Requests are recorded so the tests can assert *what* was sent — for the
+ * Requests are recorded so the tests can assert *what* was sent - for the
  * column diff, the sequence of calls is the behaviour under test.
  */
 
@@ -127,6 +127,8 @@ describe('boardApi', () => {
         name: 'My Board',
         // Carried through so the UI can gate affordances on it.
         myRole: 'owner',
+        // null for a personal board; a team id makes it reachable by that team.
+        organizationId: null,
         columns: [
           {
             id: 'col-todo',
@@ -354,7 +356,7 @@ describe('boardApi', () => {
       expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Done' });
     });
 
-    it('does not delete and recreate untouched columns — tasks would be orphaned', async () => {
+    it('does not delete and recreate untouched columns - tasks would be orphaned', async () => {
       on('GET', /full$/, () => ({ body: success(fullBoard()) }));
 
       await updateBoard('board-1', {

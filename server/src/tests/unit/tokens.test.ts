@@ -114,7 +114,7 @@ describe("verifyAccessToken", () => {
   });
 
   describe("payload shape", () => {
-    // A correctly signed token can still carry the wrong shape — an old token
+    // A correctly signed token can still carry the wrong shape - an old token
     // format, or a payload that was a bare string. Anything downstream that
     // trusts payload.id must not see these.
     it("rejects a validly signed token with no id", () => {

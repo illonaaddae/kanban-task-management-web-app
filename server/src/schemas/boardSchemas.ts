@@ -19,7 +19,7 @@ const titleOrName = z
     title: titleField.optional(),
     name: titleField.optional(),
     /**
-     * Makes this a team board. `null` detaches it, making it personal again —
+     * Makes this a team board. `null` detaches it, making it personal again -
      * distinct from omitting the key, which leaves the current team alone.
      */
     organizationId: objectIdSchema.nullable().optional(),

@@ -182,7 +182,7 @@ describe("GET /users", () => {
     expect(res.body.data.users[0]).not.toHaveProperty("password");
   });
 
-  it("returns 403 for an editor — authenticated but not permitted", async () => {
+  it("returns 403 for an editor - authenticated but not permitted", async () => {
     const editor = await registerAndLogin(app, { role: "editor" });
 
     const res = await request(app).get("/users").set(editor.authHeader).expect(403);
@@ -197,7 +197,7 @@ describe("GET /users", () => {
     await request(app).get("/users").set(viewer.authHeader).expect(403);
   });
 
-  it("returns 401 — not 403 — when no token is supplied", async () => {
+  it("returns 401 - not 403 - when no token is supplied", async () => {
     const res = await request(app).get("/users").expect(401);
 
     expect(res.body.message).toMatch(/not logged in/i);

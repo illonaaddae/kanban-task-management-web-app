@@ -43,7 +43,7 @@ export const boardRepository = {
    * to, and every board belonging to a team they are in. The $or is served by the
    * `owner`, `collaborators.user` and `organization` indexes.
    *
-   * `orgIds` is passed in rather than looked up here — a repository that queries
+   * `orgIds` is passed in rather than looked up here - a repository that queries
    * a second collection to answer one question stops being a repository.
    */
   findForUser(userId: UserId, orgIds: BoardId[] = []): Promise<BoardDocument[]> {

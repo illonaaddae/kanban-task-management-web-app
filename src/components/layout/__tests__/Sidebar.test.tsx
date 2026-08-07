@@ -5,7 +5,7 @@ import { renderWithProviders } from '../../../test/utils';
 import * as boardQueries from '../../../queries/boards';
 
 // `useBoards` is gated on `tokenStore.isAuthenticated`, so against the real hook
-// the list stays empty in tests. Stub the hook — the board list is the fixture
+// the list stays empty in tests. Stub the hook - the board list is the fixture
 // here, not the thing under test.
 vi.mock('../../../queries/boards');
 
@@ -47,7 +47,7 @@ describe('Sidebar', () => {
 
     fireEvent.click(await screen.findByText('Platform Launch'));
 
-    // The sidebar is a column of the desktop layout — navigating within it is
+    // The sidebar is a column of the desktop layout - navigating within it is
     // not a reason to take it away.
     expect(onToggle).not.toHaveBeenCalled();
   });

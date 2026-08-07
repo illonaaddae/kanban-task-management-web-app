@@ -26,7 +26,7 @@ export const invitationRepository = {
 
   /**
    * Looks an invitation up by the hash of the token from the link, with the
-   * organization and inviter resolved — the accept screen shows "Illona invited
+   * organization and inviter resolved - the accept screen shows "Illona invited
    * you to Acme" before asking anyone to commit.
    */
   findByTokenHash(tokenHash: string): Promise<InvitationDocument | null> {
@@ -57,7 +57,7 @@ export const invitationRepository = {
   },
 
   /**
-   * Marks an invitation accepted, but only from `pending` — so a token replayed
+   * Marks an invitation accepted, but only from `pending` - so a token replayed
    * twice (double-clicked link, retried request) settles the second attempt
    * against an unchanged row instead of re-adding the member.
    */

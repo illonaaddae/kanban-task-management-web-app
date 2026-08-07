@@ -18,7 +18,7 @@ interface TaskMetaFieldsProps {
  * Due date and assignee, shared by the add and edit task modals.
  *
  * The assignee list is the board's own members (owner + collaborators) because
- * the API rejects an assignee who is not one — offering anyone else would just
+ * the API rejects an assignee who is not one - offering anyone else would just
  * produce a 400 on submit.
  */
 export function TaskMetaFields({

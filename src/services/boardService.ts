@@ -1,5 +1,5 @@
 /**
- * Board Service — re-exports board and task API functions
+ * Board Service - re-exports board and task API functions
  * as a single service object for backward compatibility.
  */
 import * as boardApi from './boardApi';

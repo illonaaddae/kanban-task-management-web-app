@@ -8,8 +8,8 @@ import type { StoreSet } from "./store";
 /**
  * Applies the theme the server has stored for this account.
  *
- * Called on every path that establishes a session — login, register, OAuth
- * return and session restore — so the preference follows the user across
+ * Called on every path that establishes a session - login, register, OAuth
+ * return and session restore - so the preference follows the user across
  * devices rather than living only in this browser's local state.
  */
 function applyServerTheme(user: User | null): void {
@@ -76,7 +76,7 @@ export const createAuthSlice = (set: StoreSet): AuthState => ({
         isAuthenticated: false,
         loading: false,
       });
-      // Boards live in the query cache now, so signing out has to empty it —
+      // Boards live in the query cache now, so signing out has to empty it -
       // otherwise the next account to sign in on this browser is served the
       // previous one's boards from cache before any request goes out.
       queryClient.clear();
@@ -161,7 +161,7 @@ export const createAuthSlice = (set: StoreSet): AuthState => ({
             });
           }
         } catch {
-          // oauthError wasn't JSON — show a generic message
+          // oauthError wasn't JSON - show a generic message
           toast.error("Sign-in failed. Please try again.", { duration: 5000 });
         }
         set({ user: null, isAuthenticated: false, loading: false });

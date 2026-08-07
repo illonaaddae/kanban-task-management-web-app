@@ -19,7 +19,7 @@ import {
  */
 const DUMMY_HASH = "$2b$12$mnGeMfllYmJLA2e.kJ/SoudEYerqxj9BwU8a2mR6ATAW1YH9SfHl.";
 
-/** One message for every login failure — never reveal which half was wrong. */
+/** One message for every login failure - never reveal which half was wrong. */
 const INVALID_CREDENTIALS = "Invalid credentials";
 
 export interface AuthResult {
@@ -124,7 +124,7 @@ export const authService = {
 
   /**
    * Bumps tokenVersion, which invalidates every access and refresh token
-   * already issued to this user — including ones that have not expired.
+   * already issued to this user - including ones that have not expired.
    */
   async logout(userId: string): Promise<void> {
     await userRepository.incrementTokenVersion(userId);

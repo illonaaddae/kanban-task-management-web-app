@@ -20,7 +20,7 @@ const MONTHS = [
  * `yyyy-mm-dd` <-> Date, in **local** time.
  *
  * `new Date('2026-08-07')` parses as UTC midnight, which is the previous day for
- * anyone west of Greenwich — so a date picked on the 7th saves as the 6th. Build
+ * anyone west of Greenwich - so a date picked on the 7th saves as the 6th. Build
  * the parts explicitly to keep everything in the user's own day.
  */
 function parse(value: string): Date | null {
@@ -81,7 +81,7 @@ export function DatePicker({
   const today = useMemo(() => new Date(), []);
 
   const [open, setOpen] = useState(false);
-  // Which month the grid is showing — starts at the selection, or this month.
+  // Which month the grid is showing - starts at the selection, or this month.
   const [cursor, setCursor] = useState(() => selected ?? today);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -144,7 +144,7 @@ export function DatePicker({
           aria-haspopup="dialog"
           aria-expanded={open}
           /* An explicit label, because the visible text is a locale-formatted
-             date — "Aug 7, 2026" in one locale, "07/08/2026" in another. */
+             date - "Aug 7, 2026" in one locale, "07/08/2026" in another. */
           aria-label={selected ? `Due date ${value}` : 'Set a due date'}
         >
           <svg className={styles.icon} width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"

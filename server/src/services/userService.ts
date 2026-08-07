@@ -5,7 +5,7 @@ import { AppError } from "../utils/AppError";
 
 export const userService = {
   /**
-   * Updates the caller's own profile. `role` is not reachable from here — the
+   * Updates the caller's own profile. `role` is not reachable from here - the
    * repository's update type excludes password, and this only forwards the
    * three self-service fields, so a user cannot promote themselves.
    */

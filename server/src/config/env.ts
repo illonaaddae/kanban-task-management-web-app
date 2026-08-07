@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // Resolve .env relative to the server/ root so it works from both
 // src/ (tsx dev) and dist/ (compiled). dotenv never overrides variables
-// already present on process.env — the deployment platform wins.
+// already present on process.env - the deployment platform wins.
 loadDotenv({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 
 const envSchema = z
@@ -27,12 +27,12 @@ const envSchema = z
 
     FRONTEND_URL: z.url("FRONTEND_URL must be a valid URL").default("http://localhost:5173"),
 
-    // Optional — the app boots and serves email/password auth without them.
+    // Optional - the app boots and serves email/password auth without them.
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     GOOGLE_REDIRECT_URI: z.url("GOOGLE_REDIRECT_URI must be a valid URL").optional(),
 
-    // Optional — without it invitations are still created, the link is just
+    // Optional - without it invitations are still created, the link is just
     // logged instead of emailed (see emailService).
     RESEND_API_KEY: z.string().min(1).optional(),
     // `onboarding@resend.dev` is Resend's shared sandbox sender: it works with no
@@ -61,7 +61,7 @@ const envSchema = z
     {
       path: ["GOOGLE_CLIENT_ID"],
       message:
-        "Google OAuth is partially configured — set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REDIRECT_URI together, or none of them",
+        "Google OAuth is partially configured - set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_REDIRECT_URI together, or none of them",
     },
   )
   // Refuse to run production on the committed dev secrets.
@@ -71,11 +71,11 @@ const envSchema = z
     {
       path: ["JWT_REFRESH_SECRET"],
       message:
-        "JWT_SECRET and JWT_REFRESH_SECRET must differ in production — a shared secret lets an access token be replayed as a refresh token",
+        "JWT_SECRET and JWT_REFRESH_SECRET must differ in production - a shared secret lets an access token be replayed as a refresh token",
     },
   );
 
-// `FOO=` in a .env file yields an empty string, not an absent key — which
+// `FOO=` in a .env file yields an empty string, not an absent key - which
 // would fail `.min(1).optional()` instead of being treated as "not set".
 const rawEnv = Object.fromEntries(
   Object.entries(process.env).filter(([, value]) => value !== ""),
@@ -102,7 +102,7 @@ export const env = {
   ...data,
   // Listed explicitly so the keys always exist, holding `undefined` when unset.
   // Zod omits an absent `.optional()` field entirely, which would leave the
-  // config a different *shape* depending on the deployment — awkward to reason
+  // config a different *shape* depending on the deployment - awkward to reason
   // about, and it breaks anything that reads or overrides the property.
   GOOGLE_CLIENT_ID: data.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: data.GOOGLE_CLIENT_SECRET,

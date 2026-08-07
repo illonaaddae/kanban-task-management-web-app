@@ -32,7 +32,7 @@ export const columnRepository = {
 
   /**
    * Highest position currently used on the board, or -1 when the board has no
-   * columns — so a caller can always append at `maxPosition + 1`.
+   * columns - so a caller can always append at `maxPosition + 1`.
    */
   async maxPosition(boardId: BoardId): Promise<number> {
     const last = await Column.findOne({ boardId })
@@ -55,7 +55,7 @@ export const columnRepository = {
     return Column.findByIdAndDelete(id).exec();
   },
 
-  /** Cascade helper — called when a board is deleted. */
+  /** Cascade helper - called when a board is deleted. */
   async deleteByBoardId(boardId: BoardId): Promise<number> {
     const { deletedCount } = await Column.deleteMany({ boardId }).exec();
     return deletedCount ?? 0;

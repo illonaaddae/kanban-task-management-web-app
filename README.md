@@ -31,7 +31,7 @@ Sign in with a seeded demo account, or register your own:
 |---|---|---|
 | `editor@kanban.dev` | `Password123!` | **owner** of "Platform Launch" |
 | `viewer@kanban.dev` | `Password123!` | collaborator, **read-only** |
-| `admin@kanban.dev` | `Password123!` | platform admin — bypasses board checks |
+| `admin@kanban.dev` | `Password123!` | platform admin - bypasses board checks |
 
 Sign in as the viewer to see read-only mode: the board renders in full, but the
 add/edit/delete affordances are gone and dragging is disabled. The API enforces
@@ -39,7 +39,7 @@ the same rules independently, so those actions return 403 even when called
 directly.
 
 > The API runs on Render's free tier, which spins down after ~15 minutes idle.
-> The first request after a quiet period takes 30–60 seconds while it wakes;
+> The first request after a quiet period takes 30-60 seconds while it wakes;
 > everything after that is normal speed.
 
 ---
@@ -84,9 +84,9 @@ directly.
 - **React Hook Form** (Form Handling)
 
 ### Backend & Services
-- **Express 5 + MongoDB (Mongoose)** — the API in `server/`, see [Backend](#backend)
+- **Express 5 + MongoDB (Mongoose)** - the API in `server/`, see [Backend](#backend)
 - **Zod 4** (request validation), **bcrypt + JWT** (auth), **Pino** (logging)
-- **Appwrite** — the original backend, being migrated away from
+- **Appwrite** - the original backend, being migrated away from
 
 ---
 
@@ -142,6 +142,29 @@ src/
 ```
 
 ---
+
+### Bundle and code splitting
+
+The initial payload is **315 kB / 98 kB gzipped**. Getting there was three
+decisions, all in `App.tsx` and `vite.config.ts`:
+
+| Chunk | Loaded when |
+|---|---|
+| `index` | always |
+| `react`, `query` | always, but separate so a routine app deploy does not invalidate ~28 kB of cached vendor code |
+| `BoardView` | opening a board. It is the only route that needs dnd-kit |
+| `appwriteAuth` | only when `VITE_AUTH_PROVIDER=appwrite` |
+| `Teams`, `MyTasks`, `Admin`, `AcceptInvite`, `NotFound` | on navigation |
+
+Login and Dashboard stay eager: one of them is the first paint on every visit, so
+deferring them would trade bundle size for a slower start.
+
+**The Appwrite SDK was the single biggest win** at 105 kB (32 kB gzipped). A static
+import cannot be tree-shaken when the provider is only known at runtime, so it
+shipped to every visitor of an API-configured deployment that never touched it.
+`authService` now imports the Appwrite and mock implementations dynamically. Every
+`AuthService` method already returned a Promise, so awaiting the module costs
+callers nothing and none of the three call sites changed.
 
 ## Testing
 
@@ -227,13 +250,13 @@ server/src/
 ├── models/        User, Board, Column, Task, ActivityLog (Mongoose schemas)
 ├── repositories/  the only layer that touches Mongoose
 ├── services/      business rules, cascades, position maths, activity logging
-├── controllers/   HTTP in, HTTP out — no logic
+├── controllers/   HTTP in, HTTP out - no logic
 ├── routes/        wiring + which middleware guards what
 ├── middlewares/   auth, boardAccess, loadColumn/loadTask, validate, errorHandler, notFound
 ├── schemas/       Zod request schemas
 ├── utils/         AppError, catchAsync, generateTokens
 ├── seed/          seed.ts
-├── app.ts         exports the app (no listen) — this is what Supertest imports
+├── app.ts         exports the app (no listen) - this is what Supertest imports
 └── server.ts      entry: connect, listen, signal handlers
 ```
 
@@ -241,9 +264,9 @@ server/src/
 
 - **Repositories are the only place Mongoose appears.** Swapping the query for
   an aggregation, or adding an index hint, touches one file and no tests above
-  it. It is enforced, not aspirational — no `Model.find`/`create`/`updateMany`
+  it. It is enforced, not aspirational - no `Model.find`/`create`/`updateMany`
   call exists outside `repositories/`.
-- **Services hold the rules** — the move algorithm, cascade deletes,
+- **Services hold the rules** - the move algorithm, cascade deletes,
   "an assignee must be a board member", activity entries. They take and return
   documents, so they are unit-testable without HTTP.
 - **Controllers only translate.** Read the request, call one service, pick the
@@ -252,9 +275,9 @@ server/src/
 - **`app.ts` never calls `listen`.** Supertest imports the app directly, so the
   integration suite runs without binding a port.
 - **Errors travel as exceptions.** Services throw `AppError`; `catchAsync`
-  forwards rejections; one central `errorHandler` maps everything —
+  forwards rejections; one central `errorHandler` maps everything -
   `AppError`, `ZodError`, `CastError`, duplicate-key 11000, JWT errors,
-  malformed JSON — to the response envelope. Controllers contain no `try`.
+  malformed JSON - to the response envelope. Controllers contain no `try`.
 
 **Response envelopes.** Success is `{ "status": "success", "data": … }`; failure
 is `{ "status": "error", "message": …, "details"?: [{ field, message }] }`.
@@ -264,7 +287,7 @@ Validation failures always carry `details`.
 
 bcrypt (cost 12) + JWT: a 1h access token and a 7d refresh token, signed with
 **separate secrets** so an access token cannot be replayed as a refresh token.
-The payload is only `{ id, role, tokenVersion }` — no email, no name.
+The payload is only `{ id, role, tokenVersion }` - no email, no name.
 
 `tokenVersion` is what makes logout real: logging out increments it, and every
 already-issued token for that user is refused on its next use even though the
@@ -272,7 +295,7 @@ signature and expiry are still valid. `POST /auth/refresh` verifies the refresh
 token, re-checks `tokenVersion`, and issues a fresh pair.
 
 Login answers **the same generic 401 ("Invalid credentials")** for an unknown
-email, a wrong password, and a Google-only account — and runs a dummy bcrypt
+email, a wrong password, and a Google-only account - and runs a dummy bcrypt
 compare on the unknown-email path so a missing account takes the same time as a
 wrong password.
 
@@ -280,13 +303,13 @@ wrong password.
 
 Two independent levels:
 
-1. **Global role** (`User.role`) — `admin` bypasses board checks entirely;
+1. **Global role** (`User.role`) - `admin` bypasses board checks entirely;
    `editor`/`viewer` are the defaults for new accounts.
 2. **Board-level role**, resolved per request by `boardAccess(minRole)`, most
    specific first:
-   1. `owner` — they created the board
-   2. collaborator entry role — they were invited to *this* board
-   3. `editor` — the board belongs to a team they are in
+   1. `owner` - they created the board
+   2. collaborator entry role - they were invited to *this* board
+   3. `editor` - the board belongs to a team they are in
    4. otherwise `403`
 
    Ranked `viewer < editor < owner`. The order matters: an explicit collaborator
@@ -296,7 +319,7 @@ Two independent levels:
    `member < orgAdmin < owner`, with the platform `admin` above all of them.
 
 **Team boards.** A board with an `organization` is reachable by every member of
-that team as an `editor`, with no per-board invitation — that is the point of a
+that team as an `editor`, with no per-board invitation - that is the point of a
 team board. Membership grants `editor` rather than `viewer` because a member who
 cannot move a card cannot do the work the board exists for, and rather than
 `owner` because renaming, sharing and deleting stay with whoever created it.
@@ -311,10 +334,10 @@ the board.
 | `GET /users` | ✗ 403 | ✗ 403 | ✗ 403 | ✓ |
 
 **Status-code precision.** `401` means "we do not know who you are"; `403`
-means "we do, and you may not do this" — a logged-in user is never told to
+means "we do, and you may not do this" - a logged-in user is never told to
 re-authenticate. Existence is resolved **before** permission, so a missing
 board is `404` even on an owner-only route. But a resource that exists inside
-someone else's board returns `403`, not `404` — otherwise a column or task id
+someone else's board returns `403`, not `404` - otherwise a column or task id
 could be probed for existence by watching the status code.
 
 ### API
@@ -326,10 +349,10 @@ could be probed for existence by watching the status code.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| POST | `/auth/register` | — | `{name, email, password}`. `201`; `409` if the email is taken; `400` with `details` otherwise |
-| POST | `/auth/login` | — | `{email, password}`. Generic `401` on any failure |
-| POST | `/auth/refresh` | — | `{refreshToken}`. Verifies + checks `tokenVersion`, returns a new pair |
-| POST | `/auth/logout` | authenticated | Bumps `tokenVersion` — invalidates every existing session |
+| POST | `/auth/register` | - | `{name, email, password}`. `201`; `409` if the email is taken; `400` with `details` otherwise |
+| POST | `/auth/login` | - | `{email, password}`. Generic `401` on any failure |
+| POST | `/auth/refresh` | - | `{refreshToken}`. Verifies + checks `tokenVersion`, returns a new pair |
+| POST | `/auth/logout` | authenticated | Bumps `tokenVersion` - invalidates every existing session |
 | GET | `/auth/me` | authenticated | The current user |
 
 #### Users
@@ -348,7 +371,7 @@ could be probed for existence by watching the status code.
 | GET | `/boards/{id}` | viewer | Collaborators resolved, for the share modal |
 | GET | `/boards/{id}/full` | viewer | The nested board the frontend renders in one request |
 | PUT | `/boards/{id}` | **owner** | Rename. Optional `organizationId` moves it into a team, `null` detaches it, omitting the key leaves it alone |
-| GET | `/boards/{id}/progress` | viewer | Per-person counts for this board — see **Progress** below |
+| GET | `/boards/{id}/progress` | viewer | Per-person counts for this board - see **Progress** below |
 | DELETE | `/boards/{id}` | **owner** | Cascades columns, tasks and activity |
 | GET | `/boards/{id}/activity` | viewer | `?page=&limit=` (limit ≤ 100), newest first, with pagination metadata |
 
@@ -363,8 +386,8 @@ could be probed for existence by watching the status code.
 #### Teams (organizations)
 
 A team is a directory of people you work with. Board sharing can only reach an
-address that already has an account — "user not found" was the usual outcome of
-trying to share — so team invitations go to an **email address** instead, and the
+address that already has an account - "user not found" was the usual outcome of
+trying to share - so team invitations go to an **email address** instead, and the
 person can be brought in before they have signed up at all.
 
 Team roles are `owner` > `admin` > `member`. The owner is the `owner` field, not a
@@ -373,14 +396,14 @@ below means team admin; a platform admin bypasses these checks.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| GET | `/orgs` | — | Teams the caller owns or belongs to, with `myRole` in each |
-| POST | `/orgs` | — | `{name}` — any signed-in user may create one |
+| GET | `/orgs` | - | Teams the caller owns or belongs to, with `myRole` in each |
+| POST | `/orgs` | - | `{name}` - any signed-in user may create one |
 | GET | `/orgs/{id}` | member | Members, owner first |
 | PATCH | `/orgs/{id}` | **owner** | `{name}` |
 | DELETE | `/orgs/{id}` | **owner** | Cascades its invitations |
 | GET | `/orgs/{id}/members` | member | |
 | GET | `/orgs/{id}/analytics` | admin | Team-wide roll-up across every board the team owns |
-| GET | `/orgs/teammates` | — | Everyone across every team you are in, deduplicated. Populates the share picker; grants nothing |
+| GET | `/orgs/teammates` | - | Everyone across every team you are in, deduplicated. Populates the share picker; grants nothing |
 | PATCH | `/orgs/{id}/members/{userId}` | admin | `{role}`. `400` for the owner, `404` for a non-member |
 | DELETE | `/orgs/{id}/members/{userId}` | member* | *Removing **yourself** is "leave team"; removing anyone else needs admin. `400` for the owner |
 
@@ -390,8 +413,8 @@ below means team admin; a platform admin bypasses these checks.
 |---|---|---|---|
 | POST | `/orgs/{id}/invitations` | admin | `{email, role?}`, role defaults to `member`. `201` with `{invitation, emailSent, emailError?, acceptUrl}`. `400` inviting yourself, `409` already a member, `409` a second pending invite for the address |
 | GET | `/orgs/{id}/invitations` | admin | Pending only |
-| DELETE | `/orgs/{id}/invitations/{invitationId}` | admin | Revoke — kills the link. `404` if it belongs to another team, `409` if already revoked |
-| GET | `/invitations/{token}` | **none** | Preview: team name, inviter, invited address. Unauthenticated on purpose — see below |
+| DELETE | `/orgs/{id}/invitations/{invitationId}` | admin | Revoke - kills the link. `404` if it belongs to another team, `409` if already revoked |
+| GET | `/invitations/{token}` | **none** | Preview: team name, inviter, invited address. Unauthenticated on purpose - see below |
 | POST | `/invitations/{token}/accept` | any user | `403` naming the invited address if the session's address differs |
 | GET | `/invitations/mine` | any user | Pending invitations for the caller's own address |
 | POST | `/invitations/mine/{invitationId}/accept` | any user | Accept without the token |
@@ -400,7 +423,7 @@ below means team admin; a platform admin bypasses these checks.
 stored, so a database dump yields no usable links; lookup hashes the incoming
 token and reads the unique index. It is returned to the inviting admin exactly
 once, in `acceptUrl`, so an unconfigured or bouncing mailer can still be worked
-around by hand — no read endpoint ever returns it, and `tokenHash` is stripped
+around by hand - no read endpoint ever returns it, and `tokenHash` is stripped
 from every serialisation.
 
 **Why the preview is public.** The invitee may have no account, and the screen's
@@ -410,12 +433,12 @@ credential and reveals nothing beyond its own invitation.
 **Why accepting checks the address.** `invitation.email` must equal the session
 user's email. Without that, the link is a bearer credential for anyone it is
 forwarded to. `/invitations/mine/{id}/accept` skips the token but keeps the same
-check — and additionally requires a session, so it is not the weaker path.
+check - and additionally requires a session, so it is not the weaker path.
 
 **Single use.** `markAccepted` is conditional on `status: "pending"`, so a
 double-clicked link cannot add a member twice. A unique **partial** index on
 `{organization, email}` where `status: "pending"` is what actually prevents
-duplicate invitations — two admins inviting the same person at once would both
+duplicate invitations - two admins inviting the same person at once would both
 pass a read-then-write check. Accepted and revoked rows stay as history and do
 not block a re-invite.
 
@@ -429,7 +452,7 @@ Invitations are delivered with [Resend](https://resend.com). `RESEND_API_KEY` is
 **optional**: without it the invitation is still created and its link is logged
 and returned, so local development and a key-less deployment both stay usable.
 
-Delivery failure is reported, never thrown — `emailSent: false` with
+Delivery failure is reported, never thrown - `emailSent: false` with
 `emailError`. Failing the request would leave the admin unsure whether to retry,
 and a retry would then `409` against their own first attempt. Resend also reports
 refusals in the response payload rather than throwing, so the send result is
@@ -444,7 +467,7 @@ else.
 
 Two views, scoped differently on purpose.
 
-`GET /boards/{id}/progress` covers **one board** and is readable by anyone on it —
+`GET /boards/{id}/progress` covers **one board** and is readable by anyone on it -
 it reveals nothing a viewer could not count off the board themselves. Rows are the
 board's own people (owner first, then collaborators), plus an `Unassigned` bucket,
 plus `Former member` for tasks still owned by somebody who has left. Members with
@@ -453,13 +476,13 @@ nothing assigned are listed rather than hidden: "no tasks" is a fact about them.
 `GET /orgs/{id}/analytics` spans **every board the team owns** and is therefore
 team-admin only, since it aggregates boards an individual member might not open.
 
-**"Done" means the board's last column by position**, not a name match — boards
+**"Done" means the board's last column by position**, not a name match - boards
 rename that column freely ("Shipped", "Complete"), and position is what the UI
 already treats as the end of the flow. A board needs **at least two columns** for
 this to mean anything; with one column every task would count as complete, so a
 single-column board reports no completions at all.
 
-**Overdue** is a past `dueDate` on a task that is *not* in the done column —
+**Overdue** is a past `dueDate` on a task that is *not* in the done column -
 finishing something late does not leave it permanently overdue.
 
 There is deliberately no per-user cross-team roll-up. It would have to span boards
@@ -471,9 +494,9 @@ either leak or be wrong.
 | Method | Path | Role | Notes |
 |---|---|---|---|
 | POST | `/boards/{id}/columns` | editor | `position = maxPosition + 1` |
-| PUT | `/columns/{id}` | editor | Rename — also rewrites `status` on every task in the column |
+| PUT | `/columns/{id}` | editor | Rename - also rewrites `status` on every task in the column |
 | DELETE | `/columns/{id}` | editor | Deletes its tasks, re-compacts the remaining positions |
-| PATCH | `/boards/{id}/columns/reorder` | editor | `{orderedColumnIds}` — must list **exactly** the board's columns |
+| PATCH | `/boards/{id}/columns/reorder` | editor | `{orderedColumnIds}` - must list **exactly** the board's columns |
 
 #### Tasks
 
@@ -483,14 +506,14 @@ either leak or be wrong.
 | GET | `/tasks/{id}` | viewer | |
 | PUT / PATCH | `/tasks/{id}` | editor | Both partial. Subtask toggling comes through here. Sending `columnId` is a `400` pointing at the move endpoint |
 | GET | `/tasks/mine` | authenticated | Everything assigned to you, across every board you can reach. Declared before `/:id` so `mine` is not parsed as an id |
-| PATCH | `/tasks/{id}/move` | editor | `{columnId, position}` — drag-and-drop persistence |
+| PATCH | `/tasks/{id}/move` | editor | `{columnId, position}` - drag-and-drop persistence |
 | DELETE | `/tasks/{id}` | editor | Re-compacts the source column |
 
 #### Health
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| GET | `/health` | — | Status, uptime, timestamp, DB state. The platform's health-check path |
+| GET | `/health` | - | Status, uptime, timestamp, DB state. The platform's health-check path |
 
 #### Move semantics
 
@@ -504,7 +527,7 @@ either leak or be wrong.
 
 Steps 2 and 3 run as one ordered `bulkWrite` with the moving task excluded from
 both filters, so **reordering inside a single column is the same request** with
-the task's current `columnId` — and both columns end up contiguous from 0. A
+the task's current `columnId` - and both columns end up contiguous from 0. A
 position past the end of a column is clamped, not rejected: a drag-and-drop
 client computes the index optimistically and can legitimately overshoot.
 
@@ -517,13 +540,13 @@ cp .env.example .env      # then fill in the values below
 npm run dev               # tsx + nodemon on http://localhost:5050
 ```
 
-**Environment** (`server/.env`, Zod-validated at startup — the process exits
+**Environment** (`server/.env`, Zod-validated at startup - the process exits
 with a per-field explanation rather than booting half-configured):
 
 | Variable | Required | Notes |
 |---|---|---|
 | `NODE_ENV` | no | `development` \| `test` \| `production` |
-| `PORT` | no | Default **5050**; the host injects its own. Avoid 5000 on macOS — Control Center's AirPlay Receiver answers it with a bodyless 403 that reads like a CORS error |
+| `PORT` | no | Default **5050**; the host injects its own. Avoid 5000 on macOS - Control Center's AirPlay Receiver answers it with a bodyless 403 that reads like a CORS error |
 | `DATABASE_URL` | **yes** | `mongodb://127.0.0.1:27017/kanban` locally, or an Atlas SRV string. `db.ts` caps the pool at 10 connections per instance so several instances cannot exhaust an Atlas M0's budget of 500 |
 | `JWT_SECRET` | **yes** | ≥ 32 chars |
 | `JWT_REFRESH_SECRET` | **yes** | ≥ 32 chars, and **must differ** from `JWT_SECRET` in production |
@@ -531,7 +554,7 @@ with a per-field explanation rather than booting half-configured):
 | `JWT_REFRESH_EXPIRES_IN` | no | Default `7d` |
 | `FRONTEND_URL` | no | CORS origin. Default `http://localhost:5173` |
 | `LOG_LEVEL` | no | Default `info` |
-| `GOOGLE_CLIENT_ID` / `_SECRET` / `_REDIRECT_URI` | no | Optional, but **all three or none** — a half-configured OAuth client only fails later at the redirect with an opaque Google error |
+| `GOOGLE_CLIENT_ID` / `_SECRET` / `_REDIRECT_URI` | no | Optional, but **all three or none** - a half-configured OAuth client only fails later at the redirect with an opaque Google error |
 
 Generate a secret with:
 
@@ -539,7 +562,7 @@ Generate a secret with:
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-**Seed** — three users and one demo board built from the repo's real
+**Seed** - three users, one demo team and one demo board built from the repo's real
 `data.json` (3 columns, 17 tasks, 36 subtasks, one assignment, one due date),
 plus sample activity:
 
@@ -549,18 +572,24 @@ npm run seed                          # password defaults to Password123!
 SEED_PASSWORD='YourPassword1!' npm run seed
 ```
 
-| Account | Role | On the demo board |
-|---|---|---|
-| `admin@kanban.dev` | global admin | full access via the admin bypass |
-| `editor@kanban.dev` | editor | **owner** of "Platform Launch" |
-| `viewer@kanban.dev` | viewer | collaborator, read-only |
+| Account | Role | On the demo board | In "Platform Team" |
+|---|---|---|---|
+| `admin@kanban.dev` | global admin | full access via the admin bypass | member |
+| `editor@kanban.dev` | editor | **owner** of "Platform Launch" | **owner** |
+| `viewer@kanban.dev` | viewer | collaborator, read-only | member |
+
+The demo board belongs to the team, so every member reaches it without a
+per-board invitation. The viewer is *also* an explicit `viewer` collaborator,
+which is the more interesting case: an explicit entry overrides the team's
+`editor` default, so there is still somebody in the demo who genuinely cannot
+change anything.
 
 The script is idempotent: users are upserted by email and the demo board is
 wiped and recreated. The wipe is scoped to the demo title **owned by the seed
 editor**, so running it against a database that also holds real boards leaves
 those untouched.
 
-**Tests** — Jest + Supertest + mongodb-memory-server (one in-memory mongod per
+**Tests** - Jest + Supertest + mongodb-memory-server (one in-memory mongod per
 run, one database per worker):
 
 ```bash
@@ -571,7 +600,7 @@ npm run typecheck
 ```
 
 395 tests across 14 suites. Coverage thresholds are enforced per file at **80%**
-on `src/services/**` and `src/middlewares/**` — the layers holding the business
+on `src/services/**` and `src/middlewares/**` - the layers holding the business
 rules and the authorisation checks.
 
 ### Postman
@@ -589,7 +618,7 @@ Login and register save `{{TOKEN}}`, `{{REFRESH_TOKEN}}` and `{{USER_ID}}` with
 `{{BOARD_ID}}`/`{{COLUMN_ID}}`/`{{TASK_ID}}` for the requests that follow. Every
 URL uses `{{BASE_URL}}`.
 
-The **RBAC — viewer is refused** folder is the enforcement demo: a second
+The **RBAC - viewer is refused** folder is the enforcement demo: a second
 account is refused (403) before being invited, reads the board once invited,
 is refused on task create / task move / column create / board rename /
 self-promotion, is then promoted to editor and can move a task, but still
@@ -598,7 +627,7 @@ URL to run the same checks against production.
 
 ### Google OAuth
 
-A hand-rolled authorization-code flow — no passport, because the whole exchange
+A hand-rolled authorization-code flow - no passport, because the whole exchange
 is three HTTP calls and an upsert, and the part worth being explicit about is
 that we mint **our own** JWTs at the end rather than trusting Google's tokens for
 anything beyond identifying the user once.
@@ -610,21 +639,21 @@ anything beyond identifying the user once.
 
 - **CSRF**: `state` is 32 random bytes, stored in an `httpOnly`, `SameSite=Lax`,
   10-minute cookie scoped to `/auth`, and compared in constant time. `Lax` rather
-  than `Strict` on purpose — the callback arrives as a top-level navigation from
+  than `Strict` on purpose - the callback arrives as a top-level navigation from
   `accounts.google.com`, and a strict cookie would not be sent with it. The
   cookie is cleared before the exchange, so replaying a callback URL cannot reuse
   a state. A mismatch, a missing cookie or a missing `state` is a **403**.
 - **Tokens in the fragment**, not the query string: a URL fragment is never sent
   to a server, so the pair cannot land in access logs, proxy logs, or a `Referer`
   header on the next navigation.
-- **Upsert order**: `googleId` first (stable — an email can change, `sub`
+- **Upsert order**: `googleId` first (stable - an email can change, `sub`
   cannot), then a **verified** email to link Google onto an existing password
   account, otherwise create with `role: editor` and no password. An *unverified*
   Google email never links: without that check, anyone who could get Google to
   emit a profile carrying someone else's unverified address could take over that
-  account. Linking adds a sign-in method — the original password keeps working.
+  account. Linking adds a sign-in method - the original password keeps working.
 - **Optional by design**: with the `GOOGLE_*` keys unset the server boots, logs a
-  warning, and both routes return **503 `"OAuth not configured"`** — the routes
+  warning, and both routes return **503 `"OAuth not configured"`** - the routes
   exist, the deployment just is not configured for them. A *partial* config
   (one or two of the three) fails at startup rather than at the redirect.
 - **Failures are reported per caller.** A browser (`Accept: text/html`) is
@@ -657,7 +686,7 @@ fallback, and switching between them is one Netlify variable plus a rebuild.
 Deployed by GitHub Actions on every push to `main` that touches `server/**`
 (`.github/workflows/deploy-api.yml`). The workflow runs the full test suite,
 builds, prunes dev dependencies, ships only `server/`, then polls `/health` until
-it answers 200 — so a broken build fails the run rather than the site.
+it answers 200 - so a broken build fails the run rather than the site.
 
 | Setting | Value |
 |---|---|
@@ -667,7 +696,7 @@ it answers 200 — so a broken build fails the run rather than the site.
 | Health check | `/health` |
 
 **Region matters.** France Central was chosen to sit next to the Atlas cluster
-(AWS `eu-west-3`) — the pairing is visible in the connection string's SRV target.
+(AWS `eu-west-3`) - the pairing is visible in the connection string's SRV target.
 A mismatched region adds a round trip to every query.
 
 **Two things that will bite you:**
@@ -677,7 +706,7 @@ A mismatched region adds a round trip to every query.
   *"Publish profile is invalid"*. Enable it under
   **Configuration → General settings → SCM Basic Auth Publishing Credentials**,
   then download the profile again and update the `AZURE_WEBAPP_PUBLISH_PROFILE`
-  secret — the old download does not start working.
+  secret - the old download does not start working.
 - **Leave `PORT` unset.** Azure injects it and `env.ts` coerces it; setting it
   yourself makes the container listen on the wrong port and every request 503s.
 
@@ -691,7 +720,7 @@ az webapp config appsettings set -n kanban-api-illona -g kanban-rg \
 
 Unlike Render's free tier it does not spin down, so the first request is not slow.
 
-**Live API:** https://kanban-api-illona.azurewebsites.net — check [https://kanban-api-illona.azurewebsites.net/health](https://kanban-api-illona.azurewebsites.net/health)
+**Live API:** https://kanban-api-illona.azurewebsites.net - check [https://kanban-api-illona.azurewebsites.net/health](https://kanban-api-illona.azurewebsites.net/health)
 
 ### Backend → Render (fallback)
 
@@ -706,24 +735,24 @@ New → **Web Service** → connect this repo:
 | Health Check Path | `/health` (under **Advanced**) |
 | Instance Type | Free |
 
-**Root Directory `server`** is the setting people miss — without it Render builds
+**Root Directory `server`** is the setting people miss - without it Render builds
 the frontend instead.
 
 **`--include=dev` is required.** `NODE_ENV=production` is one of the variables
-below, and npm honours it by skipping `devDependencies` — which is where
+below, and npm honours it by skipping `devDependencies` - which is where
 `typescript` and the `@types/*` packages live. Without the flag the build fails
 with `Cannot find type definition file for 'node'`.
 
 Set every variable from the env table above in the **Environment** tab, with
 `DATABASE_URL` pointing at Atlas and `FRONTEND_URL` at the deployed frontend
-(it is the CORS origin as well as the OAuth landing page). Leave `PORT` unset —
+(it is the CORS origin as well as the OAuth landing page). Leave `PORT` unset -
 Render injects it and `env.ts` coerces it.
 
 The free instance spins down after roughly 15 minutes idle, so the first request
-after a quiet period takes 30–60 seconds while it wakes. Warm it up before
+after a quiet period takes 30-60 seconds while it wakes. Warm it up before
 demoing. Everything after that is normal speed.
 
-**Fallback API:** https://kanban-task-management-web-app-njhs.onrender.com — check [https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)
+**Fallback API:** https://kanban-task-management-web-app-njhs.onrender.com - check [https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)
 
 ### Frontend → Netlify
 
@@ -742,12 +771,12 @@ VITE_AUTH_PROVIDER=api
 ```
 
 `VITE_*` variables are inlined at **build time**, so after changing either one
-you must trigger a fresh deploy — saving alone does not alter the built bundle.
+you must trigger a fresh deploy - saving alone does not alter the built bundle.
 
 SPA routing is already handled by `public/_redirects` (`/* /index.html 200`),
 which Vite copies into `dist/`. Without it, refreshing `/board/<id>` would 404.
 
-Then set the Netlify URL as `FRONTEND_URL` on Render — it is both the CORS origin
+Then set the Netlify URL as `FRONTEND_URL` on Render - it is both the CORS origin
 and where the OAuth flow lands.
 
 **Live app:** https://kanban-task-management-web-app-lab.netlify.app
@@ -757,14 +786,14 @@ and where the OAuth flow lands.
 1. **Create/select a project** at [console.cloud.google.com](https://console.cloud.google.com).
 2. **APIs & Services → OAuth consent screen.** User type **External**; fill in app
    name, support email and developer contact. Add scopes
-   `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` — nothing more,
+   `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` - nothing more,
    or the app needs verification. Leave it in **Testing** and add each grader's
    Google account under **Test users**; an unlisted account gets
    `access_denied`, which the callback reports as
    *"Google sign-in was cancelled or refused"*.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**,
    type **Web application**.
-4. **Authorized redirect URIs** — these must match `GOOGLE_REDIRECT_URI`
+4. **Authorized redirect URIs** - these must match `GOOGLE_REDIRECT_URI`
    character for character, including the scheme and any trailing slash:
    - `http://localhost:5050/auth/google/callback`
    - `https://kanban-api-illona.azurewebsites.net/auth/google/callback`
@@ -775,7 +804,7 @@ and where the OAuth flow lands.
    is missing breaks sign-in with `redirect_uri_mismatch` and nothing else.
 
    These point at the **backend**, not the frontend. Authorized JavaScript
-   origins can be left empty — the browser never talks to Google directly here.
+   origins can be left empty - the browser never talks to Google directly here.
 5. Copy the client ID and secret into `server/.env`:
 
    ```env
@@ -784,9 +813,9 @@ and where the OAuth flow lands.
    GOOGLE_REDIRECT_URI=http://localhost:5050/auth/google/callback
    ```
 
-   All three or none — a partial config fails at startup on purpose.
+   All three or none - a partial config fails at startup on purpose.
 6. On each backend, set the same three variables with **that backend's** callback
-   URL, and make sure `FRONTEND_URL` is the Netlify origin — scheme and host only,
+   URL, and make sure `FRONTEND_URL` is the Netlify origin - scheme and host only,
    no path. It is the CORS origin, the OAuth landing page, and the base of every
    invitation link, so a trailing `/login` breaks all three at once.
 

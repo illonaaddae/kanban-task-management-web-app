@@ -44,7 +44,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     email: {
       type: String,
       required: [true, "Email is required"],
-      // Creates the unique index — do not also set `index: true` or Mongoose
+      // Creates the unique index - do not also set `index: true` or Mongoose
       // warns about a duplicate index.
       unique: true,
       lowercase: true,
@@ -91,7 +91,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
   },
   {
     timestamps: true,
-    // tokenVersion is internal session-invalidation state — the client has no
+    // tokenVersion is internal session-invalidation state - the client has no
     // use for it and exposing it advertises how revocation works.
     toJSON: toJSONOptions(["password", "tokenVersion"]),
     toObject: toJSONOptions(["password", "tokenVersion"]),
@@ -99,7 +99,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
 );
 
 userSchema.pre("save", async function hashPassword(next) {
-  // Only on create or an actual password change — otherwise every unrelated
+  // Only on create or an actual password change - otherwise every unrelated
   // save would re-hash the stored hash and lock the user out.
   if (!this.isModified("password") || !this.password) return next();
 

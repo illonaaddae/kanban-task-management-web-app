@@ -21,7 +21,7 @@ export class AppwriteAuthService implements AuthService {
       try {
         await account.deleteSession("current");
       } catch {
-        /* no session — fine */
+        /* no session - fine */
       }
       await account.createEmailPasswordSession(email, password);
       const user = await account.get();
@@ -43,7 +43,7 @@ export class AppwriteAuthService implements AuthService {
     try {
       // createOAuth2Token redirects to Slack and returns ?userId=...&secret=...
       // on the success URL. The session is then created via createSession() in
-      // handleOAuthCallback — a direct XHR that works with Firefox's cookie policy.
+      // handleOAuthCallback - a direct XHR that works with Firefox's cookie policy.
       account.createOAuth2Token(
         OAuthProvider.Slack,
         `${window.location.origin}/login`,
@@ -59,7 +59,7 @@ export class AppwriteAuthService implements AuthService {
     try {
       // createOAuth2Token redirects to Google and returns ?userId=...&secret=...
       // on the success URL. The session is then created via createSession() in
-      // handleOAuthCallback — a direct XHR that works with Firefox's cookie policy.
+      // handleOAuthCallback - a direct XHR that works with Firefox's cookie policy.
       // NOTE: To sign in with a DIFFERENT Google account, the user must first
       // sign out of Google (accounts.google.com) so Google shows the picker.
       account.createOAuth2Token(
@@ -92,7 +92,7 @@ export class AppwriteAuthService implements AuthService {
       try {
         await account.deleteSessions();
       } catch {
-        /* no session — fine */
+        /* no session - fine */
       }
       
       const user = await account.create(ID.unique(), email, password, name);
@@ -174,14 +174,14 @@ export class AppwriteAuthService implements AuthService {
         // Delete any stale session first so there's no conflict.
         try { await account.deleteSession('current'); } catch { /* no active session */ }
 
-        // createSession() is a direct XHR call — the Appwrite SDK stores the
+        // createSession() is a direct XHR call - the Appwrite SDK stores the
         // resulting session in localStorage (cookieFallback), bypassing Firefox's
         // cross-site cookie restrictions entirely.
         await account.createSession(oauthUserId, oauthSecret);
         const user = await account.get();
 
         if (user.$id !== oauthUserId) {
-          console.error("[OAuth] User ID mismatch — expected:", oauthUserId, "got:", user.$id);
+          console.error("[OAuth] User ID mismatch - expected:", oauthUserId, "got:", user.$id);
         }
 
         localStorage.setItem("kanban_user", user.name);
@@ -193,7 +193,7 @@ export class AppwriteAuthService implements AuthService {
         };
       }
 
-      // No OAuth params — silently check for an existing session (page refresh).
+      // No OAuth params - silently check for an existing session (page refresh).
       try {
         const user = await account.get();
         localStorage.setItem("kanban_user", user.name);

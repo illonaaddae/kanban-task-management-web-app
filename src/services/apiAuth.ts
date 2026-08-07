@@ -1,7 +1,7 @@
 import { api, API_URL, tokenStore } from "./api";
 import type { AuthService, User } from "./authTypes";
 
-/** The user shape the API returns — `id` already mapped from `_id` server-side. */
+/** The user shape the API returns - `id` already mapped from `_id` server-side. */
 interface ApiUser {
   id: string;
   name: string;
@@ -81,7 +81,7 @@ export class ApiAuthService implements AuthService {
       // Bumps tokenVersion server-side, killing every other session too.
       await api.post("/auth/logout");
     } catch {
-      // An expired or already-invalid token still means "log me out" locally —
+      // An expired or already-invalid token still means "log me out" locally -
       // never leave the user stuck on a screen they cannot leave.
     } finally {
       tokenStore.clear();
@@ -96,7 +96,7 @@ export class ApiAuthService implements AuthService {
       const { user } = await api.get<{ user: ApiUser }>("/auth/me");
       return toUser(user);
     } catch {
-      // The token was rejected and could not be refreshed — treat as signed out
+      // The token was rejected and could not be refreshed - treat as signed out
       // rather than surfacing an error on every page load.
       tokenStore.clear();
       localStorage.removeItem("kanban_user");
@@ -116,7 +116,7 @@ export class ApiAuthService implements AuthService {
 
   /**
    * Hands the browser to the backend, which redirects to Google and comes back
-   * to `/login#token=…&refresh=…`. Never resolves — the page is navigating.
+   * to `/login#token=…&refresh=…`. Never resolves - the page is navigating.
    */
   async loginWithGoogle(): Promise<void> {
     window.location.href = `${API_URL}/auth/google`;

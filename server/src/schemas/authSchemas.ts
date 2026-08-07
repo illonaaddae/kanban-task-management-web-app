@@ -13,7 +13,7 @@ export const registerSchema = z.object({
 });
 
 /**
- * Login checks presence only — no email format check.
+ * Login checks presence only - no email format check.
  *
  * Format-validating here would answer a malformed email with 400 and an
  * unknown-but-valid one with 401, which hands an attacker a cheap way to tell

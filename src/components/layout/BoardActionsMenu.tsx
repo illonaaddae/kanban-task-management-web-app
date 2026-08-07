@@ -15,7 +15,7 @@ interface BoardActionsMenuProps {
 /**
  * Board overflow menu.
  *
- * Activity is always offered — it is readable by viewers too, and is the only
+ * Activity is always offered - it is readable by viewers too, and is the only
  * board action a viewer gets. Everything else is gated to match the API, so the
  * menu never advertises an action that would come back 403.
  */

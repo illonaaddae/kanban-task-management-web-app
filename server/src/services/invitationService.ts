@@ -38,7 +38,7 @@ export interface CreatedInvitation {
   emailError?: string;
   /**
    * The one-time accept link. Returned to the inviting admin *only* so a
-   * key-less or bouncing setup can still be completed by hand — it is never
+   * key-less or bouncing setup can still be completed by hand - it is never
    * stored and never returned by any read endpoint.
    */
   acceptUrl: string;
@@ -100,7 +100,7 @@ export interface AcceptResult {
  * Adds the user to the organization and consumes the invitation.
  *
  * Callers must already have established that `invitation` is redeemable *and*
- * belongs to `user` — this step only performs the join.
+ * belongs to `user` - this step only performs the join.
  */
 async function redeem(
   invitation: InvitationDocument,
@@ -149,7 +149,7 @@ export const invitationService = {
   /**
    * Invites an address to an organization and emails the link.
    *
-   * Works for people who have no account yet — that was the whole problem with
+   * Works for people who have no account yet - that was the whole problem with
    * board sharing, which could only find users who had already registered.
    */
   async invite(
@@ -215,7 +215,7 @@ export const invitationService = {
 
     // A failed send is reported, not thrown: the invitation exists and the link
     // works, so failing the request would leave the admin unsure whether to
-    // retry — and a retry would then 409 against their own first attempt.
+    // retry - and a retry would then 409 against their own first attempt.
     return {
       invitation: toInvitationView(invitation),
       emailSent: result.delivered,
@@ -247,7 +247,7 @@ export const invitationService = {
 
   /**
    * What the accept screen shows. Requires the token, which is the only
-   * credential involved — deliberately readable without a session, since the
+   * credential involved - deliberately readable without a session, since the
    * invitee may not have an account yet and needs to know what they are
    * signing up for.
    */
@@ -332,7 +332,7 @@ export const invitationService = {
    * Invitations waiting for the signed-in user's address.
    *
    * Lets someone who registered *after* being invited find the invitation
-   * without needing the email again — the common case when an invite goes to
+   * without needing the email again - the common case when an invite goes to
    * somebody with no account.
    */
   async listForUser(user: UserDocument): Promise<

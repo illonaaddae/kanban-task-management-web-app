@@ -45,7 +45,7 @@ export const useKanbanStore = create<KanbanState>()(
       activeBoard: 0,
       theme: 'light',
       // Open on a desktop, where it is a column of the layout. Closed on
-      // narrower screens, where it is a drawer over the board — defaulting to
+      // narrower screens, where it is a drawer over the board - defaulting to
       // true there meant every phone load started with the nav covering the
       // content the user came for.
       isSidebarOpen:

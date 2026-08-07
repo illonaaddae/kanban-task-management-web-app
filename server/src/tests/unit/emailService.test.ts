@@ -43,7 +43,7 @@ describe("emailService without a key", () => {
 
     const result = await emailService.sendOrganizationInvitation(ARGS);
 
-    // The invitation is still valid — the admin just has to pass on the link.
+    // The invitation is still valid - the admin just has to pass on the link.
     expect(result).toEqual({
       delivered: false,
       reason: "Email delivery is not configured",

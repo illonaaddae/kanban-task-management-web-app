@@ -178,7 +178,7 @@ describe("boardAccess resolution order", () => {
     expect(res.body.message).toBe("Board not found");
   });
 
-  it("returns 404 — not 403 — even for an owner-only action on a missing board", async () => {
+  it("returns 404 - not 403 - even for an owner-only action on a missing board", async () => {
     const user = await registerAndLogin(app);
 
     await request(app).delete(`/boards/${MISSING_ID}`).set(user.authHeader).expect(404);
@@ -193,7 +193,7 @@ describe("boardAccess resolution order", () => {
     expect(res.body.message).toMatch(/do not have access/i);
   });
 
-  it("returns 401 — not 403 — with no token", async () => {
+  it("returns 401 - not 403 - with no token", async () => {
     const owner = await registerAndLogin(app);
     const board = await createBoard(owner);
 
@@ -225,7 +225,7 @@ describe("RBAC matrix", () => {
     return { owner, editor, viewer, admin, outsider, boardId: board.id };
   }
 
-  describe("view board — viewer, editor, owner and admin all allowed", () => {
+  describe("view board - viewer, editor, owner and admin all allowed", () => {
     it.each(["owner", "editor", "viewer", "admin"] as const)("%s can read", async (role) => {
       const actors = await seedBoardWithEveryRole();
 
@@ -269,7 +269,7 @@ describe("RBAC matrix", () => {
     });
   });
 
-  describe("rename board — owner and admin only", () => {
+  describe("rename board - owner and admin only", () => {
     it.each(["owner", "admin"] as const)("%s can rename", async (role) => {
       const actors = await seedBoardWithEveryRole();
 
@@ -309,7 +309,7 @@ describe("RBAC matrix", () => {
     });
   });
 
-  describe("delete board — owner and admin only", () => {
+  describe("delete board - owner and admin only", () => {
     it.each(["editor", "viewer", "outsider"] as const)("%s gets 403 or 404", async (role) => {
       const actors = await seedBoardWithEveryRole();
 
@@ -344,7 +344,7 @@ describe("RBAC matrix", () => {
     });
   });
 
-  describe("manage collaborators — owner and admin only", () => {
+  describe("manage collaborators - owner and admin only", () => {
     it.each(["editor", "viewer"] as const)("%s cannot invite", async (role) => {
       const actors = await seedBoardWithEveryRole();
 

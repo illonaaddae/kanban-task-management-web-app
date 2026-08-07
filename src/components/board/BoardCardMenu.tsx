@@ -3,7 +3,7 @@ import type { BoardRole } from '../../types';
 import styles from './BoardCardMenu.module.css';
 
 interface BoardCardMenuProps {
-  /** The caller's role on this board — decides which entries appear. */
+  /** The caller's role on this board - decides which entries appear. */
   myRole?: BoardRole;
   onEdit: () => void;
   onShare: () => void;
@@ -13,7 +13,7 @@ interface BoardCardMenuProps {
 /**
  * Per-card actions on the dashboard.
  *
- * The card is a `<Link>`, so every click here has to be stopped from bubbling —
+ * The card is a `<Link>`, so every click here has to be stopped from bubbling -
  * otherwise opening the menu navigates to the board instead.
  *
  * Entries mirror the API's rules: editors can rename, only owners can share or

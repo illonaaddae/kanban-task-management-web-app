@@ -15,7 +15,7 @@ vi.stubEnv('VITE_AUTH_PROVIDER', 'mock');
  * drawer, the header's hamburger) throws on render without this. Reports "does
  * not match", i.e. the desktop layout, which is what the existing tests assume.
  *
- * There was already a mock in src/test/setup.ts — but vitest.config.ts loads
+ * There was already a mock in src/test/setup.ts - but vitest.config.ts loads
  * *this* file, so it never ran.
  */
 if (!window.matchMedia) {

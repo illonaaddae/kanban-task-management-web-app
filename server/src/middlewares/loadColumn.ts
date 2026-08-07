@@ -11,7 +11,7 @@ import { catchAsync } from "../utils/catchAsync";
  * Mount order is: validate params → loadColumn → boardAccess(minRole).
  *
  * A column that does not exist is a 404 here. A column that exists inside
- * someone else's board falls through to `boardAccess`, which answers 403 —
+ * someone else's board falls through to `boardAccess`, which answers 403 -
  * so a column id can never be probed for existence via a 404/403 difference.
  */
 export const loadColumn: RequestHandler = catchAsync(async (req, _res, next) => {

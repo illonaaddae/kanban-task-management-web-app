@@ -21,7 +21,7 @@ export function dbState(): string {
  * Which database the connection actually landed on.
  *
  * Worth reporting: a connection string missing its path silently defaults to
- * `test`, and "connected" alone hides that completely — reads and writes go to
+ * `test`, and "connected" alone hides that completely - reads and writes go to
  * the wrong database while every health check stays green.
  */
 export function dbName(): string {
@@ -50,8 +50,8 @@ export async function connectDB(uri: string = env.DATABASE_URL): Promise<void> {
     /**
      * Cap connections *per instance*, because the cluster's limit is shared.
      *
-     * Mongoose defaults to 100. On a platform that runs several instances —
-     * Cloud Run scaling out, or two revisions overlapping during a deploy —
+     * Mongoose defaults to 100. On a platform that runs several instances -
+     * Cloud Run scaling out, or two revisions overlapping during a deploy -
      * that multiplies: 5 instances would reserve 500 connections, which is the
      * entire budget of an Atlas M0. The symptom is not a clear error but random
      * timeouts once the pool is exhausted, which is miserable to diagnose.

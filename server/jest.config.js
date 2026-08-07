@@ -29,6 +29,11 @@ module.exports = {
     "!src/tests/**",
     "!src/seed/**",
     "!src/server.ts",
+    // iCloud Drive conflict copies ("progressService 2.ts"). Instrumenting them
+    // reports 0% for a file nothing imports and fails the per-file threshold for
+    // work that is actually covered in the original.
+    "!src/**/* [0-9].ts",
+    "!src/**/* [0-9][0-9].ts",
   ],
 
   // The two layers that hold the business rules and the authorisation checks

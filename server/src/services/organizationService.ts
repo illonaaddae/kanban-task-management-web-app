@@ -163,7 +163,7 @@ export const organizationService = {
   /**
    * Changes a member's role.
    *
-   * The owner is not a members entry, so there is nothing to change for them —
+   * The owner is not a members entry, so there is nothing to change for them -
    * reported as 400 rather than 404, because the user exists and the caller's
    * mistake is asking for something the model does not express.
    */
@@ -201,7 +201,7 @@ export const organizationService = {
   ): Promise<void> {
     if (org.owner.toString() === targetUserId) {
       throw AppError.badRequest(
-        "The organization owner cannot be removed — delete the organization instead",
+        "The organization owner cannot be removed - delete the organization instead",
       );
     }
 

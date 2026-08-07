@@ -84,7 +84,7 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
     try {
       await updateTask.mutateAsync({ taskId: task.id, boardId, updates: updatedData });
 
-      // Changing the column is a move, not an update — the API rejects a
+      // Changing the column is a move, not an update - the API rejects a
       // columnId on the update route precisely so the two cannot diverge.
       if (status !== task.status) {
         const targetCol = board.columns.find(c => c.name === status);

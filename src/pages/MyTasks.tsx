@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader } from '../components/ui/Loader';
+import { TaskListSkeleton } from '../components/ui/Skeletons';
+import { EmptyState, EMPTY_ICONS } from '../components/ui/EmptyState';
+import { Button } from '../components/ui/Button';
 import { useMyTasks } from '../queries/orgs';
 import type { AssignedTask } from '../services/orgApi';
 import styles from './MyTasks.module.css';
@@ -80,7 +82,7 @@ export function MyTasks() {
     return (
       <main className={styles.page}>
         <div className={styles.loading}>
-          <Loader />
+          <TaskListSkeleton />
         </div>
       </main>
     );
@@ -91,20 +93,28 @@ export function MyTasks() {
       <header className={styles.header}>
         <h1 className={styles.title}>My tasks</h1>
         <p className={styles.subtitle}>
-          Everything assigned to you, on every board you can reach — including your
+          Everything assigned to you, on every board you can reach - including your
           teams&rsquo; boards.
         </p>
       </header>
 
       {error ? (
-        <p className={styles.empty}>
-          {error instanceof Error ? error.message : 'Could not load your tasks.'}
-        </p>
+        <EmptyState
+          icon={EMPTY_ICONS.search}
+          title="Could not load your tasks"
+          body={error instanceof Error ? error.message : 'Something went wrong'}
+        />
       ) : tasks.length === 0 ? (
-        <p className={styles.empty}>
-          Nothing is assigned to you yet. When a teammate assigns you a task it shows
-          up here.
-        </p>
+        <EmptyState
+          icon={EMPTY_ICONS.check}
+          title="Nothing assigned to you yet"
+          body="When somebody assigns you a task, on any board you can reach, it shows up here. Your teams' boards count too."
+          action={
+            <Link to="/teams">
+              <Button variant="secondary">Go to your teams</Button>
+            </Link>
+          }
+        />
       ) : (
         <>
           <div className={styles.filters} role="tablist" aria-label="Filter tasks">
@@ -126,7 +136,22 @@ export function MyTasks() {
           </div>
 
           {visible.length === 0 ? (
-            <p className={styles.empty}>Nothing in this view.</p>
+            <EmptyState
+              compact
+              icon={EMPTY_ICONS.check}
+              title={
+                filter === 'overdue'
+                  ? 'Nothing overdue'
+                  : filter === 'done'
+                    ? 'Nothing finished yet'
+                    : 'Nothing here'
+              }
+              body={
+                filter === 'overdue'
+                  ? 'Every task assigned to you is either finished or still within its due date.'
+                  : 'Try another filter to see the rest of your work.'
+              }
+            />
           ) : (
             grouped.map(([boardId, group]) => (
               <section key={boardId} className={styles.group}>

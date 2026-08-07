@@ -68,7 +68,7 @@ export const taskRepository = {
 
   /**
    * Highest position currently used in the column, or -1 when the column is
-   * empty — so a caller can always append at `maxPosition + 1`.
+   * empty - so a caller can always append at `maxPosition + 1`.
    */
   async maxPosition(columnId: ColumnId): Promise<number> {
     const last = await Task.findOne({ columnId })
@@ -91,13 +91,13 @@ export const taskRepository = {
     return Task.findByIdAndDelete(id).exec();
   },
 
-  /** Cascade helper — called when a board is deleted. */
+  /** Cascade helper - called when a board is deleted. */
   async deleteByBoardId(boardId: BoardId): Promise<number> {
     const { deletedCount } = await Task.deleteMany({ boardId }).exec();
     return deletedCount ?? 0;
   },
 
-  /** Cascade helper — called when a column is deleted. */
+  /** Cascade helper - called when a column is deleted. */
   async deleteByColumnId(columnId: ColumnId): Promise<number> {
     const { deletedCount } = await Task.deleteMany({ columnId }).exec();
     return deletedCount ?? 0;
@@ -137,7 +137,7 @@ export const taskRepository = {
    *
    * The moving task is excluded from both filters. Without that exclusion a
    * same-column reorder would shift the task by its own shifts and only come
-   * out right because step 4 overwrites its position afterwards — correct by
+   * out right because step 4 overwrites its position afterwards - correct by
    * accident rather than by construction.
    */
   async shiftForMove(params: {

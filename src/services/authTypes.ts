@@ -5,7 +5,7 @@ export interface User {
   avatar?: string;
   /**
    * The server-stored theme. Optional because the mock and Appwrite providers
-   * do not have one — only the API provider fills it in.
+   * do not have one - only the API provider fills it in.
    */
   themePreference?: 'light' | 'dark';
 }

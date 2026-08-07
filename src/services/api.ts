@@ -73,7 +73,7 @@ export const tokenStore = {
 export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
-  /** Skip the Authorization header — for login/register/refresh. */
+  /** Skip the Authorization header - for login/register/refresh. */
   skipAuth?: boolean;
   /** Skip the refresh-and-retry dance. Set on the refresh call itself. */
   skipRefresh?: boolean;
@@ -85,7 +85,7 @@ export interface RequestOptions {
 /**
  * How long to wait before giving up on a request.
  *
- * Generous, because a free-tier host that has spun down can take 30–60 seconds
+ * Generous, because a free-tier host that has spun down can take 30-60 seconds
  * to answer its first request. But *finite*: without a ceiling a stalled
  * connection leaves the promise pending forever, so a loading flag set before
  * the call is never cleared and the UI spins with no error and no way out. A
@@ -97,8 +97,8 @@ const DEFAULT_TIMEOUT_MS = 60_000;
  * Runs `fetch` with a timeout, honouring a caller-supplied signal as well.
  *
  * Built from AbortController rather than `AbortSignal.any` so it does not depend
- * on very recent browser support, and the timer is always cleared — including on
- * the error path — so a long-lived page does not accumulate timers.
+ * on very recent browser support, and the timer is always cleared - including on
+ * the error path - so a long-lived page does not accumulate timers.
  */
 async function fetchWithTimeout(
   request: Request,
@@ -119,11 +119,11 @@ async function fetchWithTimeout(
   try {
     return await fetch(request, { signal: controller.signal });
   } catch (error) {
-    // Distinguish "we gave up" from "the caller cancelled" — only the first is
+    // Distinguish "we gave up" from "the caller cancelled" - only the first is
     // an error worth showing.
     if (timedOut) {
       throw new ApiError(
-        `The server did not respond within ${Math.round(timeoutMs / 1000)}s. It may be starting up — please try again.`,
+        `The server did not respond within ${Math.round(timeoutMs / 1000)}s. It may be starting up - please try again.`,
         408,
       );
     }
@@ -160,7 +160,7 @@ async function readEnvelope<T>(response: Response): Promise<T> {
   try {
     parsed = JSON.parse(text);
   } catch {
-    // A proxy or crash returned HTML — surface the status, not a parse error.
+    // A proxy or crash returned HTML - surface the status, not a parse error.
     throw new ApiError(
       response.ok ? "The server returned a malformed response" : text.slice(0, 200),
       response.status,
@@ -200,7 +200,7 @@ function buildRequest(path: string, options: RequestOptions): Request {
 /**
  * Exchanges the refresh token for a new pair.
  *
- * Concurrent callers share one request — otherwise a page that fires several
+ * Concurrent callers share one request - otherwise a page that fires several
  * requests at once would send several refreshes, and with rotation on the
  * server all but one of the resulting tokens would be stale.
  */
@@ -252,7 +252,7 @@ export async function apiFetch<T>(
   try {
     response = await fetchWithTimeout(buildRequest(path, options), options);
   } catch (error) {
-    // A timeout already carries a precise message — do not flatten it into the
+    // A timeout already carries a precise message - do not flatten it into the
     // generic network error below.
     if (error instanceof ApiError) throw error;
     if (error instanceof DOMException && error.name === "AbortError") throw error;

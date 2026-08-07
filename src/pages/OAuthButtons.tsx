@@ -7,7 +7,7 @@ interface OAuthButtonsProps {
 
 /**
  * Google is the only social provider. Slack sign-in is out of scope for the
- * Express backend — `ApiAuthService.loginWithSlack` throws — so the button is
+ * Express backend - `ApiAuthService.loginWithSlack` throws - so the button is
  * gone rather than left visible and broken.
  */
 export function OAuthButtons({ onGoogleLogin }: OAuthButtonsProps) {

@@ -17,7 +17,7 @@ function appThrowing(error: unknown): Express {
   return app;
 }
 
-describe("errorHandler — AppError", () => {
+describe("errorHandler - AppError", () => {
   it("uses the status code and message as given", async () => {
     const res = await request(appThrowing(new AppError("Nope", 418))).get("/");
 
@@ -42,7 +42,7 @@ describe("errorHandler — AppError", () => {
   });
 });
 
-describe("errorHandler — mapped library errors", () => {
+describe("errorHandler - mapped library errors", () => {
   it("maps a ZodError that escaped the validate middleware to 400", async () => {
     const parsed = z.object({ title: z.string() }).safeParse({ title: 1 });
     const res = await request(appThrowing(parsed.error)).get("/").expect(400);
@@ -147,7 +147,7 @@ describe("errorHandler — mapped library errors", () => {
   });
 });
 
-describe("errorHandler — unexpected errors", () => {
+describe("errorHandler - unexpected errors", () => {
   it("returns 500 and includes the stack outside production", async () => {
     const res = await request(appThrowing(new Error("kaboom"))).get("/").expect(500);
 
@@ -186,7 +186,7 @@ describe("errorHandler — unexpected errors", () => {
   });
 });
 
-describe("errorHandler — headers already sent", () => {
+describe("errorHandler - headers already sent", () => {
   it("delegates back to Express instead of trying to rewrite the response", () => {
     // Once the status line is flushed there is no way to change it, so the
     // handler must hand the error back and let Express abort the connection.

@@ -10,8 +10,8 @@ import { invitationService } from "../../services/invitationService";
 import { organizationService } from "../../services/organizationService";
 import { AppError } from "../../utils/AppError";
 
-// Branches only reachable through a race — the row was there when `orgAccess`
-// loaded it and gone by the time the service read it again — plus the
+// Branches only reachable through a race - the row was there when `orgAccess`
+// loaded it and gone by the time the service read it again - plus the
 // unpopulated-ref paths, which the HTTP surface never produces because every
 // read populates. Neither is testable from the integration suites.
 jest.mock("../../repositories/organizationRepository");
@@ -54,7 +54,7 @@ function fakeInvitation(overrides: Record<string, unknown> = {}): InvitationDocu
   } as unknown as InvitationDocument;
 }
 
-describe("organizationService — the organization vanished mid-request", () => {
+describe("organizationService - the organization vanished mid-request", () => {
   it("404s on getDetailed", async () => {
     mockedOrgs.findByIdPopulated.mockResolvedValue(null);
 
@@ -137,7 +137,7 @@ describe("organizationService.getDetailed with unpopulated refs", () => {
 describe("organizationService.listForUser", () => {
   it("reports a platform admin passing through as `admin`", async () => {
     // No ownership and no membership, so there is no real relationship to
-    // report — only `protect`'s global role got them here.
+    // report - only `protect`'s global role got them here.
     mockedOrgs.findForUser.mockResolvedValue([fakeOrg()]);
 
     const list = await organizationService.listForUser(fakeUser(new Types.ObjectId()));
@@ -352,7 +352,7 @@ describe("invitationService.acceptById", () => {
   });
 });
 
-describe("invitationService.invite — email delivery is reported, not thrown", () => {
+describe("invitationService.invite - email delivery is reported, not thrown", () => {
   it("returns emailSent false with the reason", async () => {
     mockedUsers.findByEmail.mockResolvedValue(null);
     mockedInvitations.create.mockResolvedValue(fakeInvitation());
@@ -367,7 +367,7 @@ describe("invitationService.invite — email delivery is reported, not thrown", 
       "admin",
     );
 
-    // The invitation is valid regardless — failing here would leave the admin
+    // The invitation is valid regardless - failing here would leave the admin
     // unsure whether to retry, and the retry would 409.
     expect(created.emailSent).toBe(false);
     expect(created.emailError).toBe("domain not verified");

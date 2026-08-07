@@ -10,7 +10,7 @@ import { boardService } from "../../services/boardService";
 import { userService } from "../../services/userService";
 import { AppError } from "../../utils/AppError";
 
-// Branches that are unreachable — or only reachable through a race — from the
+// Branches that are unreachable - or only reachable through a race - from the
 // HTTP surface, so the integration suites cannot exercise them.
 jest.mock("../../repositories/boardRepository");
 jest.mock("../../repositories/columnRepository");
@@ -68,7 +68,7 @@ describe("userService.updateMe", () => {
   });
 });
 
-describe("boardService.listForUser — role resolution fallbacks", () => {
+describe("boardService.listForUser - role resolution fallbacks", () => {
   it("tags a board the caller owns as owner", async () => {
     mockedBoards.findForUser.mockResolvedValue([fakeBoard()]);
 
@@ -106,7 +106,7 @@ describe("boardService.listForUser — role resolution fallbacks", () => {
   });
 });
 
-describe("boardService.getFull — collaborator resolution", () => {
+describe("boardService.getFull - collaborator resolution", () => {
   beforeEach(() => {
     mockedColumns.findByBoardId.mockResolvedValue([]);
     mockedTasks.findByBoardId.mockResolvedValue([]);
@@ -172,7 +172,7 @@ describe("boardService.getFull — collaborator resolution", () => {
   });
 });
 
-describe("boardService — races between the access check and the write", () => {
+describe("boardService - races between the access check and the write", () => {
   it("getDetailed 404s when the board is gone", async () => {
     mockedBoards.findByIdPopulated.mockResolvedValue(null);
 

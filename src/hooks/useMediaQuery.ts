@@ -4,7 +4,7 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react';
  * Subscribes to a CSS media query from JavaScript.
  *
  * Layout that only CSS cares about belongs in CSS. This is for the cases where
- * behaviour differs, not just appearance — the sidebar is a persistent column on
+ * behaviour differs, not just appearance - the sidebar is a persistent column on
  * a desktop and a dismissable drawer on a phone, and "dismissable" is state, not
  * a style.
  *

@@ -24,7 +24,7 @@ export interface ApiTask {
   subtasks: ApiSubtask[];
 }
 
-/** A task from `POST /tasks`, `GET /tasks/:id`, etc. — carries its ids. */
+/** A task from `POST /tasks`, `GET /tasks/:id`, etc. - carries its ids. */
 export interface ApiTaskDocument extends ApiTask {
   boardId: string;
   columnId: string;
@@ -57,15 +57,18 @@ export interface ApiFullBoard {
   myRole: "viewer" | "editor" | "owner" | "admin";
   collaborators: ApiCollaborator[];
   columns: ApiColumn[];
+  /** The team this board belongs to, or null when it is personal. */
+  organizationId?: string | null;
 }
 
-/** An entry in `GET /boards` — no columns, no tasks. */
+/** An entry in `GET /boards` - no columns, no tasks. */
 export interface ApiBoardSummary {
   id: string;
   name: string;
   myRole: "viewer" | "editor" | "owner" | "admin";
   title?: string;
   collaborators?: ApiCollaborator[];
+  organizationId?: string | null;
 }
 
 // ── Mapping ────────────────────────────────────────────────────────────────
@@ -103,11 +106,12 @@ export function toBoard(board: ApiFullBoard): Board {
     id: board.id,
     name: board.name,
     myRole: board.myRole,
+    organizationId: board.organizationId ?? null,
     columns: (board.columns ?? []).map(toColumn),
   };
 }
 
-/** `GET /boards/:id` — the board document, with owner and collaborators resolved. */
+/** `GET /boards/:id` - the board document, with owner and collaborators resolved. */
 export interface ApiBoardDetail {
   id: string;
   name: string;
@@ -118,6 +122,16 @@ export interface ApiBoardDetail {
     user: { id: string; name: string; email: string; avatar?: string } | string;
     role: "editor" | "viewer";
   }>;
+  /** Present only on a team board: people who reach it through the team. */
+  teamMembers?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    role: "editor";
+  }>;
+  organizationId?: string | null;
+  organizationName?: string | null;
 }
 
 /**
@@ -125,19 +139,32 @@ export interface ApiBoardDetail {
  *
  * The full-board payload does not carry the owner, so this comes from
  * `GET /boards/:id`. Unpopulated refs (a bare id string) are skipped rather
- * than rendered as an object — a half-resolved member is worse than none.
+ * than rendered as an object - a half-resolved member is worse than none.
+ */
+/**
+ * Everyone who can reach the board: owner, invited collaborators, then anyone with
+ * access through the board's team.
+ *
+ * `via` records which, because the three are not interchangeable - a teammate has
+ * no collaborator entry, so their role cannot be changed and removing them is not
+ * a thing the API can do.
  */
 export function toMembers(board: ApiBoardDetail): BoardMember[] {
   const members: BoardMember[] = [];
 
   if (board.owner && typeof board.owner !== "string") {
-    members.push({ ...board.owner, role: "owner" });
+    members.push({ ...board.owner, role: "owner", via: "owner" });
   }
 
   for (const entry of board.collaborators ?? []) {
     if (entry.user && typeof entry.user !== "string") {
-      members.push({ ...entry.user, role: entry.role });
+      members.push({ ...entry.user, role: entry.role, via: "collaborator" });
     }
+  }
+
+  // The server already excludes anyone listed above, so no de-duplication here.
+  for (const teamMember of board.teamMembers ?? []) {
+    members.push({ ...teamMember, via: "team" });
   }
 
   return members;

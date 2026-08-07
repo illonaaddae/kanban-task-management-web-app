@@ -37,7 +37,7 @@ export const userRepository = {
     return User.findOne({ email: email.toLowerCase() }).exec();
   },
 
-  /** Includes the hash — only for login. `password` is `select: false`. */
+  /** Includes the hash - only for login. `password` is `select: false`. */
   findByEmailWithPassword(email: string): Promise<UserDocument | null> {
     return User.findOne({ email: email.toLowerCase() })
       .select("+password")

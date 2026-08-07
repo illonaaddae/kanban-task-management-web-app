@@ -17,7 +17,7 @@ import type { Board, Column } from "../types";
  * app, and let a user "edit" a board whose writes were going nowhere.
  */
 
-/** The nested board the UI renders — one request per board. */
+/** The nested board the UI renders - one request per board. */
 export async function getFullBoard(boardId: string): Promise<Board> {
   const full = await api.get<ApiFullBoard>(`/boards/${boardId}/full`);
   return toBoard(full);
@@ -27,7 +27,7 @@ export async function getFullBoard(boardId: string): Promise<Board> {
  * Every board the user can see, each fully hydrated.
  *
  * `GET /boards` returns summaries without columns, so the nested shape is
- * fetched per board — concurrently, not in series. `userId` is ignored: the
+ * fetched per board - concurrently, not in series. `userId` is ignored: the
  * server derives ownership from the token, which is also why a client can no
  * longer ask for somebody else's boards.
  */
@@ -45,7 +45,7 @@ export async function getBoards(_userId?: string): Promise<Board[]> {
  *
  * The API models columns as their own collection, so a board with columns is
  * two round trips. Columns are created in sequence, not with `Promise.all`,
- * because each one's position is `maxPosition + 1` — issuing them concurrently
+ * because each one's position is `maxPosition + 1` - issuing them concurrently
  * would race on that read and produce duplicate positions.
  */
 export async function createBoard(
@@ -68,7 +68,7 @@ export async function createBoard(
 /**
  * Adds a single column.
  *
- * Direct, rather than routing through `updateBoard`'s diff — which would fetch
+ * Direct, rather than routing through `updateBoard`'s diff - which would fetch
  * the board, compare, create, possibly reorder and re-fetch, for what the API
  * exposes as one POST.
  */
@@ -95,7 +95,7 @@ function sameOrder(a: string[], b: string[]): boolean {
  *
  * The old implementation stored columns as a JSON blob, so any change was one
  * write. Columns are now their own documents with their own ids and positions,
- * and tasks reference them — so replacing the set wholesale would delete and
+ * and tasks reference them - so replacing the set wholesale would delete and
  * recreate every column, orphaning every task on the board. Instead each column
  * is matched by id and only the actual difference is sent:
  *
@@ -109,7 +109,15 @@ export async function updateBoard(
   updates: Partial<Board>,
 ): Promise<Board> {
   if (updates.name !== undefined) {
-    await api.put(`/boards/${boardId}`, { name: updates.name });
+    await api.put(`/boards/${boardId}`, {
+      name: updates.name,
+      // Only sent when the caller actually asked to change it. `null` detaches the
+      // board from its team; omitting the key leaves the current team alone, and
+      // the two must stay distinguishable.
+      ...(updates.organizationId !== undefined
+        ? { organizationId: updates.organizationId }
+        : {}),
+    });
   }
 
   if (!updates.columns) return getFullBoard(boardId);
@@ -148,7 +156,7 @@ export async function updateBoard(
     orderedIds.push(created.id);
   }
 
-  // Only when the order actually moved — the endpoint rejects a partial list,
+  // Only when the order actually moved - the endpoint rejects a partial list,
   // and a no-op reorder is a pointless write.
   const serverOrder = current.columns
     .filter((c) => c.id && keptIds.has(c.id))

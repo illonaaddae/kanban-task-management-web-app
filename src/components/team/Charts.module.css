@@ -1,0 +1,185 @@
+.donutWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.donut {
+  flex-shrink: 0;
+  width: 9rem;
+  height: 9rem;
+  /* Start the first slice at 12 o'clock rather than 3. */
+  transform: rotate(-90deg);
+}
+
+.donutTrack {
+  fill: none;
+  stroke: var(--bg-secondary);
+  stroke-width: 12;
+}
+
+.donutSlice {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: butt;
+  transition: stroke-dasharray 0.4s ease;
+}
+
+/* The ring is rotated, so the labels have to be rotated back to read level. */
+.donutValue,
+.donutLabel {
+  transform: rotate(90deg);
+  transform-origin: 50px 50px;
+  fill: var(--text-primary);
+}
+
+.donutValue {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.donutLabel {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: var(--text-secondary);
+}
+
+.legend {
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+.legendLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legendValue {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Label, bar, caption. The bar takes what is left, so nothing is clipped
+   regardless of how long a board name is. */
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.barLabel {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  position: relative;
+  height: 0.625rem;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.barFill,
+.barAlert {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.barFill {
+  background: var(--primary);
+}
+
+/* Drawn over the fill, so overdue reads as a share of the same total. */
+.barAlert {
+  background: var(--red);
+  opacity: 0.85;
+}
+
+.barCaption {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  /* Label above the bar: 9rem of label plus a bar does not fit a phone. */
+  .barRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label caption'
+      'track track';
+    gap: 0.375rem 0.75rem;
+  }
+
+  .barLabel {
+    grid-area: label;
+  }
+
+  .barCaption {
+    grid-area: caption;
+  }
+
+  .barTrack {
+    grid-area: track;
+  }
+
+  .donut {
+    width: 7.5rem;
+    height: 7.5rem;
+  }
+}

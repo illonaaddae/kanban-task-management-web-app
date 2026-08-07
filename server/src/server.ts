@@ -11,7 +11,7 @@ let shuttingDown = false;
 
 async function start(): Promise<void> {
   // Connect before listening so the instance never accepts traffic it cannot
-  // serve — Render's health check will just retry until this resolves.
+  // serve - Render's health check will just retry until this resolves.
   await connectDB();
 
   server = app.listen(env.PORT, () => {
@@ -21,7 +21,7 @@ async function start(): Promise<void> {
     logger.info(`CORS origin: ${env.FRONTEND_URL}`);
     if (!env.googleOAuthEnabled) {
       logger.warn(
-        "Google OAuth not configured — /auth/google is disabled, email/password auth still works",
+        "Google OAuth not configured - /auth/google is disabled, email/password auth still works",
       );
     }
   });
@@ -36,7 +36,7 @@ async function shutdown(reason: string, exitCode = 0): Promise<void> {
   // Backstop: if a socket refuses to drain, exit anyway rather than hang
   // forever and stall the platform's deploy.
   const force = setTimeout(() => {
-    logger.fatal("Graceful shutdown timed out — forcing exit");
+    logger.fatal("Graceful shutdown timed out - forcing exit");
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
   force.unref();
@@ -64,7 +64,7 @@ process.on("unhandledRejection", (reason) => {
 });
 
 process.on("uncaughtException", (err) => {
-  // Process state is unknown after this — drain and let the platform restart us.
+  // Process state is unknown after this - drain and let the platform restart us.
   logger.fatal({ err }, "Uncaught exception");
   void shutdown("uncaughtException", 1);
 });

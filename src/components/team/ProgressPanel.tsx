@@ -1,33 +1,13 @@
 import { useBoardProgress } from '../../queries/orgs';
-import { Loader } from '../ui/Loader';
-import type { MemberProgress } from '../../services/orgApi';
+import { StatsSkeleton } from '../ui/Skeletons';
+import { EmptyState, EMPTY_ICONS } from '../ui/EmptyState';
+import { BarList, Donut } from './Charts';
 import styles from './ProgressPanel.module.css';
 
 interface ProgressPanelProps {
   boardId: string | undefined;
   /** Rendered above the table; omitted when the caller supplies its own heading. */
   showTotals?: boolean;
-}
-
-function initialsOf(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-function Avatar({ row }: { row: MemberProgress }) {
-  if (row.avatar) return <img className={styles.avatar} src={row.avatar} alt="" />;
-  return (
-    <div
-      className={`${styles.initials} ${row.userId === null ? styles.initialsMuted : ''}`}
-      aria-hidden="true"
-    >
-      {row.userId === null ? '?' : initialsOf(row.name)}
-    </div>
-  );
 }
 
 /**
@@ -41,13 +21,20 @@ export function ProgressPanel({ boardId, showTotals = true }: ProgressPanelProps
   const { data: progress, isPending, error } = useBoardProgress(boardId);
 
   if (!boardId) {
-    return <p className={styles.empty}>Pick a board to see who is working on what.</p>;
+    return (
+      <EmptyState
+        compact
+        icon={EMPTY_ICONS.chart}
+        title="Pick a board"
+        body="Progress is per board, so choose one to see who is carrying what."
+      />
+    );
   }
 
   if (isPending) {
     return (
       <div className={styles.loading}>
-        <Loader />
+        <StatsSkeleton />
       </div>
     );
   }
@@ -62,9 +49,12 @@ export function ProgressPanel({ boardId, showTotals = true }: ProgressPanelProps
 
   if (progress.totals.tasks === 0) {
     return (
-      <p className={styles.empty}>
-        No tasks on this board yet — progress shows up once there is work to do.
-      </p>
+      <EmptyState
+        compact
+        icon={EMPTY_ICONS.check}
+        title="Nothing to measure yet"
+        body="This board has no tasks. Add some and this fills in on its own."
+      />
     );
   }
 
@@ -93,69 +83,48 @@ export function ProgressPanel({ boardId, showTotals = true }: ProgressPanelProps
         </div>
       )}
 
-      {/* Wide content scrolls inside its own container so the page never scrolls
-          sideways on a phone. */}
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th scope="col">Person</th>
-              <th scope="col">Assigned</th>
-              <th scope="col">Done</th>
-              <th scope="col">Overdue</th>
-              <th scope="col">Subtasks</th>
-              <th scope="col" className={styles.barHead}>Completion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {progress.members.map((row) => (
-              <tr key={row.userId ?? 'unassigned'}>
-                <td>
-                  <div className={styles.person}>
-                    <Avatar row={row} />
-                    <div className={styles.identity}>
-                      <div className={styles.name}>{row.name}</div>
-                      {row.email && <div className={styles.email}>{row.email}</div>}
-                    </div>
-                  </div>
-                </td>
-                <td className={styles.num}>{row.assigned}</td>
-                <td className={styles.num}>{row.completed}</td>
-                <td className={`${styles.num} ${row.overdue > 0 ? styles.overdue : ''}`}>
-                  {row.overdue}
-                </td>
-                <td className={styles.num}>
-                  {row.subtasks.total === 0
-                    ? '—'
-                    : `${row.subtasks.completed}/${row.subtasks.total}`}
-                </td>
-                <td>
-                  <div className={styles.barRow}>
-                    <div
-                      className={styles.bar}
-                      role="progressbar"
-                      aria-valuenow={row.completionRate}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`${row.name} completion`}
-                    >
-                      <div
-                        className={styles.barFill}
-                        style={{ width: `${row.completionRate}%` }}
-                      />
-                    </div>
-                    <span className={styles.barValue}>{row.completionRate}%</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <section className={styles.chartBlock}>
+        <Donut
+          slices={[
+            { label: 'Done', value: progress.totals.completed, color: 'var(--primary)' },
+            { label: 'Overdue', value: progress.totals.overdue, color: 'var(--red)' },
+            {
+              label: 'In progress',
+              value: Math.max(
+                0,
+                progress.totals.tasks -
+                  progress.totals.completed -
+                  progress.totals.overdue,
+              ),
+              color: 'var(--text-secondary)',
+            },
+          ]}
+          centerValue={`${progress.totals.completionRate}%`}
+          centerLabel="complete"
+        />
+      </section>
+
+      <section className={styles.chartBlock}>
+        <h3 className={styles.chartTitle}>By person</h3>
+        <BarList
+          emptyLabel="Nothing assigned on this board yet."
+          data={progress.members.map((row) => ({
+            label: row.userId === null ? 'Unassigned' : row.name,
+            value: row.completed,
+            alert: row.overdue,
+            // One scale for every row, so the bars can be compared.
+            max: Math.max(1, ...progress.members.map((m) => m.assigned)),
+            caption:
+              row.subtasks.total > 0
+                ? `${row.completed}/${row.assigned} · ${row.subtasks.completed}/${row.subtasks.total} subtasks`
+                : `${row.completed}/${row.assigned}`,
+          }))}
+        />
+      </section>
 
       <p className={styles.footnote}>
         “Done” means the last column on the board
-        {progress.doneColumn ? ` (${progress.doneColumn})` : ''} — renaming it changes
+        {progress.doneColumn ? ` (${progress.doneColumn})` : ''} - renaming it changes
         nothing, moving a task does.
       </p>
     </div>

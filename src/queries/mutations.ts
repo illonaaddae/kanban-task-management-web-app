@@ -17,7 +17,7 @@ import type { Board, CollaboratorRole, Task } from '../types';
  *
  * 2. **Snapshot before an optimistic write.** `onMutate` returns the previous
  *    cache entry and `onError` restores it, so a rejected move is undone exactly
- *    rather than approximately — which is what a locally reconstructed "undo"
+ *    rather than approximately - which is what a locally reconstructed "undo"
  *    could never guarantee.
  */
 
@@ -55,7 +55,7 @@ export function useDeleteBoard() {
 
     // Optimistic, because the caller closes the modal and navigates away
     // immediately. Waiting for the refetch left the deleted board visible in the
-    // dashboard and sidebar for as long as the round trip took — on a
+    // dashboard and sidebar for as long as the round trip took - on a
     // spun-down free-tier API, several seconds of a board that is already gone.
     onMutate: async (boardId) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.boards.list() });
@@ -83,7 +83,7 @@ export function useDeleteBoard() {
       queryClient.removeQueries({ queryKey: queryKeys.boards.detail(boardId) });
     },
 
-    // Reconcile either way — the optimistic list is a guess, and a concurrent
+    // Reconcile either way - the optimistic list is a guess, and a concurrent
     // change by someone else should not be lost behind it.
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards.list() });
@@ -170,7 +170,7 @@ export function useUpdateTask() {
       taskApi.updateTask(taskId, updates),
 
     // Subtask toggling goes through here, and a checkbox that waits for the
-    // network feels broken — so this one is optimistic too.
+    // network feels broken - so this one is optimistic too.
     onMutate: async ({ taskId, boardId, updates }) => {
       const key = queryKeys.boards.detail(boardId);
       await queryClient.cancelQueries({ queryKey: key });
@@ -246,8 +246,8 @@ export function useDeleteTask() {
  * Task drag. The one that has to feel instant.
  *
  * Positions are renumbered in both affected columns so the optimistic state
- * matches what the server will produce — it rebalances both sides in one
- * bulkWrite — rather than leaving a gap the next render would expose.
+ * matches what the server will produce - it rebalances both sides in one
+ * bulkWrite - rather than leaving a gap the next render would expose.
  */
 export function useMoveTask() {
   const queryClient = useQueryClient();

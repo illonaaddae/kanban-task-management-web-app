@@ -47,6 +47,12 @@ export interface BoardMember {
   avatar?: string;
   /** `owner` is derived from the board, not from a collaborator entry. */
   role: BoardRole;
+  /**
+   * How they reach the board. `team` means membership of the board's team rather
+   * than an invitation - so there is no collaborator entry to change or remove,
+   * and the share modal must not offer to.
+   */
+  via?: 'collaborator' | 'owner' | 'team';
 }
 
 export interface Board {
@@ -62,6 +68,8 @@ export interface Board {
   myRole?: BoardRole;
   /** Everyone with access, owner first. Populated by the detail endpoints. */
   members?: BoardMember[];
+  /** The team this board belongs to, for UI that names it. */
+  organizationName?: string | null;
 }
 
 export interface ActivityEntry {

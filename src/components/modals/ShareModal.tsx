@@ -1,11 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useInviteCollaborator, useUpdateCollaboratorRole, useRemoveCollaborator } from '../../queries/mutations';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
-import { Loader } from '../ui/Loader';
+import { MemberListSkeleton } from '../ui/Skeletons';
+import { EmptyState, EMPTY_ICONS } from '../ui/EmptyState';
 import { useBoardMembers } from '../../queries/boards';
+import { useTeammates } from '../../queries/orgs';
 import toast from 'react-hot-toast';
 import type { BoardMember, CollaboratorRole } from '../../types';
 import styles from './ShareModal.module.css';
@@ -43,7 +45,7 @@ function MemberAvatar({ member }: { member: BoardMember }) {
 }
 
 /**
- * Board sharing — owner only.
+ * Board sharing - owner only.
  *
  * The caller gates rendering on `canManageBoard`, but every action here is also
  * owner-only server-side, so a stale UI cannot grant anything: it just earns a
@@ -67,6 +69,30 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     isOpen ? boardId : undefined,
   );
 
+  // People from the caller's teams, so sharing is a click rather than a typed
+  // address. Purely a convenience: the invite below is the same request either
+  // way, and being a teammate grants nothing on its own.
+  const { data: teammates = [] } = useTeammates();
+
+  /** Teammates who cannot already reach this board. */
+  const suggestions = useMemo(() => {
+    const known = new Set(members.map((member) => member.id));
+    return teammates.filter((teammate) => !known.has(teammate.id));
+  }, [teammates, members]);
+
+  /** Invites a teammate straight away - the address is already known. */
+  const inviteTeammate = async (email: string, name: string) => {
+    setBusyId(email);
+    try {
+      await inviteCollaborator.mutateAsync({ boardId, email, role });
+      toast.success(`Invited ${name} as ${role}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not send the invite');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleInvite = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -84,7 +110,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
       setEmail('');
     } catch (error) {
       // The API distinguishes unknown account (404), already a collaborator
-      // (409) and inviting the owner (409) — its wording is more useful than
+      // (409) and inviting the owner (409) - its wording is more useful than
       // anything generic we could write here.
       toast.error(error instanceof Error ? error.message : 'Could not send the invite');
     } finally {
@@ -158,18 +184,43 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
         </Button>
       </form>
 
+      {suggestions.length > 0 && (
+        <div className={styles.suggestions}>
+          <p className={styles.sectionTitle}>From your teams</p>
+          <div className={styles.chips}>
+            {suggestions.map((teammate) => (
+              <button
+                key={teammate.id}
+                type="button"
+                className={styles.chip}
+                disabled={busyId === teammate.email || inviting}
+                onClick={() => void inviteTeammate(teammate.email, teammate.name)}
+                title={`${teammate.email} · ${teammate.teams.join(', ')}`}
+              >
+                <span className={styles.chipPlus} aria-hidden="true">+</span>
+                {teammate.name}
+              </button>
+            ))}
+          </div>
+          <p className={styles.suggestionsHint}>
+            Adds them as {role === 'editor' ? 'an editor' : 'a viewer'} on this board.
+          </p>
+        </div>
+      )}
+
       <p className={styles.sectionTitle}>
         People with access ({members.length})
       </p>
 
       {membersLoading && members.length === 0 ? (
         <div className={styles.loading}>
-          <Loader />
+          <MemberListSkeleton />
         </div>
       ) : (
         <div className={styles.list}>
           {members.map((member) => {
             const isOwner = member.role === 'owner';
+            const viaTeam = member.via === 'team';
             const busy = busyId === member.id;
 
             return (
@@ -182,8 +233,16 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
 
                 {isOwner ? (
                   // The owner's role is a property of the board, not a
-                  // collaborator entry — there is nothing to change here.
+                  // collaborator entry - there is nothing to change here.
                   <span className={`${styles.badge} ${styles.badgeOwner}`}>Owner</span>
+                ) : viaTeam ? (
+                  // Access comes from the team, so there is no collaborator entry
+                  // to change or delete. Offering either would look like it worked
+                  // and change nothing - remove them from the team, or take the
+                  // board out of it.
+                  <span className={styles.badge} title="Access through the team">
+                    Team
+                  </span>
                 ) : (
                   <>
                     <div className={styles.roleSelect}>
@@ -217,9 +276,16 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
           })}
 
           {collaborators.length === 0 && !membersLoading && (
-            <p className={styles.empty}>
-              Only you can see this board. Invite someone above to collaborate.
-            </p>
+            <EmptyState
+              compact
+              icon={EMPTY_ICONS.people}
+              title="Only you can see this board"
+              body={
+                suggestions.length > 0
+                  ? 'Pick a teammate above, or invite anyone by email.'
+                  : 'Invite someone by email above. They do not need an account yet.'
+              }
+            />
           )}
         </div>
       )}

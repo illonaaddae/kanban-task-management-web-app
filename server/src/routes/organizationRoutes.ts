@@ -88,7 +88,7 @@ router
     removeMember,
   );
 
-// Inviting is an admin-and-above action — it grants access to the team's work.
+// Inviting is an admin-and-above action - it grants access to the team's work.
 router
   .route("/:id/invitations")
   .get(validate(idParamSchema, "params"), orgAccess("orgAdmin"), listInvitations)

@@ -8,8 +8,8 @@ import * as boardApi from '../../services/boardApi';
 import { ACCESS_TOKEN_KEY } from '../../services/api';
 
 // The Dashboard now reads through a query, so the seam moved from the store to
-// the service. Mocking here also exercises the real query wiring — keys,
-// enabled, loading and error states — rather than a hand-set store snapshot.
+// the service. Mocking here also exercises the real query wiring - keys,
+// enabled, loading and error states - rather than a hand-set store snapshot.
 vi.mock('../../services/boardApi');
 
 const mockBoards = [
@@ -60,7 +60,11 @@ describe('Dashboard', () => {
 
     renderDashboard();
 
-    expect(screen.getByText(/loading your boards/i)).toBeInTheDocument();
+    // The skeleton announces the wait once through an aria-live region rather
+    // than printing a caption, so assert on the accessible name.
+    expect(
+      screen.getByRole('status', { name: /loading your boards/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows the failure message and a retry button when the fetch fails', async () => {
@@ -68,9 +72,9 @@ describe('Dashboard', () => {
 
     renderDashboard();
 
-    expect(await screen.findByText(/could not load boards/i)).toBeInTheDocument();
+    expect(await screen.findByText(/could not load your boards/i)).toBeInTheDocument();
     expect(screen.getByText('Network error')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 
   it('retry refetches', async () => {
@@ -78,11 +82,11 @@ describe('Dashboard', () => {
     vi.mocked(boardApi.getBoards).mockRejectedValue(new Error('Oops'));
 
     renderDashboard();
-    await screen.findByRole('button', { name: /retry/i });
+    await screen.findByRole('button', { name: /try again/i });
 
     // One call for the initial fetch; retry makes another.
     expect(boardApi.getBoards).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', { name: /retry/i }));
+    await user.click(screen.getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(boardApi.getBoards).toHaveBeenCalledTimes(2));
   });
 

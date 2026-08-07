@@ -56,7 +56,7 @@ export const getBoard = catchAsync(async (req: Request, res: Response) => {
 
 /**
  * The nested board contract. `data` is the board itself rather than
- * `data.board` — this shape is fixed by CLAUDE.md so the frontend can consume
+ * `data.board` - this shape is fixed by CLAUDE.md so the frontend can consume
  * it without a mapping layer.
  */
 export const getFullBoard = catchAsync(async (req: Request, res: Response) => {
@@ -110,7 +110,12 @@ export const updateCollaborator = catchAsync(async (req: Request, res: Response)
   const { userId } = req.params as unknown as BoardUserParams;
   const { role } = req.body as UpdateCollaboratorInput;
 
-  const updated = await boardService.updateCollaboratorRole(board, userId, role);
+  const updated = await boardService.updateCollaboratorRole(
+    board,
+    userId,
+    role,
+    requireUser(req),
+  );
 
   res.status(200).json({ status: "success", data: { board: updated } });
 });

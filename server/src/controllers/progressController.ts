@@ -18,7 +18,7 @@ function requireBoard(req: Request) {
 /**
  * Everyone the caller shares a team with.
  *
- * Not an authorisation surface — being a teammate grants nothing on any board. It
+ * Not an authorisation surface - being a teammate grants nothing on any board. It
  * only decides whose name the share picker suggests, which is why it needs no
  * board or organization scope of its own.
  */
@@ -46,7 +46,7 @@ export const listMyTasks = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/** Team-wide roll-up. Admin and above — it spans every board in the team. */
+/** Team-wide roll-up. Admin and above - it spans every board in the team. */
 export const getTeamAnalytics = catchAsync(async (req: Request, res: Response) => {
   if (!req.organization) {
     throw new AppError("Organization access was not resolved for this route", 500);

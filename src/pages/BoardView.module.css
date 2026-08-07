@@ -84,7 +84,7 @@
 
   .board {
     gap: 1rem;
-    /* The scroller already pads the edges — doubling it wasted 32px of a
+    /* The scroller already pads the edges - doubling it wasted 32px of a
        375px-wide screen. */
     padding: 0;
   }

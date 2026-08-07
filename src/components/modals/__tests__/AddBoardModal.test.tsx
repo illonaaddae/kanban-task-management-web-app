@@ -10,7 +10,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // The modal creates boards through the React Query mutation, so the seam worth
-// asserting on is the API module underneath it — not the store, which no longer
+// asserting on is the API module underneath it - not the store, which no longer
 // holds board data.
 vi.mock('../../../services/boardApi');
 
@@ -79,7 +79,7 @@ describe('AddBoardModal', () => {
     await user.click(screen.getByRole('button', { name: /add new column/i }));
 
     // Regression: Button rendered a bare <button>, which inside a form defaults
-    // to type="submit" — so this click created the board instead of adding a row.
+    // to type="submit" - so this click created the board instead of adding a row.
     expect(boardApi.createBoard).not.toHaveBeenCalled();
     expect(screen.getAllByPlaceholderText('e.g. Todo')).toHaveLength(3);
   });

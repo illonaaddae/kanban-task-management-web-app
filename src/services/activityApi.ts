@@ -10,7 +10,7 @@ export interface ActivityPage {
 /**
  * A page of the board's activity feed, newest first.
  *
- * Readable by anyone who can see the board, viewers included — it is the one
+ * Readable by anyone who can see the board, viewers included - it is the one
  * board feature a viewer gets in full.
  */
 export async function getActivity(

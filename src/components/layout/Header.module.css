@@ -233,7 +233,7 @@
 }
 
 /* Share: promoted out of the overflow menu, because it is how a user invites
-   the teammates they then assign tasks to — undiscoverable there. */
+   the teammates they then assign tasks to - undiscoverable there. */
 .shareButton {
   display: inline-flex;
   align-items: center;

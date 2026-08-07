@@ -34,7 +34,7 @@ export function ProfileDropdown({ onSettings, onEditProfile, onTeams }: ProfileD
         </svg>
         <span>Edit Profile</span>
       </button>
-      {/* Teams live here because this is where users looked for them — sharing a
+      {/* Teams live here because this is where users looked for them - sharing a
           board was the only route to a teammate before, and it could not reach
           anyone without an account. */}
       <button className={styles.menuButton} onClick={onTeams}>

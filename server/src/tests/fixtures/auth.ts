@@ -31,7 +31,7 @@ let sequence = 0;
 /**
  * Registers a user through the real endpoint and returns their tokens.
  *
- * `role` is applied straight to the document afterwards — there is no
+ * `role` is applied straight to the document afterwards - there is no
  * self-promotion endpoint, by design. No re-login is needed because
  * `restrictTo` reads the role from the freshly loaded user, not from the JWT.
  */

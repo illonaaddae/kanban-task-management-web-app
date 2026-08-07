@@ -52,7 +52,7 @@ export const TaskCard = memo(function TaskCard({ task, columnIndex, taskIndex, b
     }
   };
 
-  // Viewers can still open a card to read it — they just get no drag listeners.
+  // Viewers can still open a card to read it - they just get no drag listeners.
 
   return (
     <>
