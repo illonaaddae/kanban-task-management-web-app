@@ -1,6 +1,10 @@
 .page {
   padding: 3rem;
-  max-width: 82rem;
+  /* Wide enough to use a laptop screen, since the analytics are the reason to open
+     this page and they benefit from the room. Prose inside stays capped
+     separately, because a 90rem line of body text is unreadable however much
+     window there is. */
+  max-width: 96rem;
 }
 
 .header {
@@ -84,6 +88,7 @@
 
 .hint {
   margin: 0 0 1rem;
+  max-width: 46rem;
   font-size: 0.8125rem;
   line-height: 1.6;
   color: var(--text-secondary);
@@ -417,9 +422,12 @@
   color: var(--primary);
 }
 
-/* One column now: the cards were fighting for width, not short of it. */
+/* One column, but not a narrow one. A reading cap belongs on prose, and the page
+   already has one; capping the panel left the analytics squeezed into half the
+   window with the rest of it empty. Each card decides its own measure now: the
+   hints stay readable, the charts spread. */
 .panel {
-  max-width: 52rem;
+  min-width: 0;
 }
 
 .stack {
@@ -435,6 +443,33 @@
   justify-content: space-between;
   gap: 0.75rem 1rem;
   margin-bottom: 1rem;
+}
+
+.teamHeadActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.newTeamButton {
+  flex-shrink: 0;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.newTeamButton:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(99, 95, 199, 0.1));
 }
 
 .teamName {

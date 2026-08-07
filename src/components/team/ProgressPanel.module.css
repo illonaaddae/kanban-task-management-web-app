@@ -12,9 +12,12 @@
   color: var(--text-secondary);
 }
 
+/* A grid rather than a flex row: five boxes wrapping left-aligned left a ragged
+   gap on a wide screen. These stretch to fill instead, and still wrap to two rows
+   on a phone because the minimum is what decides the column count. */
 .totals {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
@@ -192,10 +195,26 @@
   color: var(--text-secondary);
 }
 
-.chartBlock {
+/* Side by side once there is room for it.
+ *
+ * Stacked, the three blocks pushed "By person" below the fold and stretched every
+ * bar to the full width of the card, which makes short bars unreadable and long
+ * ones meaningless. Comparing lengths is the whole job of a bar, and it is easier
+ * across 24rem than across 70. `auto-fit` means the column count follows the width
+ * rather than a breakpoint guess. */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1.5rem 2rem;
+  align-items: start;
   margin-bottom: 1.5rem;
 }
 
+.chartBlock {
+  min-width: 0;
+}
+
+/* Kept for a chart block used on its own, outside the grid. */
 .chartBlock:last-of-type {
   margin-bottom: 0;
 }

@@ -287,9 +287,14 @@ export function Landing() {
                 <span className={styles.stepNumber} aria-hidden="true">
                   {String(index + 1).padStart(2, '0')}
                 </span>
-                <h3 className={styles.stepTitle}>{step.title}</h3>
-                <p className={styles.stepBody}>{step.body}</p>
-                <p className={styles.stepAside}>{step.aside}</p>
+                {/* The text is one column beside the numeral. Without this wrapper
+                    the title, body and aside became three flex siblings of the
+                    numeral and sat side by side in narrow strips. */}
+                <div className={styles.stepText}>
+                  <h3 className={styles.stepTitle}>{step.title}</h3>
+                  <p className={styles.stepBody}>{step.body}</p>
+                  <p className={styles.stepAside}>{step.aside}</p>
+                </div>
               </li>
             ))}
           </ol>
