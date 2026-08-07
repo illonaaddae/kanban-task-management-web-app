@@ -82,4 +82,16 @@ describe('Landing', () => {
       expect(link).toHaveAttribute('href', expect.stringContaining('github.com')),
     );
   });
+
+  it('links the portfolio site, not a placeholder', () => {
+    renderLanding();
+
+    // Pinned, because a footer link that quietly rots is worse than an absent one:
+    // it looks like a broken site rather than a missing one.
+    const links = screen
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('href'));
+
+    expect(links).toContain('https://oceaniccoder.dev');
+  });
 });

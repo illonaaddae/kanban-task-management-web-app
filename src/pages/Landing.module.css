@@ -634,6 +634,18 @@
   color: var(--primary);
 }
 
+/* The name in the sign-off carries the link too, since that is where a reader
+   looks for who made this. */
+.footerNoteLink {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.footerNoteLink:hover {
+  color: var(--primary);
+}
+
 .footerNote {
   max-width: 72rem;
   margin: 0 auto;

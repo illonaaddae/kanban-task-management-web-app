@@ -400,6 +400,16 @@ export function Landing() {
                   verified are here: a placeholder URL in a footer is worse than an
                   absent one, because it looks like a broken site. */}
               <h4>Built by</h4>
+              {/* Apex rather than www: the www host does not present a valid
+                  certificate, so linking it would land visitors on a browser
+                  warning. */}
+              <a
+                href="https://oceaniccoder.dev"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                oceaniccoder.dev
+              </a>
               <a
                 href="https://github.com/illonaaddae"
                 target="_blank"
@@ -430,7 +440,16 @@ export function Landing() {
         </div>
 
         <p className={styles.footerNote}>
-          Built by Illona Addae. Design based on the Frontend Mentor kanban brief.
+          Built by{' '}
+          <a
+            className={styles.footerNoteLink}
+            href="https://oceaniccoder.dev"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Illona Addae
+          </a>
+          . Design based on the Frontend Mentor kanban brief.
         </p>
       </footer>
     </div>
