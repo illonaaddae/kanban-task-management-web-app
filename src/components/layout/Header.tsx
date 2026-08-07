@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useBoards } from '../../queries/boards';
 import { useLocation } from 'react-router-dom';
-import { useStore } from '../../store/store';
-import { useShallow } from 'zustand/react/shallow';
 import { Button } from '../ui/Button';
 import { BoardSelectorModal } from '../modals/BoardSelectorModal';
 import { AddTaskModal } from '../modals/AddTaskModal';
@@ -12,12 +11,14 @@ import { ProfileButton } from './ProfileButton';
 import { ShareModal } from '../modals/ShareModal';
 import { ActivityPanel } from '../board/ActivityPanel';
 import { useBoardPermissions } from '../../hooks/useBoardPermissions';
+import { HamburgerButton } from '../ui/HamburgerButton';
+import { useKanbanStore } from '../../store/kanbanStore';
 import styles from './Header.module.css';
 
 export function Header() {
   const location = useLocation();
 
-  const { boards } = useStore(useShallow((state) => ({ boards: state.boards })));
+  const { data: boards = [] } = useBoards();
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showEditBoard, setShowEditBoard] = useState(false);
@@ -25,6 +26,8 @@ export function Header() {
   const [showShare, setShowShare] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const { canEdit, canManageBoard } = useBoardPermissions();
+  const isSidebarOpen = useKanbanStore((state) => state.isSidebarOpen);
+  const setSidebarOpen = useKanbanStore((state) => state.setSidebarOpen);
 
   const boardId = useMemo(
     () => location.pathname.match(/^\/board\/([^/]+)$/)?.[1] ?? null,
@@ -45,7 +48,15 @@ export function Header() {
   return (
     <>
       <header className={styles.header}>
-       
+        {/* Shown only below 1025px (see HamburgerButton.module.css), where the
+            sidebar is a drawer. It was the only way to reach the board list,
+            create-board and theme toggle on a phone — and the component existed
+            unused until now. */}
+        <HamburgerButton
+          isOpen={isSidebarOpen}
+          onClick={() => setSidebarOpen(!isSidebarOpen)}
+        />
+
         <button className={styles.titleButton} onClick={() => setShowBoardSelector(true)} aria-label="Select board">
           <h1 className={styles.title}>{pageTitle}</h1>
           <svg className={styles.chevron} width="10" height="7" viewBox="0 0 10 7" fill="none">
@@ -76,7 +87,11 @@ export function Header() {
                   <span>Share</span>
                 </button>
               )}
-              {canEdit && <Button onClick={() => setShowAddTask(true)}>+ Add New Task</Button>}
+              {canEdit && (
+                <Button className={styles.addTaskButton} onClick={() => setShowAddTask(true)}>
+                  + Add New Task
+                </Button>
+              )}
               {!canEdit && <span className={styles.readOnlyBadge}>View only</span>}
               <BoardActionsMenu
                 canEdit={canEdit}

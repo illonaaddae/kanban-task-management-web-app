@@ -23,6 +23,12 @@
 .menuButton {
   width: 24px;
   height: 24px;
+  /* 24px is fine for a cursor, too small for a fingertip. */
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--text-secondary);

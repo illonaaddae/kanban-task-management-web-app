@@ -1,92 +1,115 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import { useStore } from '../../store/store';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Dashboard } from '../Dashboard';
+import * as boardApi from '../../services/boardApi';
+import { ACCESS_TOKEN_KEY } from '../../services/api';
 
-vi.mock('../../store/store', async () => {
-  const actual = await vi.importActual<typeof import('../../store/store')>('../../store/store');
-  return { ...actual };
-});
+// The Dashboard now reads through a query, so the seam moved from the store to
+// the service. Mocking here also exercises the real query wiring — keys,
+// enabled, loading and error states — rather than a hand-set store snapshot.
+vi.mock('../../services/boardApi');
 
 const mockBoards = [
   {
     id: 'b1',
     name: 'Marketing Plan',
+    myRole: 'owner' as const,
     columns: [
-      { name: 'Todo', tasks: [{ id: 't1', title: 'Task A', description: '', status: 'Todo', subtasks: [] }] },
-      { name: 'Done', tasks: [] },
+      {
+        id: 'c1',
+        name: 'Todo',
+        tasks: [
+          { id: 't1', title: 'Task A', description: '', status: 'Todo', subtasks: [] },
+        ],
+      },
+      { id: 'c2', name: 'Done', tasks: [] },
     ],
   },
-  {
-    id: 'b2',
-    name: 'Roadmap',
-    columns: [],
-  },
+  { id: 'b2', name: 'Roadmap', myRole: 'owner' as const, columns: [] },
 ];
 
 function renderDashboard() {
+  // Retries off, so an error test fails fast instead of waiting out backoff.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+
   return render(
-    <BrowserRouter>
-      <Dashboard />
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    </QueryClientProvider>,
   );
 }
 
 describe('Dashboard', () => {
-  const fetchBoards = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
-    useStore.setState({
-      boards: [],
-      boardLoading: false,
-      boardError: null,
-      user: { id: 'u1', name: 'Test User', email: 'test@test.com' },
-      fetchBoards,
-    } as any);
+    // The query is gated on being signed in.
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'test-token');
   });
 
-  it('shows a loading spinner when boardLoading is true', () => {
-    useStore.setState({ boardLoading: true } as any);
+  afterEach(() => localStorage.clear());
+
+  it('shows a loading state while boards are being fetched', () => {
+    vi.mocked(boardApi.getBoards).mockReturnValue(new Promise(() => {}));
+
     renderDashboard();
+
     expect(screen.getByText(/loading your boards/i)).toBeInTheDocument();
   });
 
-  it('shows an error message and retry button when boardError is set', () => {
-    useStore.setState({ boardError: 'Network error' } as any);
+  it('shows the failure message and a retry button when the fetch fails', async () => {
+    vi.mocked(boardApi.getBoards).mockRejectedValue(new Error('Network error'));
+
     renderDashboard();
-    expect(screen.getByText(/could not load boards/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/could not load boards/i)).toBeInTheDocument();
     expect(screen.getByText('Network error')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
   });
 
-  it('clicking Retry calls fetchBoards with the user id', async () => {
+  it('retry refetches', async () => {
     const user = userEvent.setup();
-    useStore.setState({ boardError: 'Oops', fetchBoards } as any);
+    vi.mocked(boardApi.getBoards).mockRejectedValue(new Error('Oops'));
+
     renderDashboard();
+    await screen.findByRole('button', { name: /retry/i });
+
+    // One call for the initial fetch; retry makes another.
+    expect(boardApi.getBoards).toHaveBeenCalledTimes(1);
     await user.click(screen.getByRole('button', { name: /retry/i }));
-    expect(fetchBoards).toHaveBeenCalledWith('u1');
+    await waitFor(() => expect(boardApi.getBoards).toHaveBeenCalledTimes(2));
   });
 
-  it('shows empty state when there are no boards', () => {
+  it('shows the empty state when there are no boards', async () => {
+    vi.mocked(boardApi.getBoards).mockResolvedValue([]);
+
     renderDashboard();
-    expect(screen.getByText(/no boards yet/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/no boards yet/i)).toBeInTheDocument();
   });
 
-  it('renders a card for each board', () => {
-    useStore.setState({ boards: mockBoards } as any);
+  it('renders a card for each board', async () => {
+    vi.mocked(boardApi.getBoards).mockResolvedValue(mockBoards);
+
     renderDashboard();
-    expect(screen.getByText('Marketing Plan')).toBeInTheDocument();
+
+    expect(await screen.findByText('Marketing Plan')).toBeInTheDocument();
     expect(screen.getByText('Roadmap')).toBeInTheDocument();
   });
 
-  it('displays the column and task counts for each board', () => {
-    useStore.setState({ boards: mockBoards } as any);
+  it('displays the column and task counts for each board', async () => {
+    vi.mocked(boardApi.getBoards).mockResolvedValue(mockBoards);
+
     renderDashboard();
-    // Marketing Plan: 2 columns, 1 task
-    expect(screen.getByText('2 columns')).toBeInTheDocument();
+
+    // Marketing Plan: 2 columns, 1 task.
+    expect(await screen.findByText('2 columns')).toBeInTheDocument();
     expect(screen.getByText('1 tasks')).toBeInTheDocument();
   });
 });

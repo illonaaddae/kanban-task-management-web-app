@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders as render, screen, fireEvent } from '../../../test/utils';
 import { DndContext } from '@dnd-kit/core';
 import { TaskCard } from '../TaskCard';
 import type { Task } from '../../../types';

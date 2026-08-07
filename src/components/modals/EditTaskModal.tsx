@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
+import { useUpdateTask, useMoveTask } from '../../queries/mutations';
+import { useBoards } from '../../queries/boards';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -19,9 +20,9 @@ interface EditTaskModalProps {
 }
 
 export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalProps) {
-  const boards = useStore((state) => state.boards);
-  const updateTask = useStore((state) => state.updateTask);
-  const moveTask = useStore((state) => state.moveTask);
+  const { data: boards = [] } = useBoards();
+  const updateTask = useUpdateTask();
+  const moveTask = useMoveTask();
 
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState('');
@@ -81,12 +82,20 @@ export function EditTaskModal({ isOpen, onClose, boardId, task }: EditTaskModalP
     };
 
     try {
+      await updateTask.mutateAsync({ taskId: task.id, boardId, updates: updatedData });
+
+      // Changing the column is a move, not an update — the API rejects a
+      // columnId on the update route precisely so the two cannot diverge.
       if (status !== task.status) {
-        await updateTask(task.id, updatedData, boardId);
         const targetCol = board.columns.find(c => c.name === status);
-        await moveTask(task.id, status, targetCol ? targetCol.tasks.length : 0);
-      } else {
-        await updateTask(task.id, updatedData, boardId);
+        if (targetCol?.id) {
+          await moveTask.mutateAsync({
+            taskId: task.id,
+            columnId: targetCol.id,
+            position: targetCol.tasks.length,
+            boardId,
+          });
+        }
       }
       toast.success('Task updated successfully!');
       onClose();

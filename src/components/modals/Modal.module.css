@@ -26,6 +26,7 @@
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   animation: slideUp 0.3s ease;
   position: relative;
@@ -64,7 +65,9 @@
     padding: 24px;
     margin: 16px 0 !important; /* Top and bottom margin, no side margins */
     border-radius: 0 !important; /* No border radius for full-width modal */
-    max-height: calc(100vh - 32px); /* Ensure fits within viewport */
+    /* dvh, so an open on-screen keyboard shrinks the modal and its content
+       scrolls, rather than the submit button ending up under the keyboard. */
+    max-height: calc(100dvh - 32px);
     overflow-y: auto; /* Allow internal scrolling */
   }
 }
@@ -79,7 +82,7 @@
   
   .modal {
     max-width: 480px; /* Tablet modal width from Figma */
-    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
   }
 }
 

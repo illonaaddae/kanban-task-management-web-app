@@ -1,5 +1,5 @@
 .header {
-  height: 96px;
+  height: var(--header-height);
   background: var(--bg-primary);
   border-bottom: none;
   padding: 0 32px;
@@ -141,7 +141,7 @@
 /* Mobile and Tablet */
 @media (max-width: 1024px) {
   .header {
-    height: 64px;
+    /* height comes from --header-height, which this breakpoint already lowers */
     padding: 0 16px;
     gap: 12px;
   }
@@ -168,14 +168,17 @@
   .actions {
     gap: 12px;
   }
-  
-  /* Add task button shows only "+" on mobile */
-  .actions button:first-child {
+
+  /* Add task collapses to "+" on narrow screens.
+     This used to be `.actions button:first-child`, which hit whichever button
+     happened to come first: the avatar on the dashboard, and Share for a board
+     owner. Both rendered as a bare "+". Target the button itself. */
+  .addTaskButton {
     padding: 12px 18px;
     font-size: 0;
   }
-  
-  .actions button:first-child::before {
+
+  .addTaskButton::before {
     content: '+';
     font-size: 24px;
     line-height: 1;

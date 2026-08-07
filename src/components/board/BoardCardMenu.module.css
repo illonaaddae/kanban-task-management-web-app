@@ -14,32 +14,15 @@
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  /* Hidden until the card is hovered or the menu has focus, so a grid of cards
-     does not read as a wall of dots. Always visible on touch, where there is no
-     hover to reveal it. */
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
-.container:focus-within .trigger,
-.trigger[aria-expanded="true"] {
-  opacity: 1;
-}
-
-/* Revealed by the parent card's hover — see Dashboard.module.css. */
-:global(.boardCardHovered) .trigger {
-  opacity: 1;
-}
+/* Always visible. A hover-to-reveal version was invisible on touch and, more
+   importantly, meant nobody discovered the actions existed at all. */
 
 .trigger:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
-}
-
-@media (hover: none) {
-  .trigger {
-    opacity: 1;
-  }
 }
 
 .menu {
@@ -80,4 +63,17 @@
 
 .menu button.delete:hover {
   background: color-mix(in srgb, var(--red, #ea5555) 12%, transparent);
+}
+
+/* Touch: grow the trigger and the menu rows to a thumb-sized target. Left alone
+   on pointer devices, where the compact size looks right. */
+@media (hover: none) and (pointer: coarse) {
+  .trigger {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .menu button {
+    min-height: 2.75rem;
+  }
 }

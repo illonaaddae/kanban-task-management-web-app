@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useStore } from "../store/store";
-import { useShallow } from "zustand/react/shallow";
+import { useBoards } from "../queries/boards";
 import { Loader } from "../components/ui/Loader";
 import { BoardCardMenu } from "../components/board/BoardCardMenu";
 import { EditBoardModal } from "../components/modals/EditBoardModal";
@@ -11,16 +10,8 @@ import type { Board } from "../types";
 import styles from "./Dashboard.module.css";
 
 export function Dashboard() {
-  const { boards, boardLoading, boardsLoaded, boardError, fetchBoards, user } = useStore(
-    useShallow((state) => ({
-      boards: state.boards,
-      boardLoading: state.boardLoading,
-      boardsLoaded: state.boardsLoaded,
-      boardError: state.boardError,
-      fetchBoards: state.fetchBoards,
-      user: state.user,
-    })),
-  );
+  // Own loading and error state, so a mutation elsewhere cannot blank this page.
+  const { data: boards = [], isPending, error, refetch } = useBoards();
 
   // One modal instance per action, told which board it is acting on — rather
   // than rendering three modals per card.
@@ -32,7 +23,7 @@ export function Dashboard() {
   // board, say — must not replace the dashboard with a spinner: the modal that
   // triggered it is still open on top, and blanking the page behind it reads as
   // the app having broken.
-  if (boardLoading && !boardsLoaded) {
+  if (isPending) {
     return (
       <div className={styles.dashboard}>
         <div className={styles.emptyState}>
@@ -43,13 +34,13 @@ export function Dashboard() {
     );
   }
 
-  if (boardError) {
+  if (error) {
     return (
       <div className={styles.dashboard}>
         <div className={styles.emptyState}>
           <p>Could not load boards</p>
-          <span>{boardError}</span>
-          {user && <button onClick={() => fetchBoards(user.id)}>Retry</button>}
+          <span>{error instanceof Error ? error.message : 'Something went wrong'}</span>
+          <button onClick={() => void refetch()}>Retry</button>
         </div>
       </div>
     );

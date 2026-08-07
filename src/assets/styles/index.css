@@ -28,6 +28,17 @@
   --text-primary: #000112;
   --text-secondary: #828FA3;
   --border: #E4EBFA;
+
+  /* The header is shorter on phones and tablets. Anything sizing itself against
+     it reads this instead of hard-coding 96px, which left mobile pages 32px
+     taller than the viewport and permanently scrollable. */
+  --header-height: 96px;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --header-height: 64px;
+  }
 }
 
 .dark {
@@ -53,12 +64,14 @@ body {
 /* App layout */
 .app {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
 }
 
 .main-content {
   flex: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-secondary);
   transition: margin-left 0.3s ease;
 }

@@ -1,9 +1,13 @@
 .hamburger {
   display: none; /* Hidden by default on desktop */
   flex-direction: column;
-  justify-content: space-around;
-  width: 24px;
-  height: 24px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 5px;
+  /* 44px of hit area around 24px of icon. */
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
   background: transparent;
   border: none;
   cursor: pointer;

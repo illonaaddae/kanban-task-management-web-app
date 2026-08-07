@@ -1,11 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
-import { useShallow } from 'zustand/react/shallow';
+import { useState, type FormEvent } from 'react';
+import { useInviteCollaborator, useUpdateCollaboratorRole, useRemoveCollaborator } from '../../queries/mutations';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { Loader } from '../ui/Loader';
+import { useBoardMembers } from '../../queries/boards';
 import toast from 'react-hot-toast';
 import type { BoardMember, CollaboratorRole } from '../../types';
 import styles from './ShareModal.module.css';
@@ -50,23 +50,9 @@ function MemberAvatar({ member }: { member: BoardMember }) {
  * 403 whose message is shown as-is.
  */
 export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalProps) {
-  const {
-    members,
-    membersLoading,
-    fetchMembers,
-    inviteCollaborator,
-    updateCollaboratorRole,
-    removeCollaborator,
-  } = useStore(
-    useShallow((state) => ({
-      members: state.members,
-      membersLoading: state.membersLoading,
-      fetchMembers: state.fetchMembers,
-      inviteCollaborator: state.inviteCollaborator,
-      updateCollaboratorRole: state.updateCollaboratorRole,
-      removeCollaborator: state.removeCollaborator,
-    })),
-  );
+  const inviteCollaborator = useInviteCollaborator();
+  const updateCollaboratorRole = useUpdateCollaboratorRole();
+  const removeCollaborator = useRemoveCollaborator();
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -75,11 +61,11 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
   /** Which member row has a request in flight, so only that row disables. */
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // Re-read on open: a collaborator may have been added or removed elsewhere
-  // since this board was last looked at.
-  useEffect(() => {
-    if (isOpen) void fetchMembers(boardId);
-  }, [isOpen, boardId, fetchMembers]);
+  // Refetches when the modal opens if the cached list has gone stale, so a
+  // collaborator added elsewhere shows up.
+  const { data: members = [], isPending: membersLoading } = useBoardMembers(
+    isOpen ? boardId : undefined,
+  );
 
   const handleInvite = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -93,7 +79,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     setInviting(true);
 
     try {
-      await inviteCollaborator(boardId, trimmed, role);
+      await inviteCollaborator.mutateAsync({ boardId, email: trimmed, role });
       toast.success(`Invited ${trimmed} as ${role}`);
       setEmail('');
     } catch (error) {
@@ -111,7 +97,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     setBusyId(member.id);
 
     try {
-      await updateCollaboratorRole(boardId, member.id, nextRole as CollaboratorRole);
+      await updateCollaboratorRole.mutateAsync({ boardId, userId: member.id, role: nextRole as CollaboratorRole });
       toast.success(`${member.name} is now ${nextRole === 'editor' ? 'an editor' : 'a viewer'}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not change the role');
@@ -124,7 +110,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     setBusyId(member.id);
 
     try {
-      await removeCollaborator(boardId, member.id);
+      await removeCollaborator.mutateAsync({ boardId, userId: member.id });
       toast.success(`Removed ${member.name}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not remove the collaborator');

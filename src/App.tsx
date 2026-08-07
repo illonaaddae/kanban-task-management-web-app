@@ -12,6 +12,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useTheme } from "./context/ThemeContext";
 import { useKanbanStore } from "./store/kanbanStore";
 import { useStore } from "./store/store";
+import { useMediaQuery, NARROW_VIEWPORT } from "./hooks/useMediaQuery";
 
 function App() {
   useEffect(() => {
@@ -26,6 +27,13 @@ function App() {
   const { theme } = useTheme();
   const isSidebarOpen = useKanbanStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useKanbanStore((state) => state.setSidebarOpen);
+
+  // Shrinking a desktop window past the drawer breakpoint would otherwise leave
+  // the sidebar sitting open on top of the board.
+  const isDrawer = useMediaQuery(NARROW_VIEWPORT);
+  useEffect(() => {
+    if (isDrawer) setSidebarOpen(false);
+  }, [isDrawer, setSidebarOpen]);
 
   return (
     <div className={`app ${theme}`}>

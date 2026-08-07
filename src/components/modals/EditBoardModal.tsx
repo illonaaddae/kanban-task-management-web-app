@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
+import { useUpdateBoard } from '../../queries/mutations';
+import { useBoards } from '../../queries/boards';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -15,8 +16,8 @@ interface EditBoardModalProps {
 }
 
 export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoardModalProps) {
-  const boards = useStore((state) => state.boards);
-  const updateBoard = useStore((state) => state.updateBoard);
+  const { data: boards = [] } = useBoards();
+  const updateBoard = useUpdateBoard();
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -44,7 +45,7 @@ export function EditBoardModal({ isOpen, onClose, boardIndex, boardId }: EditBoa
 
     setSaving(true);
     try {
-      await updateBoard(board.id, updatedData);
+      await updateBoard.mutateAsync({ boardId: board.id, updates: updatedData });
       toast.success('Board updated successfully!');
       onClose();
     } catch (error) {
