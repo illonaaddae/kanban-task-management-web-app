@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { dbState, isDbConnected } from "../config/db";
+import { dbName, dbState, isDbConnected } from "../config/db";
 import { env } from "../config/env";
 
 /**
@@ -20,6 +20,9 @@ export function getHealth(_req: Request, res: Response): void {
       timestamp: new Date().toISOString(),
       environment: env.NODE_ENV,
       database: dbState(),
+      // Named explicitly so a misconfigured connection string is visible here
+      // rather than only surfacing later as "my data has vanished".
+      databaseName: dbName(),
     },
   });
 }

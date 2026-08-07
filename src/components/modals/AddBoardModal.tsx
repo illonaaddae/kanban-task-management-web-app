@@ -17,13 +17,18 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
   const user = useStore((state) => state.user);
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>(['Todo', 'Doing']);
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim() || !user) return;
+    if (!name.trim() || !user || saving) return;
     const filtered = columns.filter(c => c.trim());
     if (!filtered.length) return;
 
+    // Creating a board is one request per column plus the board itself, so it
+    // takes a couple of seconds. Show that here rather than letting the page
+    // behind the modal blank out, and block a second submit.
+    setSaving(true);
     try {
       await createBoard(user.id, {
         name: name.trim(),
@@ -32,8 +37,11 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
       toast.success(`Board '${name.trim()}' created!`);
       setName(''); setColumns(['Todo', 'Doing']); onClose();
     } catch (error) {
-      console.error('Failed to create board', error);
-      toast.error('Failed to create board');
+      // Show the API's own message — "requires owner access", a validation
+      // detail, or the request timeout — rather than a generic failure.
+      toast.error(error instanceof Error ? error.message : 'Failed to create board');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -47,7 +55,9 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
           onAdd={() => setColumns([...columns, ''])}
           onRemove={(i) => setColumns(columns.filter((_, j) => j !== i))}
           onChange={(i, v) => { const u = [...columns]; u[i] = v; setColumns(u); }} />
-        <Button type="submit" variant="primary" size="large">Create New Board</Button>
+        <Button type="submit" variant="primary" size="large" disabled={saving}>
+          {saving ? 'Creating board…' : 'Create New Board'}
+        </Button>
       </form>
     </Modal>
   );

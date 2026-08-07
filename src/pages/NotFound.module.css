@@ -15,7 +15,7 @@
 .title {
   font-size: 8rem;
   font-weight: 700;
-  color: var(--color-main-purple);
+  color: var(--primary);
   margin: 0;
   line-height: 1;
 }

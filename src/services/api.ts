@@ -78,6 +78,60 @@ export interface RequestOptions {
   /** Skip the refresh-and-retry dance. Set on the refresh call itself. */
   skipRefresh?: boolean;
   signal?: AbortSignal;
+  /** Override the default request timeout, in milliseconds. */
+  timeoutMs?: number;
+}
+
+/**
+ * How long to wait before giving up on a request.
+ *
+ * Generous, because a free-tier host that has spun down can take 30–60 seconds
+ * to answer its first request. But *finite*: without a ceiling a stalled
+ * connection leaves the promise pending forever, so a loading flag set before
+ * the call is never cleared and the UI spins with no error and no way out. A
+ * failed request the user can retry beats an honest-looking spinner.
+ */
+const DEFAULT_TIMEOUT_MS = 60_000;
+
+/**
+ * Runs `fetch` with a timeout, honouring a caller-supplied signal as well.
+ *
+ * Built from AbortController rather than `AbortSignal.any` so it does not depend
+ * on very recent browser support, and the timer is always cleared — including on
+ * the error path — so a long-lived page does not accumulate timers.
+ */
+async function fetchWithTimeout(
+  request: Request,
+  options: RequestOptions,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  const onCallerAbort = () => controller.abort();
+  options.signal?.addEventListener("abort", onCallerAbort, { once: true });
+
+  try {
+    return await fetch(request, { signal: controller.signal });
+  } catch (error) {
+    // Distinguish "we gave up" from "the caller cancelled" — only the first is
+    // an error worth showing.
+    if (timedOut) {
+      throw new ApiError(
+        `The server did not respond within ${Math.round(timeoutMs / 1000)}s. It may be starting up — please try again.`,
+        408,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    options.signal?.removeEventListener("abort", onCallerAbort);
+  }
 }
 
 interface SuccessEnvelope<T> {
@@ -155,11 +209,14 @@ async function refreshSession(): Promise<boolean> {
   if (!refreshToken) return false;
 
   try {
-    const response = await fetch(`${API_URL}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
+    const response = await fetchWithTimeout(
+      new Request(`${API_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      }),
+      {},
+    );
 
     const data = await readEnvelope<{ accessToken: string; refreshToken: string }>(
       response,
@@ -193,10 +250,15 @@ export async function apiFetch<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(buildRequest(path, options));
+    response = await fetchWithTimeout(buildRequest(path, options), options);
   } catch (error) {
+    // A timeout already carries a precise message — do not flatten it into the
+    // generic network error below.
+    if (error instanceof ApiError) throw error;
     if (error instanceof DOMException && error.name === "AbortError") throw error;
-    // fetch only rejects on a network-level failure.
+    // Past this point fetch only rejects on a network-level failure, which
+    // includes a CORS rejection: the browser refuses to expose the response, so
+    // "cannot reach the server" is the honest description from here.
     throw new ApiError(
       "Cannot reach the server. Check that the API is running and try again.",
       0,
@@ -218,7 +280,10 @@ export async function apiFetch<T>(
   }
 
   // Rebuild so the replay picks up the new token.
-  const retried = await fetch(buildRequest(path, { ...options, skipRefresh: true }));
+  const retried = await fetchWithTimeout(
+    buildRequest(path, { ...options, skipRefresh: true }),
+    options,
+  );
   if (retried.status === 401) tokenStore.clear();
 
   return readEnvelope<T>(retried);

@@ -17,6 +17,17 @@ export function dbState(): string {
   return READY_STATES[mongoose.connection.readyState] ?? "unknown";
 }
 
+/**
+ * Which database the connection actually landed on.
+ *
+ * Worth reporting: a connection string missing its path silently defaults to
+ * `test`, and "connected" alone hides that completely — reads and writes go to
+ * the wrong database while every health check stays green.
+ */
+export function dbName(): string {
+  return mongoose.connection.name || "(none)";
+}
+
 export function isDbConnected(): boolean {
   return mongoose.connection.readyState === 1;
 }
