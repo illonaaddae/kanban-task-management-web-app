@@ -23,7 +23,7 @@ A full-featured, production-ready task management application built with **React
 This application serves as a modern productivity tool allowing teams and individuals to organize tasks across customized boards. It moves beyond basic CRUD operations to offer a drag-and-drop interface, real-time updates, and a global state management system powered by **Zustand**.
 
 ### Live Demo
-**[Open the live app](https://kanban-task-management-web-app-lab.netlify.app)** · API at **[https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)**
+**[Open the live app](https://kanban-task-management-web-app-lab.netlify.app)** · API at **[https://kanban-api-illona.azurewebsites.net/health](https://kanban-api-illona.azurewebsites.net/health)**
 
 Sign in with a seeded demo account, or register your own:
 
@@ -601,7 +601,52 @@ Setting it up in Google Cloud Console is a manual step; see below.
 
 ## Deployment
 
-### Backend → Render
+The API is deployed **twice**, to Azure App Service and to Render, from the same
+`server/` directory. Azure is live; Render is kept configured and healthy as a
+fallback, and switching between them is one Netlify variable plus a rebuild.
+
+### Backend → Azure App Service (live)
+
+Deployed by GitHub Actions on every push to `main` that touches `server/**`
+(`.github/workflows/deploy-api.yml`). The workflow runs the full test suite,
+builds, prunes dev dependencies, ships only `server/`, then polls `/health` until
+it answers 200 — so a broken build fails the run rather than the site.
+
+| Setting | Value |
+|---|---|
+| Plan | B1 Linux, France Central |
+| Runtime | Node 22 |
+| Resource group | `kanban-rg` |
+| Health check | `/health` |
+
+**Region matters.** France Central was chosen to sit next to the Atlas cluster
+(AWS `eu-west-3`) — the pairing is visible in the connection string's SRV target.
+A mismatched region adds a round trip to every query.
+
+**Two things that will bite you:**
+
+- **Publish-profile auth must be enabled.** A fresh App Service has SCM basic
+  authentication disabled, and `azure/webapps-deploy` then fails with
+  *"Publish profile is invalid"*. Enable it under
+  **Configuration → General settings → SCM Basic Auth Publishing Credentials**,
+  then download the profile again and update the `AZURE_WEBAPP_PUBLISH_PROFILE`
+  secret — the old download does not start working.
+- **Leave `PORT` unset.** Azure injects it and `env.ts` coerces it; setting it
+  yourself makes the container listen on the wrong port and every request 503s.
+
+Set the variables from the env table under **Settings → Environment variables**,
+or from the CLI:
+
+```bash
+az webapp config appsettings set -n kanban-api-illona -g kanban-rg \
+  --settings DATABASE_URL='...' FRONTEND_URL='https://<your-site>.netlify.app'
+```
+
+Unlike Render's free tier it does not spin down, so the first request is not slow.
+
+**Live API:** https://kanban-api-illona.azurewebsites.net — check [https://kanban-api-illona.azurewebsites.net/health](https://kanban-api-illona.azurewebsites.net/health)
+
+### Backend → Render (fallback)
 
 New → **Web Service** → connect this repo:
 
@@ -631,7 +676,7 @@ The free instance spins down after roughly 15 minutes idle, so the first request
 after a quiet period takes 30–60 seconds while it wakes. Warm it up before
 demoing. Everything after that is normal speed.
 
-**Live API:** https://kanban-task-management-web-app-njhs.onrender.com — check [https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)
+**Fallback API:** https://kanban-task-management-web-app-njhs.onrender.com — check [https://kanban-task-management-web-app-njhs.onrender.com/health](https://kanban-task-management-web-app-njhs.onrender.com/health)
 
 ### Frontend → Netlify
 
@@ -645,7 +690,7 @@ Vite project at the repo root.
 In **Site configuration → Environment variables** set:
 
 ```
-VITE_API_URL=https://<your-service>.onrender.com
+VITE_API_URL=https://kanban-api-illona.azurewebsites.net
 VITE_AUTH_PROVIDER=api
 ```
 
@@ -675,7 +720,12 @@ and where the OAuth flow lands.
 4. **Authorized redirect URIs** — these must match `GOOGLE_REDIRECT_URI`
    character for character, including the scheme and any trailing slash:
    - `http://localhost:5050/auth/google/callback`
+   - `https://kanban-api-illona.azurewebsites.net/auth/google/callback`
    - `https://<your-service>.onrender.com/auth/google/callback`
+
+   Register **every** backend you might make live. Google rejects any redirect it
+   does not already know, so switching the frontend to a backend whose callback
+   is missing breaks sign-in with `redirect_uri_mismatch` and nothing else.
 
    These point at the **backend**, not the frontend. Authorized JavaScript
    origins can be left empty — the browser never talks to Google directly here.
@@ -688,9 +738,10 @@ and where the OAuth flow lands.
    ```
 
    All three or none — a partial config fails at startup on purpose.
-6. On Render, set the same three variables with the Render callback URL, and make
-   sure `FRONTEND_URL` is the Netlify URL (it is where the flow redirects at the
-   end, and the CORS origin).
+6. On each backend, set the same three variables with **that backend's** callback
+   URL, and make sure `FRONTEND_URL` is the Netlify origin — scheme and host only,
+   no path. It is the CORS origin, the OAuth landing page, and the base of every
+   invitation link, so a trailing `/login` breaks all three at once.
 
 `redirect_uri_mismatch` is the usual failure and always means step 4 does not
 match `GOOGLE_REDIRECT_URI` exactly.
