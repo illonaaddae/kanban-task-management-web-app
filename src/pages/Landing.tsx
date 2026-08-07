@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useStore } from '../store/store';
 import { PATHS } from '../routes';
+import { ThemeToggleButton } from '../components/ui/ThemeToggleButton';
 import { Logo } from '../components/ui/Logo';
 import { InviteArt, PermissionsArt, TeamBoardArt } from './landingArt';
 import styles from './Landing.module.css';
@@ -131,6 +132,9 @@ export function Landing() {
             <Link to={PATHS.docs}>Docs</Link>
           </nav>
           <div className={styles.navActions}>
+            {/* The sidebar switch lives inside the app, so without this a visitor
+                who prefers light had no way to ask for it. */}
+            <ThemeToggleButton />
             <Link to={PATHS.login} className={styles.navSignIn}>
               Sign in
             </Link>

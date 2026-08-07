@@ -323,6 +323,18 @@
   margin-right: auto;
 }
 
+/* The head is capped narrower for readability, so it needs to start at the same
+   left edge as the content under it rather than being centred on its own. */
+.sectionAlt > .sectionHead {
+  margin-inline: auto;
+  max-width: 72rem;
+}
+
+.sectionAlt .sectionTitle,
+.sectionAlt .sectionBody {
+  max-width: 40rem;
+}
+
 .sectionHead {
   max-width: 40rem;
   margin-bottom: 2.5rem;
@@ -421,8 +433,14 @@
      `auto-fit` collapses the empty track and stretches the five to fill, which is
      how the last row ended up out of proportion with the first. */
   grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  gap: 1.5rem;
-  margin: 0;
+  gap: 2rem 1.5rem;
+  /* `margin: 0` here used to beat the `margin-left/right: auto` that
+     `.sectionAlt > *` centres children with, since both rules have the same
+     specificity and this one comes later. The grid hugged the left edge of the
+     full-bleed band while the heading stayed in the 72rem column, which read as a
+     huge margin on one side. Only the block margins are zeroed now. */
+  margin-block: 0;
+  margin-inline: auto;
   padding: 0;
   list-style: none;
 }

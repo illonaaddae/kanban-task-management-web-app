@@ -4,12 +4,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { Docs } from '../Docs';
 import { DOC_SECTIONS } from '../docsContent';
 import { PATHS } from '../../routes';
+import { ThemeProvider } from '../../context/ThemeContext';
 
 function renderDocs() {
   return render(
-    <MemoryRouter initialEntries={[PATHS.docs]}>
-      <Docs />
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[PATHS.docs]}>
+        <Docs />
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 

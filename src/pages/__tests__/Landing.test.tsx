@@ -4,15 +4,20 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Landing } from '../Landing';
 import { useStore } from '../../store/store';
 import { PATHS } from '../../routes';
+import { ThemeProvider } from '../../context/ThemeContext';
 
 function renderLanding() {
+  // The nav carries a theme toggle, so the page needs the provider. Its own
+  // MemoryRouter stays, because these tests assert on the signed-in redirect.
   return render(
-    <MemoryRouter initialEntries={[PATHS.landing]}>
-      <Routes>
-        <Route path={PATHS.landing} element={<Landing />} />
-        <Route path={PATHS.dashboard} element={<p>dashboard reached</p>} />
-      </Routes>
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[PATHS.landing]}>
+        <Routes>
+          <Route path={PATHS.landing} element={<Landing />} />
+          <Route path={PATHS.dashboard} element={<p>dashboard reached</p>} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 
