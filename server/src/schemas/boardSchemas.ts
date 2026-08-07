@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { COLLABORATOR_ROLES } from "../models/Board";
+import { objectIdSchema } from "./commonSchemas";
 
 const titleField = z
   .string()
@@ -17,12 +18,24 @@ const titleOrName = z
   .object({
     title: titleField.optional(),
     name: titleField.optional(),
+    /**
+     * Makes this a team board. `null` detaches it, making it personal again —
+     * distinct from omitting the key, which leaves the current team alone.
+     */
+    organizationId: objectIdSchema.nullable().optional(),
   })
   .refine((data) => Boolean(data.title ?? data.name), {
     path: ["title"],
     message: "Board title is required",
   })
-  .transform((data) => ({ title: (data.title ?? data.name) as string }));
+  .transform((data) => ({
+    title: (data.title ?? data.name) as string,
+    // Preserved only when present, so "leave it alone" and "detach it" stay
+    // different instructions after the transform drops everything else.
+    ...(data.organizationId !== undefined
+      ? { organizationId: data.organizationId }
+      : {}),
+  }));
 
 export const createBoardSchema = titleOrName;
 export const updateBoardSchema = titleOrName;

@@ -185,7 +185,12 @@ describe("boardService — races between the access check and the write", () => 
     mockedBoards.updateById.mockResolvedValue(null);
 
     await expect(
-      boardService.rename(BOARD_ID.toString(), "New", "owner"),
+      boardService.rename(
+        BOARD_ID.toString(),
+        "New",
+        "owner",
+        fakeUser(OWNER, "editor"),
+      ),
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 

@@ -6,7 +6,10 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // 'dist' plus iCloud Drive conflict copies ("ActivityPanel 2.tsx"), which git
+  // already ignores. Linting them reports the same problems twice and buries real
+  // findings under duplicates of themselves.
+  globalIgnores(['dist', '**/* [0-9].*', '**/* [0-9][0-9].*']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

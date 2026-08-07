@@ -8,6 +8,8 @@ import { BoardView } from "./pages/BoardView";
 import { Login } from "./pages/Login";
 import { AcceptInvite } from "./pages/AcceptInvite";
 import { Admin } from "./pages/Admin";
+import { Teams } from "./pages/Teams";
+import { MyTasks } from "./pages/MyTasks";
 import { NotFound } from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useTheme } from "./context/ThemeContext";
@@ -71,6 +73,8 @@ function App() {
           {/* Nested protected routes */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/board/:boardId" element={<BoardView />} />
+          <Route path="/my-tasks" element={<MyTasks />} />
+          <Route path="/teams" element={<Teams />} />
           <Route path="/admin" element={<Admin />} />
         </Route>
 

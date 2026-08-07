@@ -5,6 +5,7 @@ import type { UserDocument } from "../models/User";
 import type { EffectiveRole } from "../middlewares/boardAccess";
 import { activityRepository } from "../repositories/activityRepository";
 import { boardRepository } from "../repositories/boardRepository";
+import { organizationRepository } from "../repositories/organizationRepository";
 import { columnRepository } from "../repositories/columnRepository";
 import { taskRepository } from "../repositories/taskRepository";
 import { userRepository } from "../repositories/userRepository";
@@ -94,7 +95,11 @@ export function withMyRole(board: BoardDocument, myRole: EffectiveRole): BoardWi
   return { ...(board.toJSON() as Record<string, unknown>), myRole };
 }
 
-function roleOnBoard(board: BoardDocument, user: UserDocument): EffectiveRole {
+function roleOnBoard(
+  board: BoardDocument,
+  user: UserDocument,
+  teamBoardIds?: Set<string>,
+): EffectiveRole {
   if (board.owner.toString() === user._id.toString()) return "owner";
 
   const entry = board.collaborators.find(
@@ -102,18 +107,67 @@ function roleOnBoard(board: BoardDocument, user: UserDocument): EffectiveRole {
   );
   if (entry) return entry.role;
 
+  // Team boards: membership grants editor, mirroring boardAccess. `teamBoardIds`
+  // is the set the caller reached *through* a team, computed once per list rather
+  // than re-read per board.
+  if (board.organization && teamBoardIds?.has(board._id.toString())) return "editor";
+
   return user.role === "admin" ? "admin" : "viewer";
 }
 
 export const boardService = {
   /** Boards the user owns plus boards shared with them, each tagged with myRole. */
   async listForUser(user: UserDocument): Promise<BoardWithRole[]> {
-    const boards = await boardRepository.findForUser(user._id);
-    return boards.map((board) => withMyRole(board, roleOnBoard(board, user)));
+    const orgs = await organizationRepository.findForUser(user._id);
+    const orgIds = orgs.map((org) => org._id);
+
+    const boards = await boardRepository.findForUser(user._id, orgIds);
+
+    // Which boards the caller reached via a team, so `myRole` can say `editor`
+    // for them without a lookup per board.
+    const orgIdSet = new Set(orgIds.map((id) => id.toString()));
+    const teamBoardIds = new Set(
+      boards
+        .filter((board) => board.organization && orgIdSet.has(board.organization.toString()))
+        .map((board) => board._id.toString()),
+    );
+
+    return boards.map((board) =>
+      withMyRole(board, roleOnBoard(board, user, teamBoardIds)),
+    );
   },
 
-  async create(user: UserDocument, title: string): Promise<BoardWithRole> {
-    const board = await boardRepository.create({ title, owner: user._id });
+  /**
+   * Creates a board, optionally inside a team.
+   *
+   * A team board is reachable by every member of that team, so the caller has to
+   * actually be in the team they are naming — otherwise this would be a way to
+   * publish a board into somebody else's team.
+   */
+  async create(
+    user: UserDocument,
+    title: string,
+    organizationId?: string,
+  ): Promise<BoardWithRole> {
+    if (organizationId) {
+      const org = await organizationRepository.findById(organizationId);
+      if (!org) throw AppError.notFound("Organization not found");
+
+      const userId = user._id.toString();
+      const belongs =
+        org.owner.toString() === userId ||
+        org.members.some((m) => m.user.toString() === userId);
+
+      if (!belongs && user.role !== "admin") {
+        throw AppError.forbidden("You are not a member of that organization");
+      }
+    }
+
+    const board = await boardRepository.create({
+      title,
+      owner: user._id,
+      ...(organizationId ? { organization: organizationId } : {}),
+    });
 
     await activityService.log({
       boardId: board._id,
@@ -183,8 +237,42 @@ export const boardService = {
     };
   },
 
-  async rename(boardId: string, title: string, myRole: EffectiveRole): Promise<BoardWithRole> {
-    const board = await boardRepository.updateById(boardId, { title });
+  /**
+   * Renames a board, and optionally moves it into or out of a team.
+   *
+   * `organizationId: null` detaches it; omitting the key leaves the current team
+   * alone. Moving a board into a team grants every member of that team access, so
+   * the caller has to be in it — same check as creation.
+   */
+  async rename(
+    boardId: string,
+    title: string,
+    myRole: EffectiveRole,
+    user: UserDocument,
+    organizationId?: string | null,
+  ): Promise<BoardWithRole> {
+    const updates: { title: string; organization?: string | null } = { title };
+
+    if (organizationId !== undefined) {
+      if (organizationId === null) {
+        updates.organization = null;
+      } else {
+        const org = await organizationRepository.findById(organizationId);
+        if (!org) throw AppError.notFound("Organization not found");
+
+        const userId = user._id.toString();
+        const belongs =
+          org.owner.toString() === userId ||
+          org.members.some((m) => m.user.toString() === userId);
+
+        if (!belongs && user.role !== "admin") {
+          throw AppError.forbidden("You are not a member of that organization");
+        }
+        updates.organization = organizationId;
+      }
+    }
+
+    const board = await boardRepository.updateById(boardId, updates);
     if (!board) throw AppError.notFound("Board not found");
 
     return withMyRole(board, myRole);

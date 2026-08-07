@@ -4,6 +4,8 @@ import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { ColumnInputs } from '../board/ColumnInputs';
+import { Dropdown } from '../ui/Dropdown';
+import { useOrganizations } from '../../queries/orgs';
 import toast from 'react-hot-toast';
 import styles from './AddBoardModal.module.css';
 
@@ -14,6 +16,10 @@ interface AddBoardModalProps {
 
 export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
   const createBoard = useCreateBoard();
+  // Teams the caller is in. A board put in a team is reachable by every member,
+  // which is how a teammate gets to work without a per-board invitation.
+  const { data: organizations = [] } = useOrganizations();
+  const [organizationId, setOrganizationId] = useState('');
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>(['Todo', 'Doing']);
   const [saving, setSaving] = useState(false);
@@ -31,10 +37,12 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
     try {
       await createBoard.mutateAsync({
         name: name.trim(),
-        columns: filtered.map(c => ({ name: c.trim(), tasks: [] }))
+        columns: filtered.map(c => ({ name: c.trim(), tasks: [] })),
+        // '' means personal, which the API expresses by omitting the key.
+        ...(organizationId ? { organizationId } : {}),
       });
       toast.success(`Board '${name.trim()}' created!`);
-      setName(''); setColumns(['Todo', 'Doing']); onClose();
+      setName(''); setColumns(['Todo', 'Doing']); setOrganizationId(''); onClose();
     } catch (error) {
       // Show the API's own message — "requires owner access", a validation
       // detail, or the request timeout — rather than a generic failure.
@@ -50,6 +58,17 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
       <form onSubmit={handleSubmit} className={styles.content}>
         <Input label="Board Name" placeholder="e.g. Web Design" value={name}
           onChange={(e) => setName(e.target.value)} />
+        {organizations.length > 0 && (
+          <Dropdown
+            label="Team (optional)"
+            value={organizationId}
+            onChange={setOrganizationId}
+            options={[
+              { value: '', label: 'Just me' },
+              ...organizations.map((org) => ({ value: org.id, label: org.name })),
+            ]}
+          />
+        )}
         <ColumnInputs columns={columns}
           onAdd={() => setColumns([...columns, ''])}
           onRemove={(i) => setColumns(columns.filter((_, j) => j !== i))}

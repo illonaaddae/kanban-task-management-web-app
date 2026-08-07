@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from "express";
 import type { BoardDocument } from "../models/Board";
 import { boardRepository } from "../repositories/boardRepository";
+import { organizationRepository } from "../repositories/organizationRepository";
 import { AppError } from "../utils/AppError";
 import { catchAsync } from "../utils/catchAsync";
 
@@ -44,11 +45,38 @@ function resolveBoardId(req: Request): string | undefined {
   return req.boardId ?? single ?? bodyId;
 }
 
-function relationshipTo(board: BoardDocument, userId: string): EffectiveRole | null {
+/**
+ * The caller's relationship to a board, most specific first:
+ *
+ *   1. owner              — they created it
+ *   2. collaborator entry — they were invited to this board specifically
+ *   3. team membership    — the board belongs to a team they are in
+ *
+ * An explicit collaborator entry beats the team default, which is what makes it
+ * possible to hold one person to `viewer` on a board their whole team can edit.
+ */
+async function relationshipTo(
+  board: BoardDocument,
+  userId: string,
+): Promise<EffectiveRole | null> {
   if (board.owner.toString() === userId) return "owner";
 
   const entry = board.collaborators.find((c) => c.user.toString() === userId);
-  return entry ? entry.role : null;
+  if (entry) return entry.role;
+
+  if (!board.organization) return null;
+
+  // Team boards are shared work: a member who cannot move a card cannot do the
+  // job the board exists for, so membership grants `editor`. Downgrading a
+  // specific person is still possible — add them as a `viewer` collaborator and
+  // the branch above wins.
+  const org = await organizationRepository.findById(board.organization);
+  if (!org) return null;
+
+  const isOrgOwner = org.owner.toString() === userId;
+  const isOrgMember = org.members.some((m) => m.user.toString() === userId);
+
+  return isOrgOwner || isOrgMember ? "editor" : null;
 }
 
 /**
@@ -81,7 +109,7 @@ export const boardAccess = (minRole: MinBoardRole): RequestHandler =>
 
     const userId = req.user._id.toString();
     const isGlobalAdmin = req.user.role === "admin";
-    const relationship = relationshipTo(board, userId);
+    const relationship = await relationshipTo(board, userId);
 
     if (!relationship && !isGlobalAdmin) {
       throw AppError.forbidden("You do not have access to this board");

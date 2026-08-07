@@ -54,6 +54,8 @@ export async function createBoard(
 ): Promise<Board> {
   const { board: created } = await api.post<{ board: ApiBoardSummary }>("/boards", {
     name: board.name,
+    // Only sent when set: the API treats an absent key as "personal board".
+    ...(board.organizationId ? { organizationId: board.organizationId } : {}),
   });
 
   for (const column of board.columns ?? []) {

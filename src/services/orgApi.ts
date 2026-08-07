@@ -61,6 +61,114 @@ export interface MyInvitation {
   expiresAt: string;
 }
 
+/** Somebody the caller shares at least one team with. */
+export interface Teammate {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  /** Which shared teams they are in — shown as context in the picker. */
+  teams: string[];
+}
+
+export interface MemberProgress {
+  /** Null for the unassigned bucket. */
+  userId: string | null;
+  name: string;
+  email: string;
+  avatar?: string;
+  assigned: number;
+  completed: number;
+  overdue: number;
+  subtasks: { total: number; completed: number };
+  completionRate: number;
+}
+
+export interface BoardProgress {
+  boardId: string;
+  /** The column treated as done — the last one by position. */
+  doneColumn: string | null;
+  totals: {
+    tasks: number;
+    completed: number;
+    overdue: number;
+    unassigned: number;
+    completionRate: number;
+  };
+  members: MemberProgress[];
+}
+
+/** One of the caller's assigned tasks, with the context needed to open it. */
+export interface AssignedTask {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  position: number;
+  dueDate: string | null;
+  isOverdue: boolean;
+  isDone: boolean;
+  subtasks: { total: number; completed: number };
+  board: { id: string; name: string; organizationId: string | null };
+  column: { id: string; name: string };
+}
+
+export interface TeamAnalytics {
+  organizationId: string;
+  boards: number;
+  totals: {
+    tasks: number;
+    completed: number;
+    overdue: number;
+    unassigned: number;
+    completionRate: number;
+  };
+  members: MemberProgress[];
+  perBoard: Array<{
+    boardId: string;
+    name: string;
+    tasks: number;
+    completed: number;
+    overdue: number;
+    completionRate: number;
+  }>;
+}
+
+// ── Teammates & progress ────────────────────────────────────────────────────
+
+/** Everything assigned to the caller, across every board they can reach. */
+export async function getMyTasks(): Promise<AssignedTask[]> {
+  const { tasks } = await api.get<{ tasks: AssignedTask[] }>("/tasks/mine");
+  return tasks;
+}
+
+/** Team-wide roll-up. Team admins only, server-side. */
+export async function getTeamAnalytics(orgId: string): Promise<TeamAnalytics> {
+  const { analytics } = await api.get<{ analytics: TeamAnalytics }>(
+    `/orgs/${orgId}/analytics`,
+  );
+  return analytics;
+}
+
+/**
+ * Everyone across every team the caller belongs to.
+ *
+ * Populates the share picker. Being a teammate grants nothing on a board — this
+ * only decides whose name is offered, so the board's own collaborator list stays
+ * the authorisation model.
+ */
+export async function getTeammates(): Promise<Teammate[]> {
+  const { teammates } = await api.get<{ teammates: Teammate[] }>("/orgs/teammates");
+  return teammates;
+}
+
+export async function getBoardProgress(boardId: string): Promise<BoardProgress> {
+  const { progress } = await api.get<{ progress: BoardProgress }>(
+    `/boards/${boardId}/progress`,
+  );
+  return progress;
+}
+
 // ── Organizations ───────────────────────────────────────────────────────────
 
 export async function getOrganizations(): Promise<Organization[]> {

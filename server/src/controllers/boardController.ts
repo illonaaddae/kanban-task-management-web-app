@@ -37,8 +37,12 @@ export const listBoards = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createBoard = catchAsync(async (req: Request, res: Response) => {
-  const { title } = req.body as CreateBoardInput;
-  const board = await boardService.create(requireUser(req), title);
+  const { title, organizationId } = req.body as CreateBoardInput;
+  const board = await boardService.create(
+    requireUser(req),
+    title,
+    organizationId ?? undefined,
+  );
 
   res.status(201).json({ status: "success", data: { board } });
 });
@@ -64,9 +68,15 @@ export const getFullBoard = catchAsync(async (req: Request, res: Response) => {
 
 export const updateBoard = catchAsync(async (req: Request, res: Response) => {
   const { board, myRole } = requireBoard(req);
-  const { title } = req.body as UpdateBoardInput;
+  const { title, organizationId } = req.body as UpdateBoardInput;
 
-  const updated = await boardService.rename(board._id.toString(), title, myRole);
+  const updated = await boardService.rename(
+    board._id.toString(),
+    title,
+    myRole,
+    requireUser(req),
+    organizationId,
+  );
 
   res.status(200).json({ status: "success", data: { board: updated } });
 });

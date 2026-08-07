@@ -282,9 +282,26 @@ Two independent levels:
 
 1. **Global role** (`User.role`) — `admin` bypasses board checks entirely;
    `editor`/`viewer` are the defaults for new accounts.
-2. **Board-level role**, resolved per request by `boardAccess(minRole)`:
-   `owner` (board.owner) > collaborator entry role > none. Ranked
-   `viewer < editor < owner`.
+2. **Board-level role**, resolved per request by `boardAccess(minRole)`, most
+   specific first:
+   1. `owner` — they created the board
+   2. collaborator entry role — they were invited to *this* board
+   3. `editor` — the board belongs to a team they are in
+   4. otherwise `403`
+
+   Ranked `viewer < editor < owner`. The order matters: an explicit collaborator
+   entry beats the team default, which is the only way to hold one person to
+   `viewer` on a board their whole team can edit.
+3. **Team-level role** (`orgAccess(minRole)`), for the team's own resources:
+   `member < orgAdmin < owner`, with the platform `admin` above all of them.
+
+**Team boards.** A board with an `organization` is reachable by every member of
+that team as an `editor`, with no per-board invitation — that is the point of a
+team board. Membership grants `editor` rather than `viewer` because a member who
+cannot move a card cannot do the work the board exists for, and rather than
+`owner` because renaming, sharing and deleting stay with whoever created it.
+Leaving the team removes the access immediately, since nothing was copied onto
+the board.
 
 | Action | viewer | editor | owner | admin |
 |---|---|---|---|---|
@@ -326,11 +343,12 @@ could be probed for existence by watching the status code.
 
 | Method | Path | Role | Notes |
 |---|---|---|---|
-| GET | `/boards` | authenticated | Owned + shared, each tagged with `myRole` |
-| POST | `/boards` | authenticated | `{name}` or `{title}`. Creator becomes owner |
+| GET | `/boards` | authenticated | Owned + shared + every board of a team you are in, each tagged with `myRole` |
+| POST | `/boards` | authenticated | `{name}` or `{title}`, plus optional `{organizationId}` to make it a team board. `403` for a team you are not in, `404` if it does not exist |
 | GET | `/boards/{id}` | viewer | Collaborators resolved, for the share modal |
 | GET | `/boards/{id}/full` | viewer | The nested board the frontend renders in one request |
-| PUT | `/boards/{id}` | **owner** | Rename |
+| PUT | `/boards/{id}` | **owner** | Rename. Optional `organizationId` moves it into a team, `null` detaches it, omitting the key leaves it alone |
+| GET | `/boards/{id}/progress` | viewer | Per-person counts for this board — see **Progress** below |
 | DELETE | `/boards/{id}` | **owner** | Cascades columns, tasks and activity |
 | GET | `/boards/{id}/activity` | viewer | `?page=&limit=` (limit ≤ 100), newest first, with pagination metadata |
 
@@ -361,6 +379,8 @@ below means team admin; a platform admin bypasses these checks.
 | PATCH | `/orgs/{id}` | **owner** | `{name}` |
 | DELETE | `/orgs/{id}` | **owner** | Cascades its invitations |
 | GET | `/orgs/{id}/members` | member | |
+| GET | `/orgs/{id}/analytics` | admin | Team-wide roll-up across every board the team owns |
+| GET | `/orgs/teammates` | — | Everyone across every team you are in, deduplicated. Populates the share picker; grants nothing |
 | PATCH | `/orgs/{id}/members/{userId}` | admin | `{role}`. `400` for the owner, `404` for a non-member |
 | DELETE | `/orgs/{id}/members/{userId}` | member* | *Removing **yourself** is "leave team"; removing anyone else needs admin. `400` for the owner |
 
@@ -420,6 +440,32 @@ checked rather than assumed.
 address that owns the API key**. Point it at a verified domain to reach anyone
 else.
 
+#### Progress and analytics
+
+Two views, scoped differently on purpose.
+
+`GET /boards/{id}/progress` covers **one board** and is readable by anyone on it —
+it reveals nothing a viewer could not count off the board themselves. Rows are the
+board's own people (owner first, then collaborators), plus an `Unassigned` bucket,
+plus `Former member` for tasks still owned by somebody who has left. Members with
+nothing assigned are listed rather than hidden: "no tasks" is a fact about them.
+
+`GET /orgs/{id}/analytics` spans **every board the team owns** and is therefore
+team-admin only, since it aggregates boards an individual member might not open.
+
+**"Done" means the board's last column by position**, not a name match — boards
+rename that column freely ("Shipped", "Complete"), and position is what the UI
+already treats as the end of the flow. A board needs **at least two columns** for
+this to mean anything; with one column every task would count as complete, so a
+single-column board reports no completions at all.
+
+**Overdue** is a past `dueDate` on a task that is *not* in the done column —
+finishing something late does not leave it permanently overdue.
+
+There is deliberately no per-user cross-team roll-up. It would have to span boards
+the caller may not be able to see, and nothing bounds it, so the number would
+either leak or be wrong.
+
 #### Columns
 
 | Method | Path | Role | Notes |
@@ -436,6 +482,7 @@ else.
 | POST | `/tasks` | editor | `{boardId, columnId, title, description?, subtasks?, dueDate?, assignedTo?}`. `position` = end of column, `status` = column title |
 | GET | `/tasks/{id}` | viewer | |
 | PUT / PATCH | `/tasks/{id}` | editor | Both partial. Subtask toggling comes through here. Sending `columnId` is a `400` pointing at the move endpoint |
+| GET | `/tasks/mine` | authenticated | Everything assigned to you, across every board you can reach. Declared before `/:id` so `mine` is not parsed as an id |
 | PATCH | `/tasks/{id}/move` | editor | `{columnId, position}` — drag-and-drop persistence |
 | DELETE | `/tasks/{id}` | editor | Re-compacts the source column |
 

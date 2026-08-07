@@ -11,6 +11,7 @@ import {
   updateCollaborator,
 } from "../controllers/boardController";
 import { getBoardActivity } from "../controllers/activityController";
+import { getBoardProgress } from "../controllers/progressController";
 import { createColumn, reorderColumns } from "../controllers/columnController";
 import { protect } from "../middlewares/auth";
 import { boardAccess } from "../middlewares/boardAccess";
@@ -55,6 +56,14 @@ router.get(
   validate(idParamSchema, "params"),
   boardAccess("viewer"),
   getFullBoard,
+);
+
+// Viewer and above: it reveals nothing a viewer could not count off the board.
+router.get(
+  "/:id/progress",
+  validate(idParamSchema, "params"),
+  boardAccess("viewer"),
+  getBoardProgress,
 );
 
 router.get(

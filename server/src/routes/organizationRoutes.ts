@@ -12,6 +12,7 @@ import {
   updateMemberRole,
   updateOrganization,
 } from "../controllers/organizationController";
+import { getTeamAnalytics, listTeammates } from "../controllers/progressController";
 import { protect } from "../middlewares/auth";
 import { orgAccess } from "../middlewares/orgAccess";
 import { validate } from "../middlewares/validate";
@@ -31,6 +32,11 @@ const router = Router();
 router.use(protect);
 
 router.get("/", listOrganizations);
+
+// Before "/:id", or "teammates" is parsed as an organization id. No org scope of
+// its own: it spans every team the caller is in.
+router.get("/teammates", listTeammates);
+
 router.post("/", validate(createOrganizationSchema), createOrganization);
 
 // Param validation runs before orgAccess so a malformed id is a 400 rather than
@@ -49,6 +55,15 @@ router
     orgAccess("owner"),
     deleteOrganization,
   );
+
+// Admin and above: it spans every board in the team, including ones the caller
+// might not otherwise open.
+router.get(
+  "/:id/analytics",
+  validate(idParamSchema, "params"),
+  orgAccess("orgAdmin"),
+  getTeamAnalytics,
+);
 
 router.get(
   "/:id/members",
