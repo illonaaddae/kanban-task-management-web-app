@@ -1,6 +1,8 @@
 import { Modal } from './Modal';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStore } from '../../store/store';
+import { queryKeys } from '../../queries/keys';
 import { seedDemoData } from '../../utils/seedData';
 import styles from './SettingsModal.module.css';
 
@@ -11,7 +13,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const user = useStore((state) => state.user);
-  const fetchBoards = useStore((state) => state.fetchBoards);
+  const queryClient = useQueryClient();
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Settings">
@@ -76,29 +78,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 type="button"
                 onClick={async () => {
                   if (!user) {
-                    const currentUser = useStore.getState().user;
-                    if (!currentUser) {
-                      alert('You must be logged in to populate data');
-                      return;
-                    }
-                    try {
-                      const success = await seedDemoData(currentUser.id);
-                      if (success) {
-                        await useStore.getState().fetchBoards(currentUser.id);
-                        onClose();
-                      }
-                    } catch (e) {
-                      console.error('Seed error:', e);
-                      alert('Failed to seed data');
-                    }
+                    alert('You must be logged in to populate data');
                     return;
                   }
-                  
+
                   try {
                     const success = await seedDemoData(user.id);
                     if (success) {
-                        await fetchBoards(user.id);
-                        onClose();
+                      // Seeding writes boards behind the query layer's back, so
+                      // the list has to be marked stale explicitly.
+                      await queryClient.invalidateQueries({ queryKey: queryKeys.boards.all() });
+                      onClose();
                     }
                   } catch (e) {
                     console.error('Seed button error:', e);

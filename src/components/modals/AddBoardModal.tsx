@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
+import { useCreateBoard } from '../../queries/mutations';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -13,15 +13,14 @@ interface AddBoardModalProps {
 }
 
 export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
-  const createBoard = useStore((state) => state.createBoard);
-  const user = useStore((state) => state.user);
+  const createBoard = useCreateBoard();
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<string[]>(['Todo', 'Doing']);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim() || !user || saving) return;
+    if (!name.trim() || saving) return;
     const filtered = columns.filter(c => c.trim());
     if (!filtered.length) return;
 
@@ -30,7 +29,7 @@ export function AddBoardModal({ isOpen, onClose }: AddBoardModalProps) {
     // behind the modal blank out, and block a second submit.
     setSaving(true);
     try {
-      await createBoard(user.id, {
+      await createBoard.mutateAsync({
         name: name.trim(),
         columns: filtered.map(c => ({ name: c.trim(), tasks: [] }))
       });

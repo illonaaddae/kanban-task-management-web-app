@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
+import { useBoards } from '../queries/boards';
 import { useStore } from '../store/store';
 import { Button } from '../components/ui/Button';
 import styles from './Admin.module.css';
 
 export function Admin() {
-  const boards = useStore((state) => state.boards);
+  const { data: boards = [] } = useBoards();
   const user = useStore((state) => state.user);
   const logout = useStore((state) => state.logout);
   const navigate = useNavigate();

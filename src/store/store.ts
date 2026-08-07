@@ -1,22 +1,23 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type AuthState, createAuthSlice } from "./authSlice";
-import type { BoardState } from "./boardTypes";
-import { createBoardSlice } from "./boardSlice";
-import { createTaskSlice } from "./taskSlice";
-import { createMemberSlice } from "./memberSlice";
 
-export type StoreState = AuthState & BoardState;
+/**
+ * Session state only.
+ *
+ * Board, task and member data used to live here behind hand-written loading
+ * flags and manual cache updates — which is where the duplicate creates, stale
+ * lists and page-blanking spinners came from. That now belongs to React Query
+ * (see src/queries), leaving this store responsible for the one thing it is
+ * actually good at: who is signed in.
+ */
+export type StoreState = AuthState;
 export type StoreSet = (partial: Partial<StoreState>) => void;
-export type StoreGet = () => StoreState;
 
 export const useStore = create<StoreState>()(
   persist(
-    (set, get) => ({
-      ...createAuthSlice(set as StoreSet, get),
-      ...createBoardSlice(set as StoreSet, get),
-      ...createTaskSlice(set as StoreSet, get),
-      ...createMemberSlice(set as StoreSet, get),
+    (set) => ({
+      ...createAuthSlice(set as StoreSet),
     }),
     {
       name: "kanban-storage-v2",

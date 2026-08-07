@@ -1,8 +1,9 @@
 import type { User } from "../services/authService";
 import { authService } from "../services/authService";
 import { useKanbanStore } from "./kanbanStore";
+import { queryClient } from "../queries/queryClient";
 import toast from "react-hot-toast";
-import type { StoreSet, StoreGet } from "./store";
+import type { StoreSet } from "./store";
 
 /**
  * Applies the theme the server has stored for this account.
@@ -31,7 +32,7 @@ export interface AuthState {
 }
 let _checkingSession = false;
 
-export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
+export const createAuthSlice = (set: StoreSet): AuthState => ({
   user: null,
   isAuthenticated: false,
   loading: true,
@@ -40,12 +41,12 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
 
   login: async (email, password) => {
     // Clear old account state before logging in as a (possibly different) user
-    set({ loading: true, error: null, boards: [], currentBoard: null });
+    set({ loading: true, error: null });
     try {
       const user = await authService.login(email, password);
       applyServerTheme(user);
       set({ user, isAuthenticated: true });
-      await get().fetchBoards(user.id);
+      queryClient.clear();
       set({ loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });
@@ -54,12 +55,12 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
   },
   register: async (email, password, name) => {
     // Clear old account state before registering a new account
-    set({ loading: true, error: null, boards: [], currentBoard: null });
+    set({ loading: true, error: null });
     try {
       const user = await authService.register(email, password, name);
       applyServerTheme(user);
       set({ user, isAuthenticated: true });
-      await get().fetchBoards(user.id);
+      queryClient.clear();
       set({ loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });
@@ -74,9 +75,11 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
         user: null,
         isAuthenticated: false,
         loading: false,
-        boards: [],
-        currentBoard: null,
       });
+      // Boards live in the query cache now, so signing out has to empty it —
+      // otherwise the next account to sign in on this browser is served the
+      // previous one's boards from cache before any request goes out.
+      queryClient.clear();
     } catch (error: any) {
       set({ error: error.message, loading: false });
     }
@@ -179,10 +182,8 @@ export const createAuthSlice = (set: StoreSet, get: StoreGet): AuthState => ({
           user,
           isAuthenticated: true,
           loading: false,
-          boards: [],
-          currentBoard: null,
         });
-        await get().fetchBoards(user.id);
+        queryClient.clear();
 
         // Only toast after an active OAuth redirect, not on silent page-refresh restores.
         if (isOAuthReturn) {

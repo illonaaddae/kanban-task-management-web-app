@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useBoards } from '../../queries/boards';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/store';
 import { Logo } from '../ui/Logo';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { AddBoardModal } from '../modals/AddBoardModal';
@@ -12,7 +12,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
-  const boards = useStore((state) => state.boards);
+  const { data: boards = [] } = useBoards();
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();

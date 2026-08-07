@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useBoards } from '../../queries/boards';
 import { useLocation } from 'react-router-dom';
-import { useStore } from '../../store/store';
-import { useShallow } from 'zustand/react/shallow';
 import { Button } from '../ui/Button';
 import { BoardSelectorModal } from '../modals/BoardSelectorModal';
 import { AddTaskModal } from '../modals/AddTaskModal';
@@ -17,7 +16,7 @@ import styles from './Header.module.css';
 export function Header() {
   const location = useLocation();
 
-  const { boards } = useStore(useShallow((state) => ({ boards: state.boards })));
+  const { data: boards = [] } = useBoards();
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showEditBoard, setShowEditBoard] = useState(false);

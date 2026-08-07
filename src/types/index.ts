@@ -94,21 +94,3 @@ export interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-// Board Context Types
-export interface BoardContextType {
-  boards: Board[];
-  activeBoard: number | null;
-  setActiveBoard: (index: number) => void;
-  addBoard: (board: Board) => void;
-  updateBoard: (index: number, board: Board) => void;
-  deleteBoard: (index: number) => void;
-  addTask: (boardIndex: number, columnIndex: number, task: Task) => void;
-  updateTask: (boardIndex: number, columnIndex: number, taskIndex: number, task: Task) => void;
-  deleteTask: (boardIndex: number, columnIndex: number, taskIndex: number) => void;
-  toggleSubtask: (boardIndex: number, columnIndex: number, taskIndex: number, subtaskIndex: number) => void;
-  moveTask: (boardIndex: number, fromColumn: number, toColumn: number, taskIndex: number) => void;
-  // Drag and drop functions
-  reorderTasksInColumn: (boardIndex: number, columnIndex: number, startIndex: number, endIndex: number) => void;
-  moveTaskBetweenColumns: (boardIndex: number, sourceColIndex: number, destColIndex: number, taskIndex: number, newIndex: number) => void;
-  reorderColumns: (boardIndex: number, startIndex: number, endIndex: number) => void;
-}

@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
-import { useShallow } from 'zustand/react/shallow';
+import { useInviteCollaborator, useUpdateCollaboratorRole, useRemoveCollaborator } from '../../queries/mutations';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -51,17 +50,9 @@ function MemberAvatar({ member }: { member: BoardMember }) {
  * 403 whose message is shown as-is.
  */
 export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalProps) {
-  const {
-    inviteCollaborator,
-    updateCollaboratorRole,
-    removeCollaborator,
-  } = useStore(
-    useShallow((state) => ({
-      inviteCollaborator: state.inviteCollaborator,
-      updateCollaboratorRole: state.updateCollaboratorRole,
-      removeCollaborator: state.removeCollaborator,
-    })),
-  );
+  const inviteCollaborator = useInviteCollaborator();
+  const updateCollaboratorRole = useUpdateCollaboratorRole();
+  const removeCollaborator = useRemoveCollaborator();
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -88,7 +79,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     setInviting(true);
 
     try {
-      await inviteCollaborator(boardId, trimmed, role);
+      await inviteCollaborator.mutateAsync({ boardId, email: trimmed, role });
       toast.success(`Invited ${trimmed} as ${role}`);
       setEmail('');
     } catch (error) {
@@ -106,7 +97,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     setBusyId(member.id);
 
     try {
-      await updateCollaboratorRole(boardId, member.id, nextRole as CollaboratorRole);
+      await updateCollaboratorRole.mutateAsync({ boardId, userId: member.id, role: nextRole as CollaboratorRole });
       toast.success(`${member.name} is now ${nextRole === 'editor' ? 'an editor' : 'a viewer'}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not change the role');
@@ -119,7 +110,7 @@ export function ShareModal({ isOpen, onClose, boardId, boardName }: ShareModalPr
     setBusyId(member.id);
 
     try {
-      await removeCollaborator(boardId, member.id);
+      await removeCollaborator.mutateAsync({ boardId, userId: member.id });
       toast.success(`Removed ${member.name}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not remove the collaborator');

@@ -1,7 +1,6 @@
-import { useEffect } from "react";
 import { useParams, Navigate } from "react-router-dom";
-import { useStore } from "../store/store";
-import { useShallow } from "zustand/react/shallow";
+import { useBoard } from "../queries/boards";
+import { ApiError } from "../services/api";
 import { Column } from "../components/board/Column";
 import { EmptyBoard } from "../components/board/EmptyBoard";
 import { EditBoardModal } from "../components/modals/EditBoardModal";
@@ -19,50 +18,28 @@ import styles from "./BoardView.module.css";
 
 export function BoardView() {
   const { boardId } = useParams<{ boardId: string }>();
-  const {
-    boards,
-    currentBoard,
-    setCurrentBoard,
-    boardLoading,
-    boardError,
-    fetchBoards,
-    user,
-  } = useStore(
-    useShallow((state) => ({
-      boards: state.boards,
-      currentBoard: state.currentBoard,
-      setCurrentBoard: state.setCurrentBoard,
-      boardLoading: state.boardLoading,
-      boardError: state.boardError,
-      fetchBoards: state.fetchBoards,
-      user: state.user,
-    })),
-  );
+  // The URL is the source of truth; the query owns the data and its own
+  // loading and error state.
+  const { data: currentBoard, isPending, error, refetch } = useBoard(boardId);
   const editModal = useModal();
   const columnModal = useModal();
   const { canEdit } = useBoardPermissions();
   const { activeId, setActiveId, sensors, handleDragEnd } =
-    useBoardDnd(currentBoard);
-
-  useEffect(() => {
-    if (boardId && boards.length > 0) {
-      const board = boards.find((b) => b.id === boardId);
-      if (board && currentBoard?.id !== boardId) setCurrentBoard(board);
-    }
-  }, [boardId, boards, currentBoard, setCurrentBoard]);
+    useBoardDnd(currentBoard ?? null);
 
   const handleAddColumn = () => {
     if (!canEdit || !currentBoard?.id) return;
     columnModal.open();
   };
 
-  if (boardId && boards.length > 0 && !boards.find((b) => b.id === boardId)) {
+  // The API answers 404 for a board that does not exist and 403 for one that
+  // exists but is not shared with this user. Neither is worth a page of error
+  // text — send them back to their own boards.
+  if (error instanceof ApiError && (error.status === 404 || error.status === 403)) {
     return <Navigate to="/" replace />;
   }
 
-  // Only when there is no board to render yet. Previously any boardLoading —
-  // including adding a column — blanked the whole board behind a spinner.
-  if (boardLoading && !currentBoard) {
+  if (isPending) {
     return (
       <div className={styles.container}>
         <div className={styles.loadingState}>
@@ -73,13 +50,13 @@ export function BoardView() {
     );
   }
 
-  if (boardError) {
+  if (error) {
     return (
       <div className={styles.container}>
         <div className={styles.empty}>
           <p>Could not load board data.</p>
-          <span>{boardError}</span>
-          {user && <button onClick={() => fetchBoards(user.id)}>Retry</button>}
+          <span>{error instanceof Error ? error.message : "Something went wrong"}</span>
+          <button onClick={() => void refetch()}>Retry</button>
         </div>
       </div>
     );

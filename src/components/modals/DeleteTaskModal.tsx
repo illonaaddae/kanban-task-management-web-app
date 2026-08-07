@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore } from '../../store/store';
+import { useDeleteTask } from '../../queries/mutations';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
 import toast from 'react-hot-toast';
@@ -19,7 +19,7 @@ interface DeleteTaskModalProps {
 export function DeleteTaskModal({
   isOpen, onClose, boardId, taskId, taskTitle
 }: DeleteTaskModalProps) {
-  const deleteTask = useStore((state) => state.deleteTask);
+  const deleteTask = useDeleteTask();
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -28,7 +28,7 @@ export function DeleteTaskModal({
     if (deleting) return;
     setDeleting(true);
     try {
-      await deleteTask(taskId, boardId);
+      await deleteTask.mutateAsync({ taskId, boardId });
       toast(`Task '${taskTitle}' deleted`, {
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useDeleteBoard } from '../../queries/mutations';
+import { useBoards } from '../../queries/boards';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/store';
 import { Modal } from './Modal';
 import { Button } from '../ui/Button';
 import toast from 'react-hot-toast';
@@ -18,8 +19,8 @@ export function DeleteBoardModal({
   isOpen, onClose, boardIndex, boardId, boardName
 }: DeleteBoardModalProps) {
   const navigate = useNavigate();
-  const deleteBoard = useStore((state) => state.deleteBoard);
-  const boards = useStore((state) => state.boards);
+  const deleteBoard = useDeleteBoard();
+  const { data: boards = [] } = useBoards();
 
   const resolvedBoardId = boardId || (typeof boardIndex === 'number' && boards[boardIndex] ? boards[boardIndex].id : null);
 
@@ -38,7 +39,7 @@ export function DeleteBoardModal({
     navigate(nextPath, { replace: true });
 
     try {
-      await deleteBoard(resolvedBoardId);
+      await deleteBoard.mutateAsync(resolvedBoardId);
       toast(`Board '${boardName}' deleted successfully`, {
         icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

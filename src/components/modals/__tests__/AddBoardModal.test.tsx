@@ -1,27 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AddBoardModal } from '../AddBoardModal';
-import { useStore } from '../../../store/store';
+import { renderWithProviders } from '../../../test/utils';
+import * as boardApi from '../../../services/boardApi';
 
 vi.mock('react-hot-toast', () => ({
   default: { success: vi.fn(), error: vi.fn() },
 }));
 
-const createBoard = vi.fn();
+// The modal creates boards through the React Query mutation, so the seam worth
+// asserting on is the API module underneath it — not the store, which no longer
+// holds board data.
+vi.mock('../../../services/boardApi');
 
 function renderModal(isOpen = true) {
-  useStore.setState({
-    user: { id: 'u1', name: 'Test', email: 'test@test.com' },
-    createBoard,
-  } as any);
-  return render(<AddBoardModal isOpen={isOpen} onClose={vi.fn()} />);
+  return renderWithProviders(<AddBoardModal isOpen={isOpen} onClose={vi.fn()} />);
 }
 
 describe('AddBoardModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createBoard.mockResolvedValue({ id: 'new-b', name: 'New', columns: [] });
+    vi.mocked(boardApi.createBoard).mockResolvedValue({
+      id: 'new-b',
+      name: 'New',
+      columns: [],
+    });
   });
 
   it('renders the modal title and input when open', () => {
@@ -43,14 +47,14 @@ describe('AddBoardModal', () => {
     expect(input.value).toBe('My New Board');
   });
 
-  it('calls createBoard with correct args when submitted', async () => {
+  it('creates the board with the typed name and columns when submitted', async () => {
     const user = userEvent.setup();
     renderModal();
     await user.type(screen.getByPlaceholderText(/e.g. Web Design/i), 'Sprint Board');
     await user.click(screen.getByRole('button', { name: /create new board/i }));
 
     await waitFor(() => {
-      expect(createBoard).toHaveBeenCalledWith('u1', {
+      expect(boardApi.createBoard).toHaveBeenCalledWith('', {
         name: 'Sprint Board',
         columns: expect.arrayContaining([
           expect.objectContaining({ name: 'Todo' }),
@@ -60,11 +64,11 @@ describe('AddBoardModal', () => {
     });
   });
 
-  it('does not call createBoard when name is empty', async () => {
+  it('does not create a board when the name is empty', async () => {
     const user = userEvent.setup();
     renderModal();
     await user.click(screen.getByRole('button', { name: /create new board/i }));
-    expect(createBoard).not.toHaveBeenCalled();
+    expect(boardApi.createBoard).not.toHaveBeenCalled();
   });
 
   it('renders default column inputs (Todo, Doing)', () => {

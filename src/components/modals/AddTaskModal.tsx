@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
+import { useCreateTask } from '../../queries/mutations';
+import { useBoards } from '../../queries/boards';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -18,9 +19,8 @@ interface AddTaskModalProps {
 }
 
 export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskModalProps) {
-  const createTask = useStore((state) => state.createTask);
-  const boards = useStore((state) => state.boards);
-  const user = useStore((state) => state.user);
+  const createTask = useCreateTask();
+  const { data: boards = [] } = useBoards();
 
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState('');
@@ -49,7 +49,7 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
     e.preventDefault();
     // Without this a second click — or Enter while the first request is in
     // flight — creates the task twice.
-    if (!board?.id || !user || saving) return;
+    if (!board?.id || saving) return;
     let hasError = false;
     if (!title.trim()) { setTitleError('Title cannot be empty'); hasError = true; }
     else { setTitleError(''); }
@@ -61,14 +61,17 @@ export function AddTaskModal({ isOpen, onClose, boardIndex, boardId }: AddTaskMo
 
     setSaving(true);
     try {
-      await createTask(board.id, user.id, {
-        title: title.trim(), description: description.trim(), status,
-        // Send the column id when we have it — the API needs it, and resolving
-        // by name costs an extra request.
-        columnId: board.columns.find(col => col.name === status)?.id,
-        dueDate: fromDateInputValue(dueDate),
-        assignedTo: assignedTo || null,
-        subtasks: subtasks.filter(st => st.trim()).map(st => ({ title: st.trim(), isCompleted: false }))
+      await createTask.mutateAsync({
+        boardId: board.id,
+        task: {
+          title: title.trim(), description: description.trim(), status,
+          // Send the column id when we have it — the API needs it, and resolving
+          // by name costs an extra request.
+          columnId: board.columns.find(col => col.name === status)?.id,
+          dueDate: fromDateInputValue(dueDate),
+          assignedTo: assignedTo || null,
+          subtasks: subtasks.filter(st => st.trim()).map(st => ({ title: st.trim(), isCompleted: false })),
+        },
       });
       toast.success(`Task '${title.trim()}' created!`);
       setTitle(''); setTitleError(''); setDescription(''); setSubtasks(['', '']);

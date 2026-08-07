@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { useBoards } from '../../queries/boards';
 import { Link } from 'react-router-dom';
-import { useStore } from '../../store/store';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { AddBoardModal } from '../modals/AddBoardModal';
 import { Modal } from './Modal';
@@ -14,7 +14,7 @@ interface BoardSelectorModalProps {
 }
 
 export function BoardSelectorModal({ isOpen, onClose, activeBoardIndex, activeBoardId }: BoardSelectorModalProps) {
-  const boards = useStore((state) => state.boards);
+  const { data: boards = [] } = useBoards();
   const [showAddBoardModal, setShowAddBoardModal] = useState(false);
   
   if (!isOpen) return null;

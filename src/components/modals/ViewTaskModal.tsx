@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useUpdateTask, useMoveTask } from '../../queries/mutations';
+import { useBoards, useBoardMembers } from '../../queries/boards';
 import { type Task } from '../../types';
-import { useStore } from '../../store/store';
-import { useShallow } from 'zustand/react/shallow';
 import { useBoardPermissions } from '../../hooks/useBoardPermissions';
 import { Modal } from './Modal';
 import { Checkbox } from '../ui/Checkbox';
@@ -44,15 +44,10 @@ function isOverdue(iso: string): boolean {
 }
 
 export function ViewTaskModal({ isOpen, onClose, task, boardId }: ViewTaskModalProps) {
-  const { boards, members, fetchMembers, updateTask, moveTask } = useStore(
-    useShallow((state) => ({
-      boards: state.boards,
-      members: state.members,
-      fetchMembers: state.fetchMembers,
-      updateTask: state.updateTask,
-      moveTask: state.moveTask,
-    })),
-  );
+  const { data: boards = [] } = useBoards();
+  const { data: members = [] } = useBoardMembers(boardId);
+  const updateTask = useUpdateTask();
+  const moveTask = useMoveTask();
   const { canEdit } = useBoardPermissions();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -60,11 +55,6 @@ export function ViewTaskModal({ isOpen, onClose, task, boardId }: ViewTaskModalP
   const board = boards.find(b => b.id === boardId);
   const statusOptions = board?.columns.map(col => ({ value: col.name, label: col.name })) || [];
   const completedCount = task.subtasks?.filter(st => st.isCompleted).length || 0;
-
-  // Needed to name the assignee. Cheap and cached in the store.
-  useEffect(() => {
-    if (isOpen && task.assignedTo) void fetchMembers(boardId);
-  }, [isOpen, task.assignedTo, boardId, fetchMembers]);
 
   const assignee = task.assignedTo
     ? members.find(member => member.id === task.assignedTo)
@@ -81,7 +71,7 @@ export function ViewTaskModal({ isOpen, onClose, task, boardId }: ViewTaskModalP
     };
 
     try {
-      await updateTask(task.id, { subtasks: updatedSubtasks }, boardId);
+      await updateTask.mutateAsync({ taskId: task.id, boardId, updates: { subtasks: updatedSubtasks } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not update the subtask');
     }
@@ -92,7 +82,13 @@ export function ViewTaskModal({ isOpen, onClose, task, boardId }: ViewTaskModalP
 
     try {
       const targetCol = board?.columns.find(c => c.name === newStatus);
-      await moveTask(task.id, newStatus, targetCol ? targetCol.tasks.length : 0);
+      if (!targetCol?.id) return;
+      await moveTask.mutateAsync({
+        taskId: task.id,
+        columnId: targetCol.id,
+        position: targetCol.tasks.length,
+        boardId,
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not change the status');
     }

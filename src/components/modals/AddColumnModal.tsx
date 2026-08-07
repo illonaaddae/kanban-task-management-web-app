@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useStore } from '../../store/store';
+import { useCreateColumn } from '../../queries/mutations';
 import { Modal } from './Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -22,7 +22,7 @@ interface AddColumnModalProps {
  * ever got the name they wanted on the first try.
  */
 export function AddColumnModal({ isOpen, onClose, boardId, existingNames }: AddColumnModalProps) {
-  const createColumn = useStore((state) => state.createColumn);
+  const createColumn = useCreateColumn();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -46,7 +46,7 @@ export function AddColumnModal({ isOpen, onClose, boardId, existingNames }: AddC
     setError('');
     setSaving(true);
     try {
-      await createColumn(boardId, trimmed);
+      await createColumn.mutateAsync({ boardId, name: trimmed });
       toast.success(`Column '${trimmed}' added`);
       setName('');
       onClose();
