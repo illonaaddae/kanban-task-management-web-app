@@ -435,15 +435,28 @@ export function Teams() {
               from any other tab. */}
           <div className={styles.teamHead}>
             <h2 className={styles.teamName}>{org?.name ?? 'Team'}</h2>
-            {organizations.length > 1 && (
-              <div className={styles.picker}>
-                <Dropdown
-                  value={activeOrgId ?? ''}
-                  onChange={setActiveOrgId}
-                  options={organizations.map((o) => ({ value: o.id, label: o.name }))}
-                />
-              </div>
-            )}
+            <div className={styles.teamHeadActions}>
+              {/* A one-option dropdown is a dead control, so with a single team the
+                  heading says which one and only the New team button shows. */}
+              {organizations.length > 1 && (
+                <div className={styles.picker}>
+                  <Dropdown
+                    value={activeOrgId ?? ''}
+                    onChange={setActiveOrgId}
+                    options={organizations.map((o) => ({ value: o.id, label: o.name }))}
+                  />
+                </div>
+              )}
+              {/* The create form lives in Settings. Reaching it used to mean knowing
+                  that, which is not something a page should ask you to guess. */}
+              <button
+                type="button"
+                className={styles.newTeamButton}
+                onClick={() => setActiveTab('settings')}
+              >
+                + New team
+              </button>
+            </div>
           </div>
 
           {/* Nine cards competed on one page: the danger zone sat beside Rename and

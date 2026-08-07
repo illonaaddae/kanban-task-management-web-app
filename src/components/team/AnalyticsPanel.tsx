@@ -93,61 +93,65 @@ export function AnalyticsPanel({ orgId, canManage }: AnalyticsPanelProps) {
         </div>
       </div>
 
-      <section className={styles.chartBlock}>
-        <h3 className={styles.chartTitle}>Where the work stands</h3>
-        <Donut
-          slices={[
-            { label: 'Done', value: analytics.totals.completed, color: 'var(--primary)' },
-            {
-              label: 'Overdue',
-              value: analytics.totals.overdue,
-              color: 'var(--red)',
-            },
-            {
-              label: 'In progress',
-              value: Math.max(
-                0,
-                analytics.totals.tasks -
-                  analytics.totals.completed -
-                  analytics.totals.overdue,
-              ),
-              color: 'var(--text-secondary)',
-            },
-          ]}
-          centerValue={`${analytics.totals.completionRate}%`}
-          centerLabel="complete"
-        />
-      </section>
+      {/* One grid, so the three read as one picture across the width rather
+          than a column of full-width bars. */}
+      <div className={styles.charts}>
+        <section className={styles.chartBlock}>
+          <h3 className={styles.chartTitle}>Where the work stands</h3>
+          <Donut
+            slices={[
+              { label: 'Done', value: analytics.totals.completed, color: 'var(--primary)' },
+              {
+                label: 'Overdue',
+                value: analytics.totals.overdue,
+                color: 'var(--red)',
+              },
+              {
+                label: 'In progress',
+                value: Math.max(
+                  0,
+                  analytics.totals.tasks -
+                    analytics.totals.completed -
+                    analytics.totals.overdue,
+                ),
+                color: 'var(--text-secondary)',
+              },
+            ]}
+            centerValue={`${analytics.totals.completionRate}%`}
+            centerLabel="complete"
+          />
+        </section>
 
-      <section className={styles.chartBlock}>
-        <h3 className={styles.chartTitle}>By board</h3>
-        <BarList
-          emptyLabel="No boards in this team yet."
-          data={analytics.perBoard.map((board) => ({
-            label: board.name,
-            value: board.completed,
-            alert: board.overdue,
-            // One scale across every board, so bar lengths are comparable rather
-            // than each row being its own 100%.
-            max: Math.max(1, ...analytics.perBoard.map((b) => b.tasks)),
-            caption: `${board.completed}/${board.tasks} · ${board.completionRate}%`,
-          }))}
-        />
-      </section>
+        <section className={styles.chartBlock}>
+          <h3 className={styles.chartTitle}>By board</h3>
+          <BarList
+            emptyLabel="No boards in this team yet."
+            data={analytics.perBoard.map((board) => ({
+              label: board.name,
+              value: board.completed,
+              alert: board.overdue,
+              // One scale across every board, so bar lengths are comparable rather
+              // than each row being its own 100%.
+              max: Math.max(1, ...analytics.perBoard.map((b) => b.tasks)),
+              caption: `${board.completed}/${board.tasks} · ${board.completionRate}%`,
+            }))}
+          />
+        </section>
 
-      <section className={styles.chartBlock}>
-        <h3 className={styles.chartTitle}>By person</h3>
-        <BarList
-          emptyLabel="Nothing assigned yet."
-          data={analytics.members.map((row) => ({
-            label: row.name,
-            value: row.completed,
-            alert: row.overdue,
-            max: Math.max(1, ...analytics.members.map((m) => m.assigned)),
-            caption: `${row.completed}/${row.assigned} · ${row.completionRate}%`,
-          }))}
-        />
-      </section>
+        <section className={styles.chartBlock}>
+          <h3 className={styles.chartTitle}>By person</h3>
+          <BarList
+            emptyLabel="Nothing assigned yet."
+            data={analytics.members.map((row) => ({
+              label: row.name,
+              value: row.completed,
+              alert: row.overdue,
+              max: Math.max(1, ...analytics.members.map((m) => m.assigned)),
+              caption: `${row.completed}/${row.assigned} · ${row.completionRate}%`,
+            }))}
+          />
+        </section>
+      </div>
 
       <p className={styles.footnote}>
         Across every board belonging to this team. Red is overdue. Anyone shown as

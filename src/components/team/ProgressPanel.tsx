@@ -83,44 +83,47 @@ export function ProgressPanel({ boardId, showTotals = true }: ProgressPanelProps
         </div>
       )}
 
-      <section className={styles.chartBlock}>
-        <Donut
-          slices={[
-            { label: 'Done', value: progress.totals.completed, color: 'var(--primary)' },
-            { label: 'Overdue', value: progress.totals.overdue, color: 'var(--red)' },
-            {
-              label: 'In progress',
-              value: Math.max(
-                0,
-                progress.totals.tasks -
-                  progress.totals.completed -
-                  progress.totals.overdue,
-              ),
-              color: 'var(--text-secondary)',
-            },
-          ]}
-          centerValue={`${progress.totals.completionRate}%`}
-          centerLabel="complete"
-        />
-      </section>
+      {/* Donut beside the per-person bars, same as the team view. */}
+      <div className={styles.charts}>
+        <section className={styles.chartBlock}>
+          <Donut
+            slices={[
+              { label: 'Done', value: progress.totals.completed, color: 'var(--primary)' },
+              { label: 'Overdue', value: progress.totals.overdue, color: 'var(--red)' },
+              {
+                label: 'In progress',
+                value: Math.max(
+                  0,
+                  progress.totals.tasks -
+                    progress.totals.completed -
+                    progress.totals.overdue,
+                ),
+                color: 'var(--text-secondary)',
+              },
+            ]}
+            centerValue={`${progress.totals.completionRate}%`}
+            centerLabel="complete"
+          />
+        </section>
 
-      <section className={styles.chartBlock}>
-        <h3 className={styles.chartTitle}>By person</h3>
-        <BarList
-          emptyLabel="Nothing assigned on this board yet."
-          data={progress.members.map((row) => ({
-            label: row.userId === null ? 'Unassigned' : row.name,
-            value: row.completed,
-            alert: row.overdue,
-            // One scale for every row, so the bars can be compared.
-            max: Math.max(1, ...progress.members.map((m) => m.assigned)),
-            caption:
-              row.subtasks.total > 0
-                ? `${row.completed}/${row.assigned} · ${row.subtasks.completed}/${row.subtasks.total} subtasks`
-                : `${row.completed}/${row.assigned}`,
-          }))}
-        />
-      </section>
+        <section className={styles.chartBlock}>
+          <h3 className={styles.chartTitle}>By person</h3>
+          <BarList
+            emptyLabel="Nothing assigned on this board yet."
+            data={progress.members.map((row) => ({
+              label: row.userId === null ? 'Unassigned' : row.name,
+              value: row.completed,
+              alert: row.overdue,
+              // One scale for every row, so the bars can be compared.
+              max: Math.max(1, ...progress.members.map((m) => m.assigned)),
+              caption:
+                row.subtasks.total > 0
+                  ? `${row.completed}/${row.assigned} · ${row.subtasks.completed}/${row.subtasks.total} subtasks`
+                  : `${row.completed}/${row.assigned}`,
+            }))}
+          />
+        </section>
+      </div>
 
       <p className={styles.footnote}>
         “Done” means the last column on the board

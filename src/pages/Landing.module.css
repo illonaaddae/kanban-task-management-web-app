@@ -417,7 +417,10 @@
 
 .steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  /* `auto-fill` rather than `auto-fit`: with five steps and room for six columns,
+     `auto-fit` collapses the empty track and stretches the five to fill, which is
+     how the last row ended up out of proportion with the first. */
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
   gap: 1.5rem;
   margin: 0;
   padding: 0;
@@ -426,7 +429,12 @@
 
 .step {
   display: flex;
+  align-items: flex-start;
   gap: 0.875rem;
+}
+
+.stepText {
+  min-width: 0;
 }
 
 .stepNumber {
@@ -454,6 +462,15 @@
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--text-secondary);
+}
+
+/* The payoff line: what you get out of the step, not another instruction. */
+.stepAside {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--primary);
 }
 
 /* ── Docs ────────────────────────────────────────────────────────────────── */
