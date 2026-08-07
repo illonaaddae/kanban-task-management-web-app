@@ -32,3 +32,12 @@ dist-ssr
 # Build output
 build
 coverage
+
+# iCloud Drive conflict copies. Syncing the same file from two machines leaves
+# "CLAUDE 2.md" / "api 3.ts" next to the original — 37 of them at last count, and
+# `git add -A src/` has picked them up before. Ignored rather than deleted: they
+# are the sync's business, not the repo's.
+* [2-9].*
+* 1[0-9].*
+# Extensionless originals too, e.g. "server/.gitignore 2".
+* [2-9]
