@@ -347,3 +347,12 @@
     align-items: stretch;
   }
 }
+
+/* Visually separated, because it is the one action here that cannot be undone. */
+.danger {
+  border-color: var(--red);
+}
+
+.danger .sectionTitle {
+  color: var(--red);
+}

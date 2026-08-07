@@ -230,7 +230,8 @@ describe("DELETE /orgs/:id", () => {
       .set(owner.authHeader)
       .expect(200);
 
-    expect(res.body.data.deleted).toEqual({ invitations: 1 });
+    // No boards in this team, so nothing to detach.
+    expect(res.body.data.deleted).toEqual({ invitations: 1, boardsDetached: 0 });
     expect(await Organization.findById(org.id)).toBeNull();
     // Left behind, an invitation's token would resolve to a dangling ref.
     expect(await Invitation.countDocuments({ organization: org.id })).toBe(0);

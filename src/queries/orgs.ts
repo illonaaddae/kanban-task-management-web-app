@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as orgApi from '../services/orgApi';
+import * as aiApi from '../services/aiApi';
 import { tokenStore } from '../services/api';
 import { queryKeys } from './keys';
 
@@ -104,6 +105,36 @@ export function useTeamAnalytics(orgId: string | undefined, canManage: boolean) 
     // A plain member gets a 403; not asking is kinder than showing them an error
     // for something they were never meant to see.
     enabled: Boolean(orgId) && canManage && tokenStore.isAuthenticated,
+  });
+}
+
+/**
+ * Whether the assistant is available.
+ *
+ * Long `staleTime`: this changes when the server is redeployed, not while somebody
+ * is using the app, and every AI affordance reads it.
+ */
+export function useAiStatus() {
+  return useQuery({
+    queryKey: queryKeys.ai.status(),
+    queryFn: aiApi.getAiStatus,
+    enabled: tokenStore.isAuthenticated,
+    staleTime: 10 * 60_000,
+  });
+}
+
+/** Proposes a description and subtasks. Nothing is saved. */
+export function useTaskSuggestion() {
+  return useMutation({
+    mutationFn: ({ title, context }: { title: string; context: string }) =>
+      aiApi.suggestTask(title, context),
+  });
+}
+
+/** Proposes a team, a first board and an invitee list, for confirmation. */
+export function useTeamPlan() {
+  return useMutation({
+    mutationFn: (prompt: string) => aiApi.planTeam(prompt),
   });
 }
 

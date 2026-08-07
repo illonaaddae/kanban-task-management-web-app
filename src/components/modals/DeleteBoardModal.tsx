@@ -6,6 +6,7 @@ import { Modal } from './Modal';
 import { Button } from '../ui/Button';
 import toast from 'react-hot-toast';
 import styles from './DeleteModal.module.css';
+import { PATHS } from '../../routes';
 
 interface DeleteBoardModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export function DeleteBoardModal({
 
     // Calculate next destination before deleting
     const remainingBoards = boards.filter(b => b.id !== resolvedBoardId);
-    const nextPath = remainingBoards.length > 0 ? `/board/${remainingBoards[0].id}` : '/';
+    const nextPath = remainingBoards.length > 0 ? PATHS.board(remainingBoards[0].id!) : PATHS.dashboard;
     navigate(nextPath, { replace: true });
 
     try {

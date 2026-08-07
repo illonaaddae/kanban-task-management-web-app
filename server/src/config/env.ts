@@ -42,6 +42,18 @@ const envSchema = z
     /** How long an organization invitation link stays valid. */
     INVITATION_EXPIRES_DAYS: z.coerce.number().int().min(1).max(90).default(7),
 
+    // Optional. Without it the AI endpoints report 503 and the frontend hides the
+    // buttons, exactly like email without RESEND_API_KEY.
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    /**
+     * The cost-optimised tier of the current family. Overridable, but not to be
+     * pointed at a frontier model without thinking about the bill: these calls are
+     * short and structured, which is what Luna is for.
+     */
+    OPENAI_MODEL: z.string().min(1).default("gpt-5.6-luna"),
+    /** Hard ceiling per call. A runaway generation is a runaway invoice. */
+    OPENAI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(64).max(4000).default(700),
+
     LOG_LEVEL: z
       .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
       .default("info"),
@@ -108,10 +120,13 @@ export const env = {
   GOOGLE_CLIENT_SECRET: data.GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI: data.GOOGLE_REDIRECT_URI,
   RESEND_API_KEY: data.RESEND_API_KEY,
+  OPENAI_API_KEY: data.OPENAI_API_KEY,
 
   isProduction: data.NODE_ENV === "production",
   isTest: data.NODE_ENV === "test",
   isDevelopment: data.NODE_ENV === "development",
+  /** True when the AI endpoints can actually reach a model. */
+  aiEnabled: Boolean(data.OPENAI_API_KEY),
   /** True when outbound email can actually be delivered. */
   emailEnabled: Boolean(data.RESEND_API_KEY),
   /** True only when the full Google OAuth triple is configured. */

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import styles from './NotFound.module.css';
+import { PATHS } from '../routes';
 
 export function NotFound() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export function NotFound() {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <div className={styles.actions}>
-          <Button variant="primary" onClick={() => navigate('/')}>
+          <Button variant="primary" onClick={() => navigate(PATHS.dashboard)}>
             Return to Dashboard
           </Button>
           <Button variant="secondary" onClick={() => navigate(-1)}>

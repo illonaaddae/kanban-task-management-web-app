@@ -30,6 +30,10 @@ export const queryKeys = {
     teammates: () => ['orgs', 'teammates'] as const,
     analytics: (orgId: string) => ['orgs', 'analytics', orgId] as const,
   },
+  ai: {
+    /** Whether the server has a key. Cached hard: it changes on deploy, not per view. */
+    status: () => ['ai', 'status'] as const,
+  },
   invitations: {
     /** Waiting for the signed-in user's own address. */
     mine: () => ['invitations', 'mine'] as const,

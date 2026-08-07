@@ -9,6 +9,7 @@ import { BoardSelectorModal } from '../modals/BoardSelectorModal';
 import { useBoards } from '../../queries/boards';
 import { useBoardPermissions, useRouteBoardId } from '../../hooks/useBoardPermissions';
 import toast from 'react-hot-toast';
+import { PATHS } from '../../routes';
 
 /**
  * App-wide keyboard shortcuts, and the dialogs they open.
@@ -74,9 +75,9 @@ export function AppShortcuts() {
       // Single keys rather than the two-key "g then d" sequences a cheatsheet
       // draft promised: one keystroke is simpler to implement *and* to remember,
       // and the cheatsheet now says what actually happens.
-      { key: 'd', description: 'Dashboard', run: () => navigate('/') },
-      { key: 't', description: 'Teams', run: () => navigate('/teams') },
-      { key: 'm', description: 'My tasks', run: () => navigate('/my-tasks') },
+      { key: 'd', description: 'Dashboard', run: () => navigate(PATHS.dashboard) },
+      { key: 't', description: 'Teams', run: () => navigate(PATHS.teams) },
+      { key: 'm', description: 'My tasks', run: () => navigate(PATHS.myTasks) },
       { key: '/', description: 'Switch board', run: () => setDialog('switcher') },
       { key: '?', description: 'Shortcuts', run: () => setDialog('help') },
     ],

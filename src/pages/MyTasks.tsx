@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { useMyTasks } from '../queries/orgs';
 import type { AssignedTask } from '../services/orgApi';
 import styles from './MyTasks.module.css';
+import { PATHS } from '../routes';
 
 type Filter = 'open' | 'overdue' | 'done' | 'all';
 
@@ -110,7 +111,7 @@ export function MyTasks() {
           title="Nothing assigned to you yet"
           body="When somebody assigns you a task, on any board you can reach, it shows up here. Your teams' boards count too."
           action={
-            <Link to="/teams">
+            <Link to={PATHS.teams}>
               <Button variant="secondary">Go to your teams</Button>
             </Link>
           }
@@ -158,7 +159,7 @@ export function MyTasks() {
                 <div className={styles.groupHead}>
                   <h2 className={styles.groupTitle}>{group.name}</h2>
                   {/* Straight to the board, which is where the work gets done. */}
-                  <Link className={styles.groupLink} to={`/board/${boardId}`}>
+                  <Link className={styles.groupLink} to={PATHS.board(boardId)}>
                     Open board
                   </Link>
                 </div>
@@ -170,7 +171,7 @@ export function MyTasks() {
                     return (
                       <Link
                         key={task.id}
-                        to={`/board/${boardId}`}
+                        to={PATHS.board(boardId)}
                         className={`${styles.task} ${task.isDone ? styles.taskDone : ''}`}
                       >
                         <div className={styles.taskMain}>

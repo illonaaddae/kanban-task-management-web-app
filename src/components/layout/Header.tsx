@@ -14,6 +14,7 @@ import { useBoardPermissions } from '../../hooks/useBoardPermissions';
 import { HamburgerButton } from '../ui/HamburgerButton';
 import { useKanbanStore } from '../../store/kanbanStore';
 import styles from './Header.module.css';
+import { PATHS } from '../../routes';
 
 export function Header() {
   const location = useLocation();
@@ -40,9 +41,9 @@ export function Header() {
   const isOnBoardView = !!currentBoard;
 
   const pageTitle = useMemo(() => {
-    if (location.pathname === '/' || location.pathname === '') return 'Dashboard';
-    if (location.pathname === '/teams') return 'Teams';
-    if (location.pathname === '/my-tasks') return 'My Tasks';
+    if (location.pathname === PATHS.dashboard) return 'Dashboard';
+    if (location.pathname === PATHS.teams) return 'Teams';
+    if (location.pathname === PATHS.myTasks) return 'My Tasks';
     if (location.pathname === '/admin') return 'Admin Panel';
     return currentBoard?.name || 'Kanban Board';
   }, [location.pathname, currentBoard]);

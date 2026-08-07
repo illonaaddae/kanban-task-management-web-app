@@ -92,7 +92,7 @@
   /* Below the trigger, allowing for the label above it. */
   top: calc(100% + 0.375rem);
   left: 0;
-  z-index: 30;
+  z-index: var(--z-popover);
   width: 17.5rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
