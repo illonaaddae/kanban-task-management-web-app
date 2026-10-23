@@ -21,7 +21,7 @@
   },
   "overridesNote": "brace-expansion: GHSA-mh99-v99m-4gvg (DoS, affects <=5.0.7) reaches us only through jest's glob/minimatch chain, dev-only. npm's suggested fix is a downgrade to jest@25; 5.0.9 ships a CJS export condition so the older minimatch consumers still resolve it. Remove once jest ships a patched glob.",
   "overrides": {
-    "brace-expansion": "^5.0.9"
+    "brace-expansion": "^5.0.12"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
